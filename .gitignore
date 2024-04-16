@@ -19,3 +19,88 @@
 
 # Go workspace file
 go.work
+
+# Flutter
+# Miscellaneous
+*.lock
+*.log
+*.pot
+*.pyc
+*.swp
+.DS_Store
+._*
+Thumbs.db
+
+# IDE and editor folders
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# Flutter/Dart/Pub相关
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.generated_plugin_registrant.dart
+**/pubspec.lock
+build/
+flutter_*.png
+packages
+pubspec.yaml
+
+# OS files
+*.DS_Store*
+Icon?
+._*
+.Spotlight-V100
+.Trashes
+
+# Packages and platform-specific files
+# 如果你的代码依赖于包，不要包括他们的源代码：
+/packages
+
+# 如果使用CocoaPods，也应忽略相应文件：
+ios/Pods/
+ios/Podfile.lock
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/.generated/
+macos/Pods/
+macos/Podfile.lock
+macos/.symlinks/
+macos/Flutter/Flutter.framework
+macos/Flutter/Flutter.podspec
+macos/.generated/
+
+# Android相关文件
+android/.gradle
+android/build/
+android/app/build/
+
+# Web相关文件
+/web/favicon.png
+/web/icons/
+/web/images/
+
+# Windows文件
+/windows/flutter/ephemeral/
+
+# Linux文件
+/linux/flutter/ephemeral/
+
+# MacOS文件
+/macos/flutter/ephemeral/
+/macos/Flutter/ephemeral/
+
+# Build outputs
+/ios/Flutter/App.framework
+/ios/Flutter/Flutter.framework
+/ios/Flutter/Generated.xcconfig
+/ios/Flutter/app.flx
+/ios/Flutter/app.zip
+/ios/Flutter/flutter_assets/
+/ios/Flutter/project.xcworkspace
+/.build/
+/build/
