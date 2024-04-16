@@ -11,10 +11,7 @@
 
 ## 💪技术栈
 
-前端Flutter
-
-后端Redis+Gin+MongoDB
-
-使用Kubernetes+Promethus+Grafana进行拓展和监控
-
-文档注释用swag
+- 前端Flutter
+- 后端Redis+Gin+MongoDB
+- 使用Kubernetes+Promethus+Grafana进行拓展和监控
+- 文档注释用swag
