@@ -15,3 +15,36 @@
 - 后端Redis+Gin+MongoDB
 - 使用Kubernetes+Promethus+Grafana进行拓展和监控
 - 文档注释用swag
+
+## 项目结构
+aorb
+│
+├── /api            # 后端API
+│   ├── /handlers   # 请求处理
+│   ├── /middleware # 中间件
+│   └── /routes     # 路由
+│
+├── /cmd            # 后端入口
+│   └── main.go
+│
+├── /lib
+│   ├── /models     # 数据模型
+│   ├── /services   # 服务层
+│   ├── /controllers# 控制器
+│   └── /views      # 视图层
+│
+├── /config         # 配置文件
+│
+├── /pkg
+│   ├── /store      # 数据访问层
+│   └── /util       # 工具类
+│
+├── /assets         # 静态资源
+│
+├── /docs           # 文档
+│
+├── /tests          # 测试代码
+│
+└── /deployments    # Kubernetes和监控配置
+    ├── /kubernetes
+    └── /monitoring
