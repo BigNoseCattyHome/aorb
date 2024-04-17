@@ -20,7 +20,7 @@ flutter_build:
 # 构建Go后端服务
 go_build:
 	@echo "Building Go backend service..."
-	cd api && go build -o ../build/backend_service
+	cd backend/api && go build -o ../build/backend_service
 
 # 运行Flutter应用
 run_frontend:
@@ -30,7 +30,7 @@ run_frontend:
 # 运行Go后端服务
 run_backend:
 	@echo "Running Go backend service..."
-	cd build && ./backend_service
+	cd backend/build && ./backend_service
 
 # 清理构建文件
 clean:
@@ -51,7 +51,7 @@ flutter_test:
 # 运行Go测试
 go_test:
 	@echo "Running Go tests..."
-	cd api && go test ./...
+	cd backend/api && go test ./...
 
 # 部署项目
 deploy: kubernetes_deploy monitoring_deploy
