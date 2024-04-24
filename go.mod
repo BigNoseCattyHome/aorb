@@ -1,6 +1,11 @@
 module github.com/BigNoseCattyHome/aorb
 
+
+
 go 1.22.1
+
+// realease do not forget to remove this line
+// replace github.com/BigNoseCattyHome/aorb => ../aorb
 
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect

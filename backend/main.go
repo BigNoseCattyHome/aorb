@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/BigNoseCattyHome/aorb/routes"
+	"../aorb/routes"
 )
 
 func main() {
