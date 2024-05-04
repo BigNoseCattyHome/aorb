@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'help_me_choose.dart';
-import 'help_them_choose.dart';
+import 'index.dart';
 import 'messages.dart';
 import 'profile.dart';
 import '../widgets/bottom_nav_bar.dart';
@@ -13,8 +13,7 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
   final List<Widget> _children = [
-    HelpMeChoose(),
-    HelpThemChoose(),
+    Index(),
     Messages(),
     Profile()
   ];

@@ -47,7 +47,6 @@ Thumbs.db
 build/
 flutter_*.png
 packages
-pubspec.yaml
 
 # OS files
 *.DS_Store*

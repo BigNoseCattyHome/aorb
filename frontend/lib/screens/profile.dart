@@ -5,14 +5,17 @@ import '../models/user.dart';
 
 class Profile extends StatelessWidget {
   final User user = User(
-    id: '001',
-    nickname: 'JohnDoe',
-    avatarUrl: 'https://via.placeholder.com/150',
-    following: ['002', '003'],
-    followers: ['004', '005', '006'],
-    coins: 150,
-    coinTransactions:['007', '008', '009', '010', '011', '012', '013', '014'],
-    blocked: [],
+    id: '1',
+    nickname: '张三',
+    avatarUrl: 'https://example.com/avatar.jpg',
+    followed: ['2', '3'],
+    followers: ['2', '3'],
+    blacklist: [],
+    coins: 100,
+    coinsRecord: ['+10', '-5'],
+    questionsAsk: ['1', '2'],
+    questionsAnswer: ['1', '2'],
+    channels: ['1', '2'],
   );
 
   @override

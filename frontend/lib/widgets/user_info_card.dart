@@ -15,7 +15,7 @@ class UserInfoCard extends StatelessWidget {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text('关注: ${user.following.length}'),
+            Text('关注: ${user.followed.length}'),
             Text('粉丝: ${user.followers.length}'),
             Text('金币: ${user.coins}'),
           ],

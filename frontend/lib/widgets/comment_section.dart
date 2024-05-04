@@ -13,9 +13,10 @@ class CommentSection extends StatelessWidget {
       itemBuilder: (context, index) {
         final comment = comments[index];
         return ListTile(
-          leading: CircleAvatar(backgroundImage: NetworkImage(comment.userAvatarUrl)),
-          title: Text(comment.userName),
-          subtitle: Text(comment.content),
+          // ! 这里记得把头像的URL替换成真实的URL
+          leading: CircleAvatar(backgroundImage: NetworkImage(comment.userid)),
+          title: Text(comment.userid),
+          subtitle: Text(comment.advise),
         );
       },
     );

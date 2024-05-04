@@ -2,18 +2,18 @@ package models
 
 import "encoding/json"
 
-func UnmarshalQuestion(data []byte) (Question, error) {
-	var r Question
+func UnmarshalQuestion(data []byte) (Vote, error) {
+	var r Vote
 	err := json.Unmarshal(data, &r)
 	return r, err
 }
 
-func (r *Question) Marshal() ([]byte, error) {
+func (r *Vote) Marshal() ([]byte, error) {
 	return json.Marshal(r)
 }
 
 // question
-type Question_my struct {
+type Vote struct {
 	// 发布频道                   
 	Channel         string    `json:"channel"`
 	// 评论区                    
@@ -32,6 +32,8 @@ type Question_my struct {
 	Time            string    `json:"time"`
 	// 问题题目                   
 	Title           string    `json:"title"`
+	// 问题描述
+	Description     string    `json:"description"`
 	// 问题类型：公开/私密/匿名          
 	Type            Type      `json:"type"`
 	// 投票者和他的建议               

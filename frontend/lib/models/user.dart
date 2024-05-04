@@ -1,22 +1,30 @@
+import 'package:flutter/material.dart';
+
 class User {
   final String id;
   final String nickname;
   final String avatarUrl;
-  final List<String> following;
+  final List<String> followed;
   final List<String> followers;
-  final List<String> blocked;
+  final List<String> blacklist;
   final int coins;
-  final List<String> coinTransactions;
+  final List<String> coinsRecord;
+  final List<String> questionsAsk;
+  final List<String> questionsAnswer;
+  final List<String> channels;
 
   User({
     required this.id,
     required this.nickname,
     required this.avatarUrl,
-    required this.following,
+    required this.followed,
     required this.followers,
-    required this.blocked,
+    required this.blacklist,
     required this.coins,
-    required this.coinTransactions,
+    required this.coinsRecord,
+    required this.questionsAsk,
+    required this.questionsAnswer,
+    required this.channels,
   });
 
   // 从JSON数据创建User对象的工厂方法
@@ -24,12 +32,15 @@ class User {
     return User(
       id: json['id'],
       nickname: json['nickname'],
-      avatarUrl: json['avatarUrl'],
-      following: List<String>.from(json['following']),
-      followers: List<String>.from(json['followers']),
-      blocked: List<String>.from(json['blocked']),
-      coins: json['coins'],
-      coinTransactions: List<String>.from(json['coinTransactions']),
+      avatarUrl: json['avatar'],
+      followed: List<String>.from(json['followed']),
+      followers: List<String>.from(json['follower']),
+      blacklist: List<String>.from(json['blacklist']),
+      coins: json['coins'].toInt(),
+      coinsRecord: List<String>.from(json['coins_record'] ?? []),
+      questionsAsk: List<String>.from(json['questions_ask']),
+      questionsAnswer: List<String>.from(json['questions_asw']),
+      channels: List<String>.from(json['channels']),
     );
   }
 
@@ -38,36 +49,15 @@ class User {
     return {
       'id': id,
       'nickname': nickname,
-      'avatarUrl': avatarUrl,
-      'following': following,
-      'followers': followers,
-      'blocked': blocked,
+      'avatar': avatarUrl,
+      'followed': followed,
+      'follower': followers,
+      'blacklist': blacklist,
       'coins': coins,
-      'coinTransactions': coinTransactions,
+      'coins_record': coinsRecord,
+      'questions_ask': questionsAsk,
+      'questions_asw': questionsAnswer,
+      'channels': channels,
     };
-  }
-
-  // 方法：关注另一个用户
-  void followUser(String userId) {
-    if (!following.contains(userId)) {
-      following.add(userId);
-    }
-  }
-
-  // 方法：取消关注另一个用户
-  void unfollowUser(String userId) {
-    following.remove(userId);
-  }
-
-  // 方法：屏蔽用户
-  void blockUser(String userId) {
-    if (!blocked.contains(userId)) {
-      blocked.add(userId);
-    }
-  }
-
-  // 方法：解除屏蔽用户
-  void unblockUser(String userId) {
-    blocked.remove(userId);
   }
 }

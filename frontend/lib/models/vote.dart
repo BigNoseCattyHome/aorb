@@ -1,38 +1,50 @@
+import 'package:flutter/material.dart';
+import './comment.dart';
+
 class Vote {
   final String id;
-  final String userId;
+  final String type; // 这里我们使用 String 替代原 Type 枚举
+  final String time;
+  final String sponsor;
   final String title;
   final String description;
   final List<String> options;
-  Map<String, int> results; // key是选项，value是该选项的投票数
-  final bool isAnonymous;
-  final DateTime startTime;
-  final DateTime endTime;
+  final String channel;
+  final List<Comment> comments;
+  final int? fee; // 用 int? 表示可选的整数
+  final List<String> inviteIDs;
+  final List<String> voters;
 
   Vote({
     required this.id,
-    required this.userId,
-    required this.title,
+    required this.channel,
+    required this.comments,
     required this.description,
+    this.fee,
+    required this.sponsor,
+    required this.time,
+    required this.title,
     required this.options,
-    required this.results,
-    required this.isAnonymous,
-    required this.startTime,
-    required this.endTime,
+    required this.inviteIDs,
+    required this.type,
+    required this.voters,
   });
 
   // 从JSON数据创建Vote对象的工厂方法
   factory Vote.fromJson(Map<String, dynamic> json) {
     return Vote(
       id: json['id'],
-      userId: json['userId'],
-      title: json['title'],
       description: json['description'],
+      channel: json['channel'],
+      comments: List<Comment>.from(json['comments'].map((x) => Comment.fromJson(x))),
+      fee: json['fee'],
+      sponsor: json['sponsor'],
+      time: json['time'],
+      title: json['title'],
       options: List<String>.from(json['options']),
-      results: Map<String, int>.from(json['results']),
-      isAnonymous: json['isAnonymous'],
-      startTime: DateTime.parse(json['startTime']),
-      endTime: DateTime.parse(json['endTime']),
+      inviteIDs: List<String>.from(json['invite_ids'] ?? []),
+      type: json['type'],
+      voters: List<String>.from(json['voters']),
     );
   }
 
@@ -40,20 +52,18 @@ class Vote {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'userId': userId,
+      'channel': channel,
+      'comments': List<dynamic>.from(comments.map((x) => x.toJson())),
+      'fee': fee,
+      'sponsor': sponsor,
+      'time': time,
       'title': title,
       'description': description,
       'options': options,
-      'results': results,
-      'isAnonymous': isAnonymous,
-      'startTime': startTime.toIso8601String(),
-      'endTime': endTime.toIso8601String(),
+      'invite_ids': inviteIDs,
+      'type': type,
+      'voters': voters,
     };
   }
-
-  // 检查投票是否在有效期内
-  bool isVoteActive() {
-    final now = DateTime.now();
-    return now.isAfter(startTime) && now.isBefore(endTime);
-  }
 }
+

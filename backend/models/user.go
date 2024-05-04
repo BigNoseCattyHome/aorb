@@ -15,7 +15,7 @@ func (r *User) Marshal() ([]byte, error) {
 	return json.Marshal(r)
 }
 
-type User_my struct {
+type User struct {
 	// 用户头像
 	Avatar string `json:"avatar"`
 	// 屏蔽好友
