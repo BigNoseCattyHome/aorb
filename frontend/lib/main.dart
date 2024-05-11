@@ -3,10 +3,12 @@ import 'screens/main_screen.dart';
 import 'screens/help_me_choose.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -14,16 +16,16 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           primarySwatch: Colors.blue,
           visualDensity: VisualDensity.adaptivePlatformDensity,
-          appBarTheme: AppBarTheme(
+          appBarTheme: const AppBarTheme(
             backgroundColor: Colors.white, // 设置AppBar的背景颜色
             foregroundColor: Colors.black, // 设置AppBar中前景色（如文字、图标）
             centerTitle: true, // 将标题居中
             elevation: 0, // 移除阴影
           ),
         ),
-        home: MainScreen(),
+        home: const MainScreen(),
         routes: {
-          '/help_me_choose': (context) => HelpMeChoose(),
+          '/help_me_choose': (context) => const HelpMeChoose(),
         });
   }
 }

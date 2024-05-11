@@ -3,7 +3,10 @@ import '../models/vote.dart';
 import '../widgets/choice_card.dart';
 // import '../widgets/customed_app_bar.dart';
 
+// Index是一个StatefulWidget类
 class Index extends StatefulWidget {
+  const Index({super.key});
+
   @override
   _IndexState createState() => _IndexState();
 }
@@ -59,11 +62,11 @@ class _IndexState extends State<Index> with SingleTickerProviderStateMixin {
       appBar: AppBar(
         title: TabBar(
           controller: _tabController,
-          indicator: UnderlineTabIndicator(
+          indicator: const UnderlineTabIndicator(
             borderSide: BorderSide(width: 2.0, color: Colors.blue),
           ),
           labelColor: Colors.black,
-          tabs: [
+          tabs: const [
             Tab(text: '动态'),
             Tab(text: '推荐'),
           ],
@@ -86,8 +89,8 @@ class _IndexState extends State<Index> with SingleTickerProviderStateMixin {
         onPressed: () {
           Navigator.pushNamed(context, '/help_me_choose');
         },
-        child: Icon(Icons.add),
         backgroundColor: Colors.blue,
+        child: const Icon(Icons.add),
       ),
     );
   }

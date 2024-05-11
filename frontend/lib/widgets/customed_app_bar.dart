@@ -7,7 +7,7 @@ class CustomAppBarTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Text(
+        const Text(
           '标题栏',
           style: TextStyle(
             fontSize: 20.0,

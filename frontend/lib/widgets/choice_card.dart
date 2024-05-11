@@ -4,7 +4,7 @@ import '../models/vote.dart';  // 确保你有Vote模型
 class ChoiceCard extends StatelessWidget {
   final Vote vote;
 
-  ChoiceCard({required this.vote});
+  const ChoiceCard({super.key, required this.vote});
 
   @override
   Widget build(BuildContext context) {
@@ -12,7 +12,7 @@ class ChoiceCard extends StatelessWidget {
       child: ListTile(
         title: Text(vote.title),
         subtitle: Text(vote.description),
-        trailing: Icon(Icons.arrow_forward),
+        trailing: const Icon(Icons.arrow_forward),
         onTap: () {
           // 处理点击事件
         },

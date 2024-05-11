@@ -4,7 +4,7 @@ import '../models/comment.dart';  // 确保你有Comment模型
 class CommentSection extends StatelessWidget {
   final List<Comment> comments;
 
-  CommentSection({required this.comments});
+  const CommentSection({super.key, required this.comments});
 
   @override
   Widget build(BuildContext context) {
