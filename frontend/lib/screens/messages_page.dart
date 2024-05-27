@@ -14,15 +14,25 @@ class MessagesPageState extends State<MessagesPage>
   late TabController _tabController; // 顶部导航栏控制器
 
   @override
+  void initState() {
+    super.initState(); // 调用父类的 initState 方法
+    _tabController = TabController(length: 2, vsync: this); // 初始化顶部导航栏控制器
+  }
+
+  @override
+  void dispose() {
+    // 释放资源
+    _tabController.dispose();
+    super.dispose();
+  }
+  @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      // 顶部栏
-      appBar: DynamicTopBar(
-        tabs: ['提醒', '私信'],
-        showSearch: true,
-      )
-
-
-    );
+    return Scaffold(
+        // 顶部栏
+        appBar: DynamicTopBar(
+      tabs: const ['提醒', '私信'],
+      showSearch: true,
+      tabController: _tabController,
+    ));
   }
 }
