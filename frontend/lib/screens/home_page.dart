@@ -19,8 +19,89 @@ class HomePageState extends State<HomePage>
   @override
   void initState() {
     super.initState(); // 调用父类的 initState 方法
-    _tabController = TabController(length: 3, vsync: this); // 初始化顶部导航栏控制器
+    _tabController = TabController(length: 2, vsync: this); // 初始化顶部导航栏控制器
     _futureQuestions = _fetchQuestions(); // 初始化时调用 _fetchQuestions 获取数据
+  }
+
+  @override
+  void dispose() {
+    // 释放资源
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      // 顶部栏
+      appBar: DynamicTopBar(
+        tabs: const ['推荐', '关注'],
+        showSearch: true,
+        tabController: _tabController,
+      ),
+
+      // 发布按钮
+      floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            // 导航到发布界面
+          },
+          backgroundColor: Colors.blue[700],
+          child: const Icon(
+            Icons.add,
+            color: Colors.white,
+            size: 30,
+          )),
+
+      // 中间的投票卡片
+      body: TabBarView(controller: _tabController, children: [
+        FutureBuilder<List<QuestionUnvoted>>(
+          future: _futureQuestions,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return const Center(child: Text('No questions available.'));
+            } else {
+              return ListView.builder(
+                itemCount: snapshot.data!.length,
+                itemBuilder: (context, index) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0, vertical: 8.0), // 设置外边距
+                    child: snapshot.data![index],
+                  );
+                },
+              );
+            }
+          },
+        ),
+        FutureBuilder<List<QuestionUnvoted>>(
+          future: _futureQuestions,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return const Center(child: Text('No questions available.'));
+            } else {
+              return ListView.builder(
+                itemCount: snapshot.data!.length,
+                itemBuilder: (context, index) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0, vertical: 8.0), // 设置外边距
+                    child: snapshot.data![index],
+                  );
+                },
+              );
+            }
+          },
+        ),
+      ]),
+    );
   }
 
   Future<List<QuestionUnvoted>> _fetchQuestions() async {
@@ -84,60 +165,5 @@ class HomePageState extends State<HomePage>
         selectedOption: -1,
       ),
     ];
-  }
-
-  @override
-  void dispose() {
-    // 释放资源
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      // 顶部栏
-      appBar: const DynamicTopBar(
-        tabs: ['推荐', '关注'],
-        showSearch: true,
-      ),
-
-      // 发布按钮
-      floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            // 导航到发布界面
-          },
-          backgroundColor: Colors.blue[700],
-          child: const Icon(
-            Icons.add,
-            color: Colors.white,
-            size: 30,
-          )),
-
-      // 中间的投票卡片
-      body: FutureBuilder<List<QuestionUnvoted>>(
-        future: _futureQuestions,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No questions available.'));
-          } else {
-            return ListView.builder(
-              itemCount: snapshot.data!.length,
-              itemBuilder: (context, index) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0, vertical: 8.0), // 设置外边距
-                  child: snapshot.data![index],
-                );
-              },
-            );
-          }
-        },
-      ),
-    );
   }
 }
