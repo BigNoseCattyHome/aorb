@@ -34,65 +34,55 @@ class HomePageState extends State<HomePage>
         votePercentage: [0.4, 0.6],
         voteCount: 20,
         time: '发布于 5 小时前',
-        avatar: 'https://s2.loli.net/2024/05/25/icuYCOP9HB1JbIx.png',
+        avatar: 'https://s2.loli.net/2024/05/27/2MgJcvLtOVKmAdn.jpg',
         nickname: '爱吃饭的小袁同学',
         questionId: '1',
+        backgroundImage: 'gradient:0xFF8DB3EB,0xFFF895CA',
+        selectedOption: -1,
+      ),
+      const QuestionUnvoted(
+        title: '下午去哪里玩?',
+        content: '天气很好，感觉顾村公园和外滩都挺不错的，选哪个？',
+        options: ['顾村公园', '外滩'],
+        votePercentage: [0.16, 0.84],
+        voteCount: 76,
+        time: '发布于 36 分钟前',
+        avatar: 'https://s2.loli.net/2024/05/25/icuYCOP9HB1JbIx.png',
+        nickname: '花枝鼠gogo来帮忙',
+        questionId: '2',
+        backgroundImage: '0xFF354967',
+        selectedOption: -1,
+      ),
+      const QuestionUnvoted(
+        title: '要不要去小美家玩啊？',
+        content: '小美小美小美好香的小美，Bad 小新',
+        options: ['麻辣烫', '炸鸡汉堡'],
+        votePercentage: [0.4, 0.6],
+        voteCount: 20,
+        time: '发布于 7 小时前',
+        avatar: 'https://s2.loli.net/2024/05/27/QzKM41C3Vs5FeHW.jpg',
+        nickname: '风见澈Siri',
+        questionId: '3',
         backgroundImage: 'https://s2.loli.net/2024/05/25/HqJM8dTuSRbUNBO.jpg',
         selectedOption: -1,
       ),
       const QuestionUnvoted(
-        title: '午饭吃什么呀?',
-        content: '想了半天没有想出来到底要吃什么，好纠结，真可恶！',
-        options: ['麻辣烫', '炸鸡汉堡'],
+        title: 'Exploring the Enigmatic World of Quantum Mechanics',
+        content:
+            'Quantum mechanics is a fundamental theory in physics that provides a description of the physical properties of nature at the scale of atoms and subatomic particles. However, it\'s not as straightforward as classical physics. Can you help me understand some of the key concepts and phenomena of quantum mechanics?',
+        options: [
+          'Yes, I\'d love to.',
+          'I\'m familiar with quantum mechanics.',
+        ],
         votePercentage: [0.4, 0.6],
         voteCount: 20,
-        time: '发布于 5 小时前',
-        avatar: 'https://s2.loli.net/2024/05/25/icuYCOP9HB1JbIx.png',
-        nickname: '爱吃饭的小袁同学',
-        questionId: '1',
-        backgroundImage: 'https://s2.loli.net/2024/05/25/HqJM8dTuSRbUNBO.jpg',
+        time: '发布于昨天',
+        avatar: 'https://s2.loli.net/2024/05/27/alt3BKPYhzmV4E7.jpg',
+        nickname: 'Anti Cris',
+        questionId: '4',
+        backgroundImage: 'gradient:0x7FFCE300,0xFFFF5065,0xFF1F9AC1',
         selectedOption: -1,
       ),
-      const QuestionUnvoted(
-        title: '午饭吃什么呀?',
-        content: '想了半天没有想出来到底要吃什么，好纠结，真可恶！',
-        options: ['麻辣烫', '炸鸡汉堡'],
-        votePercentage: [0.4, 0.6],
-        voteCount: 20,
-        time: '发布于 5 小时前',
-        avatar: 'https://s2.loli.net/2024/05/25/icuYCOP9HB1JbIx.png',
-        nickname: '爱吃饭的小袁同学',
-        questionId: '1',
-        backgroundImage: 'https://s2.loli.net/2024/05/25/HqJM8dTuSRbUNBO.jpg',
-        selectedOption: -1,
-      ),
-      const QuestionUnvoted(
-        title: '午饭吃什么呀?',
-        content: '想了半天没有想出来到底要吃什么，好纠结，真可恶！',
-        options: ['麻辣烫', '炸鸡汉堡'],
-        votePercentage: [0.4, 0.6],
-        voteCount: 20,
-        time: '发布于 5 小时前',
-        avatar: 'https://s2.loli.net/2024/05/25/icuYCOP9HB1JbIx.png',
-        nickname: '爱吃饭的小袁同学',
-        questionId: '1',
-        backgroundImage: 'https://s2.loli.net/2024/05/25/HqJM8dTuSRbUNBO.jpg',
-        selectedOption: -1,
-      ),
-      const QuestionUnvoted(
-        title: '午饭吃什么呀?',
-        content: '想了半天没有想出来到底要吃什么，好纠结，真可恶！',
-        options: ['麻辣烫', '炸鸡汉堡'],
-        votePercentage: [0.4, 0.6],
-        voteCount: 20,
-        time: '发布于 5 小时前',
-        avatar: 'https://s2.loli.net/2024/05/25/icuYCOP9HB1JbIx.png',
-        nickname: '爱吃饭的小袁同学',
-        questionId: '1',
-        backgroundImage: 'https://s2.loli.net/2024/05/25/HqJM8dTuSRbUNBO.jpg',
-        selectedOption: -1,
-      ),
-      // 可以添加更多QuestionUnvoted示例
     ];
   }
 
@@ -112,9 +102,20 @@ class HomePageState extends State<HomePage>
         showSearch: true,
       ),
 
+      // 发布按钮
+      floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            // 导航到发布界面
+          },
+          backgroundColor: Colors.blue[700],
+          child: const Icon(
+            Icons.add,
+            color: Colors.white,
+            size: 30,
+          )),
+
       // 中间的投票卡片
-      body: 
-      FutureBuilder<List<QuestionUnvoted>>(
+      body: FutureBuilder<List<QuestionUnvoted>>(
         future: _futureQuestions,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -137,7 +138,6 @@ class HomePageState extends State<HomePage>
           }
         },
       ),
-
     );
   }
 }

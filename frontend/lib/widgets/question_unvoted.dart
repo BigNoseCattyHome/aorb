@@ -46,13 +46,7 @@ class QuestionUnvotedState extends State<QuestionUnvoted> {
   Widget build(BuildContext context) {
     return Container(
       // decoration是容器的装饰，这里设置了背景图片和圆角
-      decoration: BoxDecoration(
-        image: DecorationImage(
-          image: NetworkImage(widget.backgroundImage), // network image从网络加载图片
-          fit: BoxFit.cover,
-        ),
-        borderRadius: BorderRadius.circular(10),
-      ),
+      decoration: createBackgroundDecoration(widget.backgroundImage),
 
       // padding是容器的内边距，这里设置了上下左右各16像素
       padding: const EdgeInsets.all(16.0),
@@ -123,67 +117,122 @@ class QuestionUnvotedState extends State<QuestionUnvoted> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center, // 设置主轴对齐方式为居中
       children: List.generate(text.length, (i) {
+        // Expanded是一个占满剩余空间的部件
         return Expanded(
-            // Expanded是一个占满剩余空间的部件
-            child:
-                // 获取ElevatedButton部件的宽度
-                LayoutBuilder(builder:
-                    (BuildContext context, BoxConstraints constraints) {
-          // 获取Container的最大宽度
-          double containerWidth = constraints.maxWidth;
-          return ElevatedButton(
-            // style是按钮的样式，这里设置了背景颜色、圆角等
-            style: ElevatedButton.styleFrom(
-              // 设置按钮颜色
-              backgroundColor: selectedOption == -1
-                  ? colorBackground[i + 1]
-                  : (selectedOption == i
-                      ? colorBackground[i + 1]
-                      : colorBackground[0]),
-              // 设置按钮上文本颜色
-              foregroundColor: Colors.white,
-              // 设置按钮圆角
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+            child: Stack(children: [
+          // 获取ElevatedButton部件的宽度
+          LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints constraints) {
+            // 获取Container的最大宽度
+            double containerWidth = constraints.maxWidth;
+            double containerHeight = constraints.maxHeight;
+            return ElevatedButton(
+              // style是按钮的样式，这里设置了背景颜色、圆角等
+              style: ElevatedButton.styleFrom(
+                // 设置按钮颜色
+                backgroundColor: selectedOption == -1
+                    ? colorBackground[i + 1]
+                    : (selectedOption == i
+                        ? colorBackground[i + 1]
+                        : colorBackground[0]),
+                // 设置按钮上文本颜色
+                foregroundColor: Colors.white,
+                // 设置按钮圆角
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                minimumSize: const Size(130, 50),
+                padding: EdgeInsets.zero, // 设置内边距为0
               ),
-              minimumSize: const Size(130, 50), // 设置最小高度为 10
-            ),
-            // 要求当selectedOption更改时，外部调用组件要能够获取到更新
-            // 同时组件自己也要更新
-            onPressed: () {
-              setState(() {
-                _selectedOption = i;
-              });
-            },
-            child: Stack(
-              children: [
-                if (_selectedOption != -1)
-                  Positioned(
-                    left: 0, // 设置为0以确保Container相对于ElevatedButton左对齐
-                    top: 0, // 设置为0以确保Container相对于ElevatedButton顶部对齐
-                    child: Container(
-                      height: 20, // 设置矩形高度
-                      // 宽度等于父组件的长度*这个option所占的百分比
-                      // width: votePercentage[i] * 130,
-                      width: votePercentage[i] * containerWidth,
-                      decoration: BoxDecoration(
-                        color: _selectedOption == i
-                            ? colorPercents[i + 1] // 使用正确的颜色
-                            : colorPercents[0], // 使用默认颜色
-                        borderRadius: BorderRadius.circular(10), // 设置圆角半径
+
+              child: Stack(
+                alignment: Alignment.center, // 设置Stack的对齐方式为居中
+                children: [
+                  if (_selectedOption != -1)
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Container(
+                        height: 40, // ! 好像containerHeight的数值有问题，所以先用50测试
+                        // 宽度等于父组件的长度*这个option所占的百分比
+                        width: votePercentage[i] * containerWidth,
+                        decoration: BoxDecoration(
+                          color: _selectedOption == i
+                              ? colorPercents[i + 1] // 使用正确的颜色
+                              : colorPercents[0], // 使用默认颜色
+                          borderRadius: BorderRadius.circular(10), // 设置圆角半径
+                        ),
                       ),
                     ),
+                  // 使用Align小部件来居中对齐Container
+                  Align(
+                    alignment: Alignment.center,
+                    child: Text(text[i]),
                   ),
-                // 使用Align小部件来居中对齐Container
-                Align(
-                  alignment: Alignment.center,
-                  child: Text(text[i]),
-                ),
-              ],
-            ),
-          );
-        }));
+                ],
+              ),
+
+              // 单次点击投票
+              onPressed: () {
+                setState(() {
+                  _selectedOption = i;
+                  // TODO 把选择的结果发送到服务端
+                });
+              },
+
+              // 长按取消
+              onLongPress: () {
+                setState(() {
+                  _selectedOption = -1;
+                  // TODO 把选择的结果发送到服务端
+                });
+              },
+            );
+          })
+        ]));
       }),
     );
+  }
+
+  BoxDecoration createBackgroundDecoration(String backgroundImage) {
+    if (backgroundImage.startsWith('0x')) {
+      // 纯色背景
+      int colorValue = int.parse(backgroundImage.substring(2), radix: 16);
+      return BoxDecoration(
+        color: Color(colorValue),
+        borderRadius: BorderRadius.circular(10),
+      );
+    } else if (backgroundImage.startsWith('http://') ||
+        backgroundImage.startsWith('https://')) {
+      // 网络图片背景
+      return BoxDecoration(
+        image: DecorationImage(
+          image: NetworkImage(backgroundImage),
+          fit: BoxFit.cover,
+        ),
+        borderRadius: BorderRadius.circular(10),
+      );
+    } else if (backgroundImage.startsWith('gradient:')) {
+      // 渐变背景
+      List<String> colorStrings =
+          backgroundImage.substring('gradient:'.length).split(',');
+      List<Color> colors = colorStrings
+          .map((colorString) =>
+              Color(int.parse(colorString.substring(2), radix: 16)))
+          .toList();
+      return BoxDecoration(
+        gradient: LinearGradient(
+          colors: colors,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(10),
+      );
+    } else {
+      // 默认纯色背景
+      return BoxDecoration(
+        color: Colors.blue[900],
+        borderRadius: BorderRadius.circular(10),
+      );
+    }
   }
 }

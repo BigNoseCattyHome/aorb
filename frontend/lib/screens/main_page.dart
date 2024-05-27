@@ -44,25 +44,28 @@ class MainPageState extends State<MainPage> {
         items: <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: _currentIndex == 0
-                ? SvgPicture.asset('assets/images/home_selected.svg')
-                : SvgPicture.asset('assets/images/home_unselected.svg'),
+                ? SvgPicture.asset('images/home_selected.svg')
+                : SvgPicture.asset('images/home_unselected.svg'),
             label: '首页',
           ),
           BottomNavigationBarItem(
             icon: _currentIndex == 1
-                ? SvgPicture.asset('assets/images/msg_selected.svg')
-                : SvgPicture.asset('assets/images/msg_unselected.svg'),
+                ? SvgPicture.asset('images/msg_selected.svg')
+                : SvgPicture.asset('images/msg_unselected.svg'),
             label: '消息',
           ),
           BottomNavigationBarItem(
             icon: _currentIndex == 2
-                ? SvgPicture.asset('assets/images/me_selected.svg')
-                : SvgPicture.asset('assets/images/me_unselected.svg'),
+                ? SvgPicture.asset('images/me_selected.svg')
+                : SvgPicture.asset('images/me_unselected.svg'),
             label: '我',
           ),
         ],
         currentIndex: _currentIndex,
         selectedItemColor: Colors.blue[700],
+        selectedLabelStyle: TextStyle(
+            fontFamily: 'SimHei', fontSize: 12, fontWeight: FontWeight.w700),
+        unselectedLabelStyle: TextStyle(fontFamily: 'SimHei', fontSize: 12,fontWeight: FontWeight.w500),
         onTap: _onItemTapped,
       ),
     );
