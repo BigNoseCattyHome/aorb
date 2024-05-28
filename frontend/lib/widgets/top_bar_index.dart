@@ -9,7 +9,7 @@ class DynamicTopBar extends StatelessWidget implements PreferredSizeWidget {
     Key? key,
     required this.tabs,
     this.showSearch = true,
-    required this.tabController, // 现在是必需的属性
+    required this.tabController,
   }) : super(key: key);
 
   @override

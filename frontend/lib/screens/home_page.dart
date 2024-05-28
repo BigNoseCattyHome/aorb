@@ -1,11 +1,12 @@
 // home_page.dart
 import 'package:flutter/material.dart';
-import '../widgets/top_bar_index.dart'; // 引入顶部导航栏组件
 import '../widgets/question_unvoted.dart'; // 引入未投票问题组件
 import 'dart:async';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final TabController tabController;
+  
+  const HomePage({super.key, required this.tabController});
 
   @override
   HomePageState createState() => HomePageState();
@@ -19,13 +20,12 @@ class HomePageState extends State<HomePage>
   @override
   void initState() {
     super.initState(); // 调用父类的 initState 方法
-    _tabController = TabController(length: 2, vsync: this); // 初始化顶部导航栏控制器
+    _tabController = widget.tabController; // 初始化顶部导航栏控制器
     _futureQuestions = _fetchQuestions(); // 初始化时调用 _fetchQuestions 获取数据
   }
 
   @override
   void dispose() {
-    // 释放资源
     _tabController.dispose();
     super.dispose();
   }
@@ -33,12 +33,7 @@ class HomePageState extends State<HomePage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // 顶部栏
-      appBar: DynamicTopBar(
-        tabs: const ['推荐', '关注'],
-        showSearch: true,
-        tabController: _tabController,
-      ),
+      // 顶部栏，由main_page接管
 
       // 发布按钮
       floatingActionButton: FloatingActionButton(
