@@ -77,11 +77,10 @@ class MainPageState extends State<MainPage>
                 Navigator.pop(context);
               },
             ),
-            
           ],
         ),
       ),
-      
+
       // 底部导航栏
       bottomNavigationBar: BottomNavigationBar(
         items: <BottomNavigationBarItem>[
@@ -98,9 +97,18 @@ class MainPageState extends State<MainPage>
             label: '消息',
           ),
           BottomNavigationBarItem(
-            icon: _currentIndex == 2
-                ? SvgPicture.asset('images/me_selected.svg')
-                : SvgPicture.asset('images/me_unselected.svg'),
+            icon: ClipOval(
+                child: CircleAvatar(
+              radius: 24,
+              backgroundColor:
+                  _currentIndex == 2 ? Colors.blue[700] : Colors.white,
+              child: const CircleAvatar(
+                radius: 22, // 确保边框宽度
+                backgroundImage: NetworkImage(
+                    'https://s2.loli.net/2024/05/28/MY6bk5FxVh8ufOa.png'),
+                backgroundColor: Colors.transparent,
+              ),
+            )),
             label: '我',
           ),
         ],
