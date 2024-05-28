@@ -25,7 +25,7 @@ go_build:
 # 运行Flutter应用
 run_frontend:
 	@echo "Running Flutter app..."
-	flutter run
+	cd frontend && flutter run
 
 # 运行Go后端服务
 run_backend:
