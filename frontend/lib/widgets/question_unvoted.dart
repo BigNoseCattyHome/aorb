@@ -125,7 +125,8 @@ class QuestionUnvotedState extends State<QuestionUnvoted> {
               builder: (BuildContext context, BoxConstraints constraints) {
             // 获取Container的最大宽度
             double containerWidth = constraints.maxWidth;
-            double containerHeight = constraints.maxHeight;
+            // ^ 获取Container的最大高度
+            // double containerHeight = constraints.maxHeight;
             return ElevatedButton(
               // style是按钮的样式，这里设置了背景颜色、圆角等
               style: ElevatedButton.styleFrom(
