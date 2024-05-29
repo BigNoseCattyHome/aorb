@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class QuestionUnvoted extends StatefulWidget {
   final String title;
@@ -78,19 +79,43 @@ class QuestionUnvotedState extends State<QuestionUnvoted> {
             ],
           ),
           const SizedBox(height: 16),
-          // title
-          Text(
-            widget.title,
-            style: const TextStyle(
-                color: Color.fromARGB(255, 255, 255, 255), fontSize: 24),
+          Stack(
+            children: [
+              Positioned(
+                top: 3,
+                left: 0,
+                child: SvgPicture.asset('images/comments.svg'),
+              ),
+              const SizedBox(width: 8),
+              Padding(
+                padding: const EdgeInsets.only(left: 60), // 根据你的SVG图标的大小调整这个值
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // title
+                    Text(
+                      widget.title,
+                      style: const TextStyle(
+                        color: Color.fromARGB(255, 255, 255, 255),
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    // content
+                    Text(
+                      widget.content,
+                      style: const TextStyle(
+                        color: Color.fromARGB(221, 255, 255, 255),
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          // content
-          Text(
-            widget.content,
-            style: const TextStyle(
-                color: Color.fromARGB(221, 255, 255, 255), fontSize: 10),
-          ),
+
           const SizedBox(height: 16),
           // options
           _buildOptionButtons(

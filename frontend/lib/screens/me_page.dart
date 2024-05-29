@@ -63,7 +63,6 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
                                   style: TextStyle(
                                       color: Colors.white,
                                       fontSize: 32,
-                                      // fontFamily: 'SimHei',
                                       fontWeight: FontWeight.bold,
                                       height: 1.5)),
                               Row(
@@ -106,7 +105,6 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
                                           height: 2)),
                                 ],
                               ),
-                              // Spacer(),
                               Row(
                                 children: [
                                   const Text('我的背包：',
@@ -125,26 +123,20 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
                                           color: Colors.white,
                                           fontSize: 12,
                                           height: 2)),
-                                  // 下面的内容右对齐
-                                  Expanded(
-                                      child: Container(
-                                    alignment: Alignment.centerRight,
-                                    child: 
-                                        ElevatedButton(
-                                      onPressed: () {},
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.blue[700],
-                                        foregroundColor: Colors.white,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(20),
-                                        ),
+                                  const Spacer(),
+                                  ElevatedButton(
+                                    onPressed: () {},
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.blue[700],
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
                                       ),
-                                      child: const Text('编辑资料'),
                                     ),
-                                  )),
+                                    child: const Text('编辑资料'),
+                                  ),
                                 ],
-                              )
+                              ),
                             ],
                           ),
                         ),
@@ -159,7 +151,7 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
                                   constraints.maxHeight / 6.5; // ^ 玄学调参
                               return CircleAvatar(
                                 radius: avatarSize,
-                                backgroundColor: Colors.white, 
+                                backgroundColor: Colors.white,
                                 child: CircleAvatar(
                                   radius: avatarSize - 2, // 确保边框宽度
                                   backgroundImage: const NetworkImage(
@@ -191,11 +183,14 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
                           controller: _tabController,
                           labelColor: Colors.blue[700],
                           labelStyle: const TextStyle(
-                            fontSize: 18,
-                            fontFamily: 'SimHei',
+                            fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
                           unselectedLabelColor: Colors.grey[400],
+                          indicator: UnderlineTabIndicator(
+                            borderSide: BorderSide(width: 2.0, color: Colors.blue.shade700),
+                            insets: const EdgeInsets.symmetric(horizontal: 20.0)
+                          ),
                           indicatorSize: TabBarIndicatorSize.label,
                           indicatorWeight: 3,
                           indicatorColor: Colors.blue[700],
