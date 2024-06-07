@@ -41,24 +41,44 @@ aorb
 
 ## 🚀 快速开始
 
-进入到`frontend/`下，执行以下命令：
+推荐使用vscode进行开发，安装flutter插件，以及dart插件
 
-1.  获取依赖
+### 将项目克隆到本地
 
 ```shell
-flutter pub get
+git clone https://github.com/BigNoseCattyHome/aorb.git
 ```
 
-2.  启动前端
+### 前端开发 
+开发和测试flutter应用
+
 ```shell
-flutter run
+make run_frontend
 ```
-flutter会自动编译fronted/lib/main.dart文件并运行
+
+flutter会自动编译fronted/lib/main.dart文件并运行，选择一个合适的平台进行查看就好，不同平台需要满足特定的工具包。
+
 
 figma原型设计共享链接：[Aorb原型设计](https://www.figma.com/design/roDqwgrlbQo29vpSqeCVFw/Aorb?node-id=0-1&t=SOBamnPsEXegjKDF-1)
 
+### 数据库初始化
+
+这里是一篇[MongoDB安装和简单上手](https://obyi4vacom.feishu.cn/file/DTTWb1DMjoGynkxmgOBc0qgInWd)文档，可以参考一下
+
+确保在本地安装好MongoDB后，进行数据库初始化：
+
+```shell    
+mongosh
+```
+
+进入到mongodb shell之后输入命令：
+```shell
+load("scripts/init_db.js")
+```
+
 ## 📝 开发文档
 
-[Flutter开发过程用到组件指南](https://bignosecat.yuque.com/org-wiki-bignosecat-an84wk/ww9doa/duovwzv5mrr4nwuk?singleDoc#《Flutter开发用到的组件和相关知识》)
+[Flutter开发过程用到组件指南](https://obyi4vacom.feishu.cn/file/E9vdbu0RBocg4yxfV0NcS1kHnwe)
 
 [Git使用指南](http://sirius1y.top/posts/notes/dev/%E6%8C%87%E5%8D%97%E5%9B%A2%E9%98%9Fgit%E5%8D%8F%E4%BD%9C/)
+

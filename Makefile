@@ -4,33 +4,35 @@
 # 默认执行的命令
 all: build
 
-# 构建整个项目，包括前端和后端
-build: flutter_build go_build
-
-# 构建Flutter应用
-flutter_build:
-	@echo "Building Flutter app for all platforms..."
-	flutter build apk
-	flutter build ios
-	flutter build web
-	flutter build linux
-	flutter build macos
-	flutter build windows
-
-# 构建Go后端服务
-go_build:
-	@echo "Building Go backend service..."
-	cd backend/api && go build -o ../build/backend_service
-
-# 运行Flutter应用
+# 运行Flutter应用，用于开发和测试
 run_frontend:
 	@echo "Running Flutter app..."
+	cd frontend && flutter pub get
 	cd frontend && flutter run
 
 # 运行Go后端服务
 run_backend:
 	@echo "Running Go backend service..."
 	cd backend/build && ./backend_service
+
+
+# 构建整个项目，包括前端和后端
+build: flutter_build go_build
+
+# 构建Flutter前端应用,用于发布应用
+flutter_build:
+	@echo "Building Flutter app for all platforms..."
+	cd frontend && flutter build apk
+	cd frontend && flutter build ios
+	cd frontend && flutter build web
+	cd frontend && flutter build linux
+	cd frontend && flutter build macos
+	cd frontend && flutter build windows
+
+# 构建Go后端服务
+go_build:
+	@echo "Building Go backend service..."
+	cd backend/api && go build -o ../build/backend_service
 
 # 清理构建文件
 clean:
