@@ -25,7 +25,7 @@ aorb
 │   │   ├── poll            # 投票服务
 │   │   └── recommendation  # 推荐服务
 │   └── java-services       # 使用Java编写的服务
-│       └── user            # 用户服务
+│       └── auth            # 用户服务
 ├── frontend                # 前端代码
 │   ├── android 
 │   ├── fonts               # 字体文件
