@@ -1,0 +1,4 @@
+# api前缀
+[api]
+prefix = "/api"
+version = "v1"
