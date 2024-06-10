@@ -1,6 +1,6 @@
 syntax = "proto3";
 package rpc.user;
-option go_package = "aorb/backend/rpc/user";
+option go_package = "github.com/BigNoseCattyHome/aorb/backend/rpc/user";
 
 
 message User{

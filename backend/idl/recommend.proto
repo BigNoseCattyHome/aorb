@@ -1,6 +1,6 @@
 syntax = "proto3";
 package rpc.recommend;
-option go_package = "aorb/backend/rpc/recommend";
+option go_package = "github.com/BigNoseCattyHome/aorb/backend/rpc/recommend";
 
 message RecommendRequest{
   uint32 user_id = 1;

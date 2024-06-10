@@ -1,6 +1,6 @@
 syntax = "proto3";
 package rpc.auth;
-option go_package = "aorb/backend/rpc/auth";
+option go_package = "github.com/BigNoseCattyHome/aorb/backend/rpc/auth";
 
 message LoginRequest{
   string username = 1;  // 登陆用户名

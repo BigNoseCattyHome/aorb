@@ -1,6 +1,6 @@
 syntax = "proto3";
 package rpc.question;
-option go_package = "aorb/backend/rpc/question";
+option go_package = "github.com/BigNoseCattyHome/aorb/backend/rpc/question";
 import "user.proto";
 
 message Question{

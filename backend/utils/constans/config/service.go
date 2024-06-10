@@ -1,4 +1,4 @@
-package constans
+package config
 
 // 微服务的名字以及端口
 const WebServiceName = "AorB-Gateway"
@@ -13,14 +13,11 @@ const UserRpcServiceAddr = ":37002"
 const CommentRpcServiceName = "AorB-CommentService"
 const CommentRpcServiceAddr = ":37003"
 
-const VotesRpcServiceName = "AorB-VotesService"
-const VotesRpcServiceAddr = ":37004"
+const VoteRpcServiceName = "AorB-VoteService"
+const VoteRpcServiceAddr = ":37004"
 
 const QuestionRpcServiceName = "AorB-QuestionService"
 const QuestionRpcServiceAddr = ":37005"
 
-const RelationshipRpcServiceName = "AorB-RelationshipService"
-const RelationshipRpcServiceAddr = ":37006"
-
-const MessageRpcServiceName = "AorB-MessageService"
-const MessageRpcServiceAddr = ":37007"
+const RecommendRpcServiceName = "AorB-RecommendService"
+const RecommendRpcServiceAddr = ":37006"

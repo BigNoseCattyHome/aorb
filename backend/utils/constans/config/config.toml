@@ -1,0 +1,56 @@
+[Server]
+    port = 4000
+    version = "1.0"
+
+[MongoDB]
+    host = "127.0.0.1"
+    port = 27017
+    username = ""
+    password = ""
+    database = "aorb"
+
+[Redis]
+    host = "127.0.0.1"
+    port = 6379
+    username = "root"
+    password = ""
+    db = 0
+
+[JWT]
+    jwtSecrete = 38324
+
+[Etcd]
+    host = "127.0.0.1"
+    port = 2379
+
+[Services]
+    [Services.Auth]
+        name = "auth"
+        loadBalance = "true"
+        host = "127.0.0.1"
+        port = 10001
+    [Services.Comment]
+        name = "comment"
+        loadBalance = "true"
+        host = "127.0.0.1"
+        port = 10002
+    [Services.Question]
+        name = "question"
+        loadBalance = "true"
+        host = "127.0.0.1"
+        port = 10003
+    [Services.Recommend]
+        name = "recommend"
+        loadBalance = "true"
+        host = "127.0.0.1"
+        port = 10004
+    [Services.User]
+        name = "user"
+        loadBalance = "true"
+        host = "127.0.0.1"
+        port = 10005
+    [Services.Vote]
+        name = "vote"
+        loadBalance = "true"
+        host = "127.0.0.1"
+        port = 10006

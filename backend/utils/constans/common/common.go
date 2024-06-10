@@ -1,4 +1,4 @@
-package constans
+package common
 
 const (
 	ServiceOKCode = 0
