@@ -1,7 +1,7 @@
 syntax = "proto3";
 import "user.proto";
 package rpc.comment;
-option go_package = "aorb/backend/rpc/comment";
+option go_package = "github.com/BigNoseCattyHome/aorb/backend/rpc/comment";
 
 message Comment{
   uint32 id = 1;

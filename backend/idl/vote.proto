@@ -1,6 +1,6 @@
 syntax = "proto3";
 package rpc.vote;
-option go_package = "aorb/backend/rpc/vote";
+option go_package = "github.com/BigNoseCattyHome/aorb/backend/rpc/vote";
 import "user.proto";
 
 message Vote{
