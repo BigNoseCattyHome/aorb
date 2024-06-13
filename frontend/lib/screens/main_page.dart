@@ -3,7 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'home_page.dart';
 import 'messages_page.dart';
 import 'me_page.dart';
-import '../widgets/top_bar_index.dart';
+import 'package:aorb/widgets/top_bar_index.dart';
 
 class MainPage extends StatefulWidget {
   final int initialIndex;

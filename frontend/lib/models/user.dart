@@ -1,7 +1,7 @@
 class User {
   final String id;
   final String nickname;
-  final String avatarUrl;
+  final String avatar;
   final List<String> followed;
   final List<String> followers;
   final List<String> blacklist;
@@ -14,7 +14,7 @@ class User {
   User({
     required this.id,
     required this.nickname,
-    required this.avatarUrl,
+    required this.avatar,
     required this.followed,
     required this.followers,
     required this.blacklist,
@@ -25,20 +25,20 @@ class User {
     required this.channels,
   });
 
-  // 从JSON数据创建User对象的工厂方法
+  // 从JSON数据创建User对象的工厂方法，提供默认值，可以防止转换的时候出现字段缺失导致的错误
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      id: json['id'],
-      nickname: json['nickname'],
-      avatarUrl: json['avatar'],
-      followed: List<String>.from(json['followed']),
-      followers: List<String>.from(json['follower']),
-      blacklist: List<String>.from(json['blacklist']),
-      coins: json['coins'].toInt(),
-      coinsRecord: List<String>.from(json['coins_record'] ?? []),
-      questionsAsk: List<String>.from(json['questions_ask']),
-      questionsAnswer: List<String>.from(json['questions_asw']),
-      channels: List<String>.from(json['channels']),
+      id: json['id'] ?? '',
+      nickname: json['nickname'] ?? '',
+      avatar: json['avatar'] ?? '',
+      followed: json['followed'] != null ? List<String>.from(json['followed']) : [],
+      followers: json['follower'] != null ? List<String>.from(json['follower']) : [],
+      blacklist: json['blacklist'] != null ? List<String>.from(json['blacklist']) : [],
+      coins: json['coins'] != null ? json['coins'].toInt() : 0,
+      coinsRecord: json['coins_record'] != null ? List<String>.from(json['coins_record']) : [],
+      questionsAsk: json['questions_ask'] != null ? List<String>.from(json['questions_ask']) : [],
+      questionsAnswer: json['questions_asw'] != null ? List<String>.from(json['questions_asw']) : [],
+      channels: json['channels'] != null ? List<String>.from(json['channels']) : [],
     );
   }
 
@@ -47,7 +47,7 @@ class User {
     return {
       'id': id,
       'nickname': nickname,
-      'avatar': avatarUrl,
+      'avatar': avatar,
       'followed': followed,
       'follower': followers,
       'blacklist': blacklist,
