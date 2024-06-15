@@ -11,7 +11,7 @@ class QuestionUnvoted extends StatefulWidget {
   final String avatar;
   final String nickname;
   final String postId;
-  final String userID;
+  final String userId;
   final String backgroundImage;
   final int selectedOption; // 用户选择的选项,-1代表没有投票
 
@@ -24,7 +24,7 @@ class QuestionUnvoted extends StatefulWidget {
     required this.time,
     required this.avatar,
     required this.nickname,
-    required this.userID,
+    required this.userId,
     required this.postId,
     required this.backgroundImage,
     required this.votePercentage,
@@ -273,7 +273,7 @@ class QuestionUnvotedState extends State<QuestionUnvoted> {
     Navigator.pushNamed(
       context,
       '/poll_content',
-      arguments: {'postID': widget.postId, 'userID': widget.userID},
+      arguments: {'postId': widget.postId, 'userId': widget.userId},
     );
   }
 }
