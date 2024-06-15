@@ -1,3 +1,5 @@
+import 'package:aorb/models/simple_user.dart';
+import 'package:aorb/models/user.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:aorb/conf/config.dart';
@@ -11,32 +13,52 @@ class UserService {
     }));
 
     if (response.statusCode == 200) {
-      // 如果服务器返回一个 200 OK 响应，那么解析 JSON。
       final data = jsonDecode(response.body);
       return data['isFollowed'];
     } else {
-      // 如果服务器返回一个不是 200 OK 的响应，那么抛出一个异常。
       throw Exception('Failed to load follow status');
     }
   }
 
   // 查询用户的部分或者全部信息
-  Future<Map<String, dynamic>> fetchUserInfo(String userId,
+  Future<User> fetchUserInfo(String userId,
       [List<String> fields = const []]) async {
-    // 构建查询参数
     String queryParams = fields.isNotEmpty ? '?fields=${fields.join(',')}' : '';
-
-    // 发送GET请求
     final response =
         await http.get(Uri.http(apiDomain, '/api/v1/user/$userId$queryParams'));
 
     if (response.statusCode == 200) {
-      // 如果服务器返回一个 200 OK 响应，那么解析 JSON。
       final data = jsonDecode(response.body);
-      return data; // ! 注意这个data的解析过程，并不是一个完整的user对象
+      User user = User.fromJson(data); // 这里把不是很完全的用户信息转换为User对象
+      return user;
     } else {
-      // 如果服务器返回一个不是 200 OK 的响应，那么抛出一个异常。
       throw Exception('Failed to load user info');
+    }
+  }
+
+  // 查询用户的关注列表
+  Future<List<SimpleUser>> fetchFollowList(String userId) async {
+    final response =
+        await http.get(Uri.http(apiDomain, '/api/v1/user/$userId/followed'));
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data;
+    } else {
+      throw Exception('Failed to load follow list');
+    }
+  }
+
+  // 查询用户的粉丝列表
+  Future<List<SimpleUser>> fetchFanList(String userId) async {
+    final response =
+        await http.get(Uri.http(apiDomain, '/api/v1/user/$userId/fans'));
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data;
+    } else {
+      throw Exception('Failed to load follow list');
     }
   }
 }

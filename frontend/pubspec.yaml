@@ -38,6 +38,8 @@ dependencies:
   http: ^0.13.3
   intl: ^0.19.0
   graphql_flutter: ^5.0.0
+  shared_preferences: ^2.0.9
+  logger: ^1.4.0
   
 dev_dependencies:
   flutter_test:

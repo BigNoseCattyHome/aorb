@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:aorb/screens/main_page.dart';
-import 'package:aorb/screens/poll_content.dart';
+import 'package:aorb/screens/poll_detail_page.dart';
 
 class AppRouter {
-  static const String homeRoute = '/';
-  static const String messagesRoute = '/messages';
-  static const String meRoute = '/me';
-  static const String pollContentRoute = '/poll_content'; // 新增的路由
+  static const String homeRoute = '/'; // 首页推荐页面
+  static const String messagesRoute = '/messages'; // 消息页面
+  static const String meRoute = '/me'; // “我”页面
+  static const String pollContentRoute = '/poll_content'; // 内容详情页面
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -21,11 +21,11 @@ class AppRouter {
             builder: (_) => const MainPage(initialIndex: 2));
       case pollContentRoute:
         // 假设你从 RouteSettings 中获取了 postUserID 和 userID
-        final postUserID = settings.arguments as String;
-        final userID = settings.arguments as String;
+        final postUserId = settings.arguments as String;
+        final userId = settings.arguments as String;
         return MaterialPageRoute(
             builder: (_) =>
-                PollContent(postUserID: postUserID, userID: userID));
+                PollDetailPage(postUserId: postUserId, userId: userId));
       default:
         return MaterialPageRoute(
             builder: (_) => Scaffold(
