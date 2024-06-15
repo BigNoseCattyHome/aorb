@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'home_page.dart';
-import 'messages_page.dart';
-import 'me_page.dart';
+
+import 'package:aorb/screens/home_page.dart';
+import 'package:aorb/screens/messages_page.dart';
+import 'package:aorb/screens/me_page.dart';
 import 'package:aorb/widgets/top_bar_index.dart';
+import 'package:aorb/services/auth_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MainPage extends StatefulWidget {
   final int initialIndex;
   const MainPage({super.key, this.initialIndex = 0});
-
   @override
   MainPageState createState() => MainPageState();
 }
@@ -17,11 +19,15 @@ class MainPageState extends State<MainPage>
     with SingleTickerProviderStateMixin {
   late int _currentIndex; // 用于控制底部到行栏的切换
   late TabController tabController; // 顶部导航栏控制器
+  late bool isLoggedIn; // 是否登录
+  late String userId; // 在initstate中从本地读取，用于传递给 _pages中的MePage
+  late String avatar; // 在initstate中从本地读取，用于底部状态栏的icon的展示
 
+  // TODO 根据登录状态调整“我的”页面，当登录的时候就展示“我的”页面，当没有登录的时候展示Login页面
   late final List<Widget> _pages = [
     HomePage(tabController: tabController), // 传递 _tabController 给 HomePage
     MessagesPage(tabController: tabController),
-    const MePage(),
+    MePage(userId: userId),
   ];
 
   @override
@@ -30,6 +36,13 @@ class MainPageState extends State<MainPage>
     // vsync: this 表示使用当前的 SingleTickerProviderStateMixin
     tabController = TabController(length: 2, vsync: this);
     _currentIndex = widget.initialIndex;
+
+    // 获取登录状态，没有触发UI更新
+    AuthService().checkLoginStatus().then((value) => isLoggedIn = value);
+
+    // 从本地中读取userId，传递给_pages，本地userId的来源是登录的时候写进去的
+    SharedPreferences.getInstance().then((prefs) => prefs.getString('userId'));
+    SharedPreferences.getInstance().then((prefs) => prefs.getString('avtar'));
   }
 
   // 底部导航栏切换
@@ -82,6 +95,7 @@ class MainPageState extends State<MainPage>
       ),
 
       // 底部导航栏
+      // TODO 根据登录状态调整底部栏中的icon，当登录的时候展示用户头像，当没有登录的时候展示默认icon
       bottomNavigationBar: BottomNavigationBar(
         items: <BottomNavigationBarItem>[
           BottomNavigationBarItem(
@@ -102,10 +116,9 @@ class MainPageState extends State<MainPage>
               radius: 24,
               backgroundColor:
                   _currentIndex == 2 ? Colors.blue[700] : Colors.white,
-              child: const CircleAvatar(
+              child: CircleAvatar(
                 radius: 22, // 确保边框宽度
-                backgroundImage: NetworkImage(
-                    'https://s2.loli.net/2024/05/28/MY6bk5FxVh8ufOa.png'),
+                backgroundImage: NetworkImage(avatar),
                 backgroundColor: Colors.transparent,
               ),
             )),
