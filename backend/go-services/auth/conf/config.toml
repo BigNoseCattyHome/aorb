@@ -1,0 +1,7 @@
+# api前缀
+[api]
+prefix = "/api"
+version = "v1"
+
+[db]
+mongodb_url = "mongodb://localhost:27017"

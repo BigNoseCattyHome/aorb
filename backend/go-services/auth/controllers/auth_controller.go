@@ -46,17 +46,17 @@ func Register(c *gin.Context) {
 // 登录
 // 这个在文档中写好了，就先写这个把
 func Login(c *gin.Context) {
-	var user models.User // 这里定义了一个user变量，类型是models.User
+	var request models.RequestLogin // 根据文档中的请求数据结构，定义了一个RequestLogin的模型
 
 	// 这里是gin框架的方法，用来解析请求的json数据，然后把解析后的数据放到user变量中
-	if err := c.ShouldBindJSON(&user); err != nil {
+	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
 	// 这里Login方法中也是和上面的Register方法一样
 	// 把user从请求的JSON中解析出来，传递给service中的方法做具体的操作
-	token, err := services.AuthenticateUser(&user) // 这里就是把user作为参数传递给了AuthenticateUser方法
+	token, simple_user, err := services.AuthenticateUser(&request) // 这里就是把user作为参数传递给了AuthenticateUser方法
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
 		return
@@ -64,17 +64,17 @@ func Login(c *gin.Context) {
 
 	// 定义了好返回的数据结构models/response.go之后，这里就进行具体的处理
 	// 现在我们就是要把处理之后的User中的特定字段，放到Response中，然后返回给客户端
-	var res models.Response // 定义一个Response变量res
+	var res models.ResponseLogin // 定义一个Response变量res
 	// 具体赋值，把处理之后的user中的字段赋值给res中的字段
-	res = models.Response{
+	res = models.ResponseLogin{
 		Message: "User registered successfully",
 		Success: true,
 		Token:   token, //这个就是经常念叨的JWT，前面生成好了这里直接赋值过来，生成token的代码在service中
-		User: models.UserResponse{
-			Avatar:    user.Avatar,
-			ID:        user.ID,
-			Ipaddress: user.Ipaddress,
-			Nickname:  user.Nickname,
+		User: models.SimpleUser{
+			Avatar:    simple_user.Avatar,
+			ID:        simple_user.ID,
+			Ipaddress: simple_user.Ipaddress,
+			Nickname:  simple_user.Nickname,
 		},
 	}
 	c.JSON(http.StatusOK, res) // 然后就把这个res发出去就好啦

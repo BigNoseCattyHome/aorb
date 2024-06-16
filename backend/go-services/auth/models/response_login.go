@@ -11,28 +11,28 @@ import "encoding/json"
 // 这个生成的文件就包含了返回结构体的两个struct，还有他们的与json数据结构的转换方法
 
 // 这个是从json转换为Response的方法，用于处理接收的数据
-func UnmarshalResponse(data []byte) (Response, error) {
-	var r Response
+func UnmarshalResponse(data []byte) (ResponseLogin, error) {
+	var r ResponseLogin
 	err := json.Unmarshal(data, &r)
 	return r, err
 }
 
 // 这个是从Response转换为json的方法，用于返回数据
-func (r *Response) Marshal() ([]byte, error) {
+func (r *ResponseLogin) Marshal() ([]byte, error) {
 	return json.Marshal(r)
 }
 
-type Response struct {
+type ResponseLogin struct {
 	// 消息
 	Message string `json:"message"`
 	// 操作是否成功
 	Success bool `json:"success"`
 	// JWT令牌
-	Token string       `json:"token"`
-	User  UserResponse `json:"user"`
+	Token string     `json:"token"`
+	User  SimpleUser `json:"user"`
 }
 
-type UserResponse struct {
+type SimpleUser struct {
 	// 头像
 	Avatar string `json:"avatar"`
 	// 用户ID
