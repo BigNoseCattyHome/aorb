@@ -10,6 +10,7 @@ db.users.insertMany([
   {
     _id: ObjectId(),
     nickname: "爱吃饭的小袁同学",
+    password: "e10adc3949ba59abbe56e057f20f883e",
     avatar: "https://s2.loli.net/2024/05/27/2MgJcvLtOVKmAdn.jpg",
     coins: 100,
     coins_record: [],
@@ -26,6 +27,7 @@ db.users.insertMany([
   {
     _id: ObjectId(),
     nickname: "花枝鼠gogo来帮忙",
+    password: "e10adc3949ba59abbe56e057f20f883e",
     avatar: "https://s2.loli.net/2024/05/25/icuYCOP9HB1JbIx.png",
     coins: 50,
     coins_record: [],
@@ -42,6 +44,7 @@ db.users.insertMany([
   {
     _id: ObjectId(),
     nickname: "风见澈Siri",
+    password: "e10adc3949ba59abbe56e057f20f883e",
     avatar: "https://s2.loli.net/2024/05/27/QzKM41C3Vs5FeHW.jpg",
     coins: 70,
     coins_record: [],
@@ -58,6 +61,7 @@ db.users.insertMany([
   {
     _id: ObjectId(),
     nickname: "Anti Cris",
+    password: "e10adc3949ba59abbe56e057f20f883e",
     avatar: "https://s2.loli.net/2024/05/27/alt3BKPYhzmV4E7.jpg",
     coins: 90,
     coins_record: [],
@@ -74,6 +78,7 @@ db.users.insertMany([
   {
     _id: ObjectId(),
     nickname: "Sirius Wild",
+    password: "e10adc3949ba59abbe56e057f20f883e",
     avatar: "https://s2.loli.net/2024/06/07/newUserA.jpg",
     coins: 120,
     coins_record: [],

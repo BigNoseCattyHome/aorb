@@ -5,13 +5,16 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/BigNoseCattyHome/aorb/backend/go-services/auth/conf"
 	"github.com/BigNoseCattyHome/aorb/backend/go-services/auth/models"
+	"github.com/dgrijalva/jwt-go"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -20,6 +23,11 @@ var client *mongo.Client                          // MongoDB客户端
 
 // init函数在main函数之前执行
 func init() {
+	// 初始化AppConfig
+	if err := conf.LoadConfig(); err != nil {
+		log.Fatalf("Failed to load configuration: %v", err)
+	}
+
 	// 设置客户端选项，从AppConfig中获取MongoDB的URL
 	clientOptions := options.Client().ApplyURI(conf.AppConfig.GetString("db.mongodb_url"))
 
@@ -65,8 +73,9 @@ func AuthenticateUser(user *models.RequestLogin) (string, models.SimpleUser, err
 		log.Error("Failed to get user from database: ", err)
 		return "", models.SimpleUser{}, errors.New("failed to get user from database")
 	}
+
 	// 检查用户名对应的密码是否正确
-	if checkPassword(user.ID, user.Password) {
+	if user.Password != storedUser.Password {
 		log.Error("Invalid password")
 		return "", models.SimpleUser{}, errors.New("invalid password")
 	}
@@ -90,28 +99,58 @@ func AuthenticateUser(user *models.RequestLogin) (string, models.SimpleUser, err
 }
 
 // 从数据库获取用户
-func getUser(username string) (*models.User, error) {
+func getUser(id string) (*models.User, error) {
 	user := models.User{}
 
-	// 如果执行失败，user将保持零值
-	client.Database("aorb").Collection("users").FindOne(context.TODO(), bson.M{"id": username}).Decode(&user)
+	// 将字符串转换为 ObjectId
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Error("Failed to convert string to ObjectID: ", err)
+		return &models.User{}, err
+	}
+
+	// 使用 ObjectId 进行查询
+	result := client.Database("aorb").Collection("users").FindOne(context.TODO(), bson.M{"_id": objectID})
+
+	// 解码结果到 user 结构体
+	err = result.Decode(&user)
+	if err != nil {
+		log.Error("Failed to decode result: ", err)
+		return &models.User{}, err
+	}
 
 	return &user, nil
 }
 
-// 检查密码是否匹配
-func checkPassword(id string, password string) bool {
-	hashedPassword := ""
-
-	// 根据id查询数据库中的哈希密码
-	client.Database("aorb").Collection("users").FindOne(context.TODO(), bson.M{"id": id}).Decode(&hashedPassword)
-
-	return password == hashedPassword
+// Claims 结构体，用于存储JWT声明
+type Claims struct {
+	UserID string `json:"user_id"`
+	jwt.StandardClaims
 }
 
-// 生成JWT令牌
+// generateJWTToken 生成JWT令牌
 func generateJWTToken(user *models.User) (string, error) {
-	// 在这里生成JWT令牌
+	// 创建声明对象
+	expirationTime := time.Now().Add(1 * time.Hour) // 设置令牌过期时间为1小时后
+	claims := &Claims{
+		UserID: user.ID,
+		StandardClaims: jwt.StandardClaims{
+			// 在声明中设置过期时间
+			ExpiresAt: expirationTime.Unix(),
+			// 可以设置其他标准声明，如Issuer, Subject等
+			// Issuer: "your_app_name",
+		},
+	}
 
-	return "", nil
+	// 创建令牌对象，指定算法和声明
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	// 使用密钥签名令牌
+	tokenString, err := token.SignedString(jwtKey)
+	if err != nil {
+		log.Error("Failed to sign token: ", err)
+		return "", err
+	}
+
+	return tokenString, nil
 }
