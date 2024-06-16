@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"github.com/BigNoseCattyHome/aorb/backend/go-services/api-gateway/controllers"
+	"github.com/BigNoseCattyHome/aorb/backend/go-services/auth/controllers"
 
 	"github.com/gin-gonic/gin"
 )
