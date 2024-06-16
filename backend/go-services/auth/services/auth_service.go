@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"backend/go-services/api-gateway/models"
+	"github.com/BigNoseCattyHome/aorb/backend/go-services/api-gateway/models"
 
 	"github.com/dgrijalva/jwt-go"
 )
