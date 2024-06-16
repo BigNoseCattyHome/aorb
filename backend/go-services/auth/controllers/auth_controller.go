@@ -20,24 +20,27 @@ func Register(c *gin.Context) {
 	// 把user使用ShouldBindJSON方法解析请求的json数据
 	if err := c.ShouldBindJSON(&user); err != nil {
 		// 这里是一些错误处理
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalid request"})
 		return
 	}
 
 	// 调用service层的RegisterUser方法，把user传进去
 	// controller要做的就是把user解析出来，然后把user传递到Service中做具体的任务
-	// 待会我们再去写service层的RegisterUser方法
 	if err := services.RegisterUser(&user); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to register user"})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   "Failed to register user"})
 		return
 	}
 
-	// 上面是把user传递给RegisterUser方法，然后对于服务端的请求，我们都要返回一些东西吧
-	// 然后具体要返回什么东西，就看我们文档中的要求
-	// 定义了好返回的数据结构models/response.go之后，这里就进行具体的处理啦
-
-	// 然后就把这个res发出去就好啦
-	c.JSON(http.StatusOK, gin.H{})
+	// 上面是把user传递给RegisterUser方法
+	// 返回注册成功的消息
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "User registered successfully",
+	})
 }
 
 // 登录
@@ -59,25 +62,21 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	// 刚才搞错啦，这个是login接口的代码
-	// 然后具体要返回什么东西，就看我们文档中的要求
-	// 定义了好返回的数据结构models/response.go之后，这里就进行具体的处理啦
+	// 定义了好返回的数据结构models/response.go之后，这里就进行具体的处理
 	// 现在我们就是要把处理之后的User中的特定字段，放到Response中，然后返回给客户端
-	// 定义一个Response变量res
-	var res models.Response
-	// 具体的赋值，把处理之后的user中的字段赋值给res中的字段
+	var res models.Response // 定义一个Response变量res
+	// 具体赋值，把处理之后的user中的字段赋值给res中的字段
 	res = models.Response{
 		Message: "User registered successfully",
 		Success: true,
-		Token:   "", //这个就是经常念叨的JWT，前面生成好了这里直接赋值过来，生成的代码待会写前面
+		Token:   token, //这个就是经常念叨的JWT，前面生成好了这里直接赋值过来，生成token的代码在service中
 		User: models.UserResponse{
-			// 这个就是根据service处理之后的user来的
 			Avatar:    user.Avatar,
 			ID:        user.ID,
 			Ipaddress: user.Ipaddress,
 			Nickname:  user.Nickname,
 		},
 	}
-	// 然后就把这个res发出去就好啦
-	c.JSON(http.StatusOK, res)
+	c.JSON(http.StatusOK, res) // 然后就把这个res发出去就好啦
+
 }

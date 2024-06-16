@@ -7,9 +7,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/BigNoseCattyHome/aorb/backend/go-services/api-gateway/models"
-
+	"github.com/BigNoseCattyHome/aorb/backend/go-services/auth/models"
 	"github.com/dgrijalva/jwt-go"
+	log "github.com/sirupsen/logrus"
 )
 
 // 从环境变量中获取JWT密钥
@@ -22,15 +22,16 @@ type Claims struct {
 }
 
 // 注册用户函数
-func 注册用户(user *models.User) error {
+func RegisterUser(user *models.User) error {
 	// 使用MD5哈希用户密码
 	hasher := md5.New()
 	hasher.Write([]byte(user.Password))
 	user.Password = hex.EncodeToString(hasher.Sum(nil))
 
 	// 将用户保存到数据库（假设你有一个函数来执行此操作）
-	err := 保存用户到数据库(user)
+	err := storeUser(user)
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 
@@ -38,9 +39,9 @@ func 注册用户(user *models.User) error {
 }
 
 // 认证用户函数
-func 认证用户(user *models.User) (string, error) {
+func AuthenticateUser(user *models.User) (string, error) {
 	// 检查用户凭据
-	dbUser, err := 从数据库获取用户(user.Username)
+	dbUser, err := getUser(user.Username)
 	if err != nil {
 		return "", err
 	}
@@ -70,15 +71,15 @@ func 认证用户(user *models.User) (string, error) {
 	return tokenString, nil
 }
 
-// 占位：将用户保存到数据库
-func 保存用户到数据库(user *models.User) error {
+// 将用户保存到数据库
+func storeUser(user *models.User) error {
 	// 实现此函数以将用户保存到数据库
 
 	return nil
 }
 
-// 占位：从数据库获取用户
-func 从数据库获取用户(username string) (*models.User, error) {
+// 从数据库获取用户
+func getUser(username string) (*models.User, error) {
 	// 实现此函数以从数据库获取用户
 	return &models.User{
 		Username: username,
