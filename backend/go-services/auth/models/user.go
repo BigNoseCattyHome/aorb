@@ -20,40 +20,42 @@ func (r *User) Marshal() ([]byte, error) {
 
 // user
 type User struct {
-	// 用户头像                       
-	Avatar           string       `json:"avatar"`
-	// 屏蔽好友                       
-	Blacklist        []string     `json:"blacklist"`
-	// 用户的金币数                     
-	Coins            float64      `json:"coins"`
-	// 用户金币流水记录                   
-	CoinsRecord      []CoinRecord `json:"coins_record"`
-	// 关注者                        
-	Followed         []string     `json:"followed"`
-	// 被关注者                       
-	Follower         []string     `json:"follower"`
-	// 用户ID                       
-	ID               string       `json:"id"`
-	// IP归属地                      
-	Ipaddress        string       `json:"ipaddress"`
-	// 用户昵称                       
-	Nickname         string       `json:"nickname"`
-	// 发起过的问题                     
-	QuestionsAsk     []string     `json:"questions_ask"`
-	// 回答过的问题                     
-	QuestionsAsw     []string     `json:"questions_asw"`
-	// 收藏的问题                      
-	QuestionsCollect []string     `json:"questions_collect"`
+	// 用户头像
+	Avatar string `json:"avatar"`
+	// 屏蔽好友
+	Blacklist []string `json:"blacklist"`
+	// 用户的金币数
+	Coins float64 `json:"coins"`
+	// 用户金币流水记录
+	CoinsRecord []CoinRecord `json:"coins_record"`
+	// 关注者
+	Followed []string `json:"followed"`
+	// 被关注者
+	Follower []string `json:"follower"`
+	// 用户ID，这个是Objectid，由服务端mongodb生成，不支持修改
+	ID string `json:"id"`
+	// IP归属地
+	Ipaddress string `json:"ipaddress"`
+	// 用户昵称
+	Nickname string `json:"nickname"`
+	// 用户密码
+	Password string `json:"password"`
+	// 发起过的问题
+	QuestionsAsk []string `json:"questions_ask"`
+	// 回答过的问题
+	QuestionsAsw []string `json:"questions_asw"`
+	// 收藏的问题
+	QuestionsCollect []string `json:"questions_collect"`
 }
 
 // 一条金币流水记录
 //
 // coin_record
 type CoinRecord struct {
-	// 消耗的金币数          
-	Consume     int64  `json:"consume"`
-	// 为其投币的问题ID       
-	QuestionID  string `json:"question_id"`
-	// 使用者的ID          
-	UserID      string `json:"user_id"`
+	// 消耗的金币数
+	Consume int64 `json:"consume"`
+	// 为其投币的问题ID
+	QuestionID string `json:"question_id"`
+	// 使用者的ID
+	UserID string `json:"user_id"`
 }
