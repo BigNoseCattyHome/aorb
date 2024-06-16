@@ -1,8 +1,59 @@
+// This file was generated from JSON Schema using quicktype, do not modify it directly.
+// To parse and unparse this JSON data, add this code to your project and do:
+//
+//    user, err := UnmarshalUser(bytes)
+//    bytes, err = user.Marshal()
+
 package models
 
+import "encoding/json"
+
+func UnmarshalUser(data []byte) (User, error) {
+	var r User
+	err := json.Unmarshal(data, &r)
+	return r, err
+}
+
+func (r *User) Marshal() ([]byte, error) {
+	return json.Marshal(r)
+}
+
+// user
 type User struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Email    string `json:"email"`
-	Avatar   string `json:"avatar"`
+	// 用户头像                       
+	Avatar           string       `json:"avatar"`
+	// 屏蔽好友                       
+	Blacklist        []string     `json:"blacklist"`
+	// 用户的金币数                     
+	Coins            float64      `json:"coins"`
+	// 用户金币流水记录                   
+	CoinsRecord      []CoinRecord `json:"coins_record"`
+	// 关注者                        
+	Followed         []string     `json:"followed"`
+	// 被关注者                       
+	Follower         []string     `json:"follower"`
+	// 用户ID                       
+	ID               string       `json:"id"`
+	// IP归属地                      
+	Ipaddress        string       `json:"ipaddress"`
+	// 用户昵称                       
+	Nickname         string       `json:"nickname"`
+	// 发起过的问题                     
+	QuestionsAsk     []string     `json:"questions_ask"`
+	// 回答过的问题                     
+	QuestionsAsw     []string     `json:"questions_asw"`
+	// 收藏的问题                      
+	QuestionsCollect []string     `json:"questions_collect"`
+}
+
+// 一条金币流水记录
+//
+// coin_record
+type CoinRecord struct {
+	// 消耗的金币数          
+	Consume     int64  `json:"consume"`
+	// 为其投币的问题ID       
+	QuestionID  string `json:"question_id"`
+	// 使用者的ID          
+	UserID      string `json:"user_id"`
 }
