@@ -1,6 +1,5 @@
 package main
 
-// 在main.go中启动路由
 import (
 	"os"
 
