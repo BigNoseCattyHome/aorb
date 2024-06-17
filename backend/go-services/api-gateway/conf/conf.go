@@ -26,11 +26,3 @@ func LoadConfig() error {
 	AppConfig = viper.GetViper()
 	return nil
 }
-
-func GetAPIPrefix() string {
-	return AppConfig.GetString("api.prefix")
-}
-
-func GetAPIVersion() string {
-	return AppConfig.GetString("api.version")
-}
