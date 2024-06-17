@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
-	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -14,12 +12,10 @@ import (
 
 	"github.com/BigNoseCattyHome/aorb/backend/go-services/auth/conf"
 	"github.com/BigNoseCattyHome/aorb/backend/go-services/auth/models"
-	"github.com/dgrijalva/jwt-go"
 	log "github.com/sirupsen/logrus"
 )
 
-var jwtKey = []byte(os.Getenv("AORB_SECRET_KEY")) // 从环境变量中获取JWT密钥，用于生成JWT令牌
-var client *mongo.Client                          // MongoDB客户端
+var client *mongo.Client // MongoDB客户端
 
 // init函数在main函数之前执行
 func init() {
@@ -120,37 +116,4 @@ func getUser(id string) (*models.User, error) {
 	}
 
 	return &user, nil
-}
-
-// Claims 结构体，用于存储JWT声明
-type Claims struct {
-	UserID string `json:"user_id"`
-	jwt.StandardClaims
-}
-
-// generateJWTToken 生成JWT令牌
-func generateJWTToken(user *models.User) (string, error) {
-	// 创建声明对象
-	expirationTime := time.Now().Add(1 * time.Hour) // 设置令牌过期时间为1小时后
-	claims := &Claims{
-		UserID: user.ID,
-		StandardClaims: jwt.StandardClaims{
-			// 在声明中设置过期时间
-			ExpiresAt: expirationTime.Unix(),
-			// 可以设置其他标准声明，如Issuer, Subject等
-			// Issuer: "your_app_name",
-		},
-	}
-
-	// 创建令牌对象，指定算法和声明
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	// 使用密钥签名令牌
-	tokenString, err := token.SignedString(jwtKey)
-	if err != nil {
-		log.Error("Failed to sign token: ", err)
-		return "", err
-	}
-
-	return tokenString, nil
 }
