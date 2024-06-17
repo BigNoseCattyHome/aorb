@@ -48,13 +48,45 @@ func init() {
 // 注册
 func RegisterUser(user *models.User) error {
 	// 在这里写注册用户的逻辑
+	isExsitUser, err := getUser(user.ID)
+	if err == nil && isExsitUser != nil {
+		return errors.New("用户名已存在")
+	}
+
+	// 密码哈希过了，不用处理直接调用storeuser就保存密码了
+
+	// 生成新的ObjectID
+	user.ID = primitive.NewObjectID().Hex()
+
+	// 初始化其他字段
+	user.Coins = 0
+	user.Blacklist = []string{}
+	user.CoinsRecord = []models.CoinRecord{}
+	user.Followed = []string{}
+	user.Follower = []string{}
+	user.QuestionsAsk = []string{}
+	user.QuestionsAsw = []string{}
+	user.QuestionsCollect = []string{}
+
+	// 保存用户到数据库
+	if err := storeUser(user); err != nil {
+		log.Error("注册失败", err)
+		return errors.New("注册失败")
+	}
 
 	return nil
 }
 
 // 将用户保存到数据库
 func storeUser(user *models.User) error {
-	// 实现此函数以将用户保存到数据库
+	collection := client.Database("aorb").Collection("users")
+
+	// 将用户信息插入到数据库中
+	_, err := collection.InsertOne(context.TODO(), user)
+	if err != nil {
+		log.Error("插入失败", err)
+		return err
+	}
 
 	return nil
 }
