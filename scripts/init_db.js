@@ -4,6 +4,14 @@ conn = new Mongo();
 // 切换到数据库 aorb
 db = conn.getDB("aorb");
 
+// 检查是否存在数据库 aorb，如果存在则清空所有集合
+if (db.getCollectionInfos().length > 0) {
+  db.getCollectionNames().forEach(function(collectionName) {
+    db[collectionName].drop();
+  });
+  print("Database 'aorb' has been cleared.");
+}
+
 // 创建 users 集合并插入数据
 db.createCollection("users");
 db.users.insertMany([

@@ -1,3 +1,4 @@
+// api-gateway
 package routes
 
 import (
@@ -6,12 +7,30 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// RegisterRoutes 注册路由
 func RegisterRoutes(router *gin.RouterGroup) {
-	// 本地开发的时候都可以把地址设置为localhost
-	router.GET("/auth/*path", controllers.ProxyRequest("http://auth-service:8080"))       // auth可以暂时先不做
-	router.GET("/message/*path", controllers.ProxyRequest("http://message-service:8080")) // 将/api/message/*的请求代理到message-service
-	router.GET("/poll/*path", controllers.ProxyRequest("http://poll-service:8080"))
-	router.GET("/recommendation/*path", controllers.ProxyRequest("http://recommendation-service:8080"))
-	router.GET("/auth/*path", controllers.ProxyRequest("http://java-user-service:8080")) // Java服务
+
+	router.GET("/auth/*path", controllers.ProxyRequest("http://localhost:8081"))
+	router.POST("/auth/*path", controllers.ProxyRequest("http://localhost:8081"))
+	router.PUT("/auth/*path", controllers.ProxyRequest("http://localhost:8081"))
+	router.DELETE("/auth/*path", controllers.ProxyRequest("http://localhost:8081"))
+
+	router.GET("/message/*path", controllers.ProxyRequest("http://localhost:8082"))
+	router.POST("/message/*path", controllers.ProxyRequest("http://localhost:8082"))
+	router.PUT("/message/*path", controllers.ProxyRequest("http://localhost:8082"))
+	router.DELETE("/message/*path", controllers.ProxyRequest("http://localhost:8082"))
+
+	router.GET("/poll/*path", controllers.ProxyRequest("http://localhost:8083"))
+	router.POST("/poll/*path", controllers.ProxyRequest("http://localhost:8083"))
+	router.PUT("/poll/*path", controllers.ProxyRequest("http://localhost:8083"))
+	router.DELETE("/poll/*path", controllers.ProxyRequest("http://localhost:8083"))
+
+	router.GET("/recommendation/*path", controllers.ProxyRequest("http://localhost:8084"))
+	router.POST("/recommendation/*path", controllers.ProxyRequest("http://localhost:8084"))
+	router.PUT("/recommendation/*path", controllers.ProxyRequest("http://localhost:8084"))
+	router.DELETE("/recommendation/*path", controllers.ProxyRequest("http://localhost:8084"))
+
+	router.GET("/user/*path", controllers.ProxyRequest("http://localhost:8085"))
+	router.POST("/user/*path", controllers.ProxyRequest("http://localhost:8085"))
+	router.PUT("/user/*path", controllers.ProxyRequest("http://localhost:8085"))
+	router.DELETE("/user/*path", controllers.ProxyRequest("http://localhost:8085"))
 }
