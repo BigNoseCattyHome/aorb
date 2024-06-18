@@ -1,0 +1,57 @@
+syntax = "proto3";
+package rpc.poll;
+option go_package = "github.com/BigNoseCattyHome/aorb/backend/rpc/poll";
+import "user.proto";
+
+message Poll{
+  uint32 id = 1;  // 问题id
+  user.User user = 2; // 用户信息
+  string title = 3; // 问题标题
+  string choice_a = 4;  // 选项a
+  string choice_b = 5;  // 选项b
+  string create_date = 6;
+}
+
+enum ActionPollType{
+  ACTION_POLL_TYPE_UNSPECIFIED = 0;
+  ACTION_POLL_TYPE_ADD = 1;
+  ACTION_POLL_TYPE_DELETE = 2;
+}
+
+message ActionPollRequest{
+  uint32 actor_id = 1;
+  uint32 poll_id = 2;
+  ActionPollType action_type = 3;
+}
+
+message ActionPollResponse{
+  int32 status_code = 1;
+  string status_msg = 2;
+  optional Poll poll = 3;
+}
+
+message ListPollRequest{
+  uint32 actor_id = 1;
+}
+
+message ListPollResponse{
+  int32 status_code = 1;
+  string status_msg = 2;
+  repeated Poll poll_list = 3;
+}
+
+message CountPollRequest{
+  uint32 actor_id = 1;
+}
+
+message CountPollResponse{
+  int32 status_code = 1;
+  string status_msg = 2;
+  uint32 poll_count = 3;
+}
+
+service PollService{
+  rpc ActionPoll(ActionPollRequest) returns (ActionPollResponse);
+  rpc ListPoll(ListPollRequest) returns (ListPollResponse);
+  rpc CountPoll(CountPollRequest) returns (CountPollResponse);
+}

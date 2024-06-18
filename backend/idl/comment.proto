@@ -18,7 +18,7 @@ enum ActionCommentType{
 
 message ActionCommentRequest{
   uint32 actor_id = 1;
-  uint32 question_id = 2;
+  uint32 poll_id = 2;
   ActionCommentType action_type = 3;
   oneof action{
     string comment_text = 4;
@@ -34,7 +34,7 @@ message ActionCommentResponse{
 
 message ListCommentRequest{
   uint32 actor_id = 1;
-  uint32 question_id = 2;
+  uint32 poll_id = 2;
 }
 
 message ListCommentResponse{
@@ -45,7 +45,7 @@ message ListCommentResponse{
 
 message CountCommentRequest{
   uint32 actor_id = 1;
-  uint32 question_id = 2;
+  uint32 poll_id = 2;
 }
 
 message CountCommentResponse{

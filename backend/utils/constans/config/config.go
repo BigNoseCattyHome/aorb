@@ -8,12 +8,35 @@ import (
 var Conf *Config
 
 type Config struct {
+	Consul   *Consul             `toml:"Consul"`
 	Server   *Server             `toml:"Server"`
 	MongoDB  *MongoDB            `toml:"MongoDB"`
 	Redis    *Redis              `toml:"Redis"`
 	JWT      *JWT                `toml:"JWT"`
 	Etcd     *Etcd               `toml:"Etcd"`
 	Services map[string]*Service `toml:"Services"`
+	PodIP    *PodIP              `toml:"PodIp"`
+	Log      *Log                `toml:"Log"`
+	Tracing  *Tracing            `toml:"Tracing"`
+}
+
+type Tracing struct {
+	EndPoint string `toml:"endPoint"`
+	State    string `toml:"state"`
+}
+
+type Log struct {
+	LoggerLevel string `toml:"loggerLevel"`
+}
+
+type Consul struct {
+	Host          string `toml:"host"`
+	Port          string `toml:"port"`
+	AnonymityName string `toml:"anonymityName"`
+}
+
+type PodIP struct {
+	PodIpAddress string `toml:"podIp"`
 }
 
 type Server struct {
