@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"errors"
 	"os"
 	"time"
@@ -8,6 +9,8 @@ import (
 	"github.com/BigNoseCattyHome/aorb/backend/go-services/auth/models"
 	"github.com/dgrijalva/jwt-go"
 	log "github.com/sirupsen/logrus"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // 开发的时候需要在本地环境变量中设置AORB_SECRET_KEY，用于生成JWT令牌
@@ -48,27 +51,31 @@ func GenerateAccessToken(user *models.User) (string, error) {
 
 // VerifyAccessToken 验证令牌是否有效，返回声明
 func VerifyAccessToken(tokenString string) (*Claims, error) {
-	// 解析令牌
+	// 解析令牌，验证签名的合法性
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		return jwtKey, nil
 	})
 
 	if err != nil {
-		log.Error("Failed to parse token: ", err)
+		if err == jwt.ErrSignatureInvalid {
+			log.Println("Invalid token signature")
+			return nil, errors.New("invalid token signature")
+		}
+		log.Println("Failed to parse token: ", err)
 		return nil, err
 	}
 
 	// 获取声明
 	claims, ok := token.Claims.(*Claims)
 	if !ok || !token.Valid {
-		log.Error("Failed to get claims from token")
+		log.Println("Failed to get claims from token or token is invalid")
 		return nil, errors.New("invalid token")
 	}
 
-	// 检查令牌是否被撤销
-	if CheckTokenRevoked(claims.UserID, tokenString) {
-		log.Error("Token has been revoked")
-		return nil, errors.New("revoked token")
+	// 检查令牌是否过期
+	if time.Unix(claims.ExpiresAt, 0).Before(time.Now()) {
+		log.Println("Token has expired")
+		return nil, errors.New("token expired")
 	}
 
 	return claims, nil
@@ -84,7 +91,7 @@ func RefreshAccessToken(refreshTokenString string) (string, error) {
 	}
 
 	// 生成新的访问令牌
-	newAccessTokenString, err := GenerateAccessToken(&models.User{ID: claims.UserID})
+	newAccessTokenString, err := GenerateAccessToken(&models.User{ID: claims.UserID, Username: claims.Username})
 	if err != nil {
 		log.Error("Failed to generate new access token: ", err)
 		return "", err
@@ -101,20 +108,30 @@ func VerifyRefreshToken(refreshTokenString string) (*Claims, error) {
 	})
 
 	if err != nil {
-		log.Error("Failed to parse refresh token: ", err)
+		if err == jwt.ErrSignatureInvalid {
+			log.Println("Invalid refresh token signature")
+			return nil, errors.New("invalid refresh token signature")
+		}
+		log.Println("Failed to parse refresh token: ", err)
 		return nil, err
 	}
 
 	// 获取声明
 	claims, ok := token.Claims.(*Claims)
 	if !ok || !token.Valid {
-		log.Error("Failed to get claims from refresh token")
+		log.Println("Failed to get claims from refresh token or token is invalid")
 		return nil, errors.New("invalid refresh token")
+	}
+
+	// 检查刷新令牌是否过期
+	if time.Unix(claims.ExpiresAt, 0).Before(time.Now()) {
+		log.Println("Refresh token has expired")
+		return nil, errors.New("refresh token expired")
 	}
 
 	// 检查刷新令牌是否被撤销
 	if CheckTokenRevoked(claims.UserID, refreshTokenString) {
-		log.Error("Refresh token has been revoked")
+		log.Println("Refresh token has been revoked")
 		return nil, errors.New("revoked refresh token")
 	}
 
@@ -149,14 +166,46 @@ func GenerateRefreshToken(user *models.User) (string, error) {
 
 // CheckTokenRevoked 检查令牌是否被撤销
 func CheckTokenRevoked(userID, tokenString string) bool {
-	// 这里应该有一个数据库查询或其他逻辑来检查令牌是否被撤销
-	// 示例：假设有一个函数 IsTokenRevoked(userID, tokenString) 来检查
-	return false
+	collection := client.Database("aorb").Collection("refresh_tokens")
+	filter := bson.M{"user_id": userID, "token": tokenString}
+
+	// 查找文档
+	var result bson.M
+	err := collection.FindOne(context.Background(), filter).Decode(&result)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return false // 令牌不存在，视为未撤销
+		}
+		log.Fatal(err)
+	}
+
+	revoked, ok := result["revoked"].(bool)
+	if !ok {
+		return false // 如果 revoked 字段不存在或类型不匹配，视为未撤销
+	}
+
+	return revoked
 }
 
 // RevokeToken 使令牌失效
 func RevokeRefreshToken(userID, tokenString string) error {
-	// 这里应该有一个数据库更新或其他逻辑来使令牌失效
-	// 示例：假设有一个数据库更新来使令牌失效
+	collection := client.Database("aorb").Collection("refresh_tokens")
+
+	// filter表示要更新的文档，update表示要更新的字段
+	filter := bson.M{"user_id": userID, "token": tokenString}
+	update := bson.M{"$set": bson.M{"revoked": true}}
+
+	// 更新文档
+	result, err := collection.UpdateOne(context.Background(), filter, update)
+	if err != nil {
+		log.Print("Failed to revoke token: ", err)
+		return err
+	}
+
+	// 没有找到要更新的文档
+	if result.ModifiedCount == 0 {
+		return errors.New("token not found")
+	}
+
 	return nil
 }

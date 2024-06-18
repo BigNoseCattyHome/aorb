@@ -23,12 +23,12 @@ type ResponseLogin struct {
 	ExpiresIn int64 `json:"expires_in"`
 	// 消息
 	Message string `json:"message"`
+	// 刷新令牌
+	RefreshToken string `json:"refresh_token"`
 	// 操作是否成功
 	Success bool `json:"success"`
 	// JWT令牌
-	Token string `json:"token"`
-	// 令牌类型
-	TokenType string `json:"token_type"`
-	// simpleuser
-	User SimpleUser `json:"user"`
+	Token     string     `json:"token"`
+	TokenType string     `json:"token_type"`
+	User      SimpleUser `json:"user"`
 }

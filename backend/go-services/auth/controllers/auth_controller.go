@@ -3,17 +3,14 @@ package controllers
 import (
 	"net/http"
 
-	"github.com/BigNoseCattyHome/aorb/backend/go-services/auth/models"   // 用户模型，返回的数据结构也在这里
-	"github.com/BigNoseCattyHome/aorb/backend/go-services/auth/services" // 用户服务
+	"github.com/BigNoseCattyHome/aorb/backend/go-services/auth/models"
+	"github.com/BigNoseCattyHome/aorb/backend/go-services/auth/services"
 	"github.com/gin-gonic/gin"
 )
 
 // controller就是用来接收我们的API请求的，然后调用service层的方法，最后返回结果给客户端
 
 // 注册
-// 注册接口在apifox上还没有搞好hh
-
-// 感觉GPT写的差不多了，我们需要做的就是修改，然后加上我们自己需要的逻辑
 func Register(c *gin.Context) {
 	var user models.User
 
@@ -56,7 +53,7 @@ func Login(c *gin.Context) {
 
 	// 这里Login方法中也是和上面的Register方法一样
 	// 把user从请求的JSON中解析出来，传递给service中的方法做具体的操作
-	token, simple_user, err := services.AuthenticateUser(&request) // 这里就是把user作为参数传递给了AuthenticateUser方法
+	token, refresh_token, simple_user, err := services.AuthenticateUser(&request) // 这里就是把user作为参数传递给了AuthenticateUser方法
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
 		return
@@ -66,9 +63,10 @@ func Login(c *gin.Context) {
 	// 现在我们就是要把处理之后的User中的特定字段，放到Response中，然后返回给客户端
 	// 具体赋值，把处理之后的user中的字段赋值给res中的字段
 	res := models.ResponseLogin{
-		Message: "User registered successfully",
-		Success: true,
-		Token:   token, //这个就是经常念叨的JWT，前面生成好了这里直接赋值过来，生成token的代码在service中
+		Message:      "User registered successfully",
+		Success:      true,
+		Token:        token, //这个就是经常念叨的JWT，前面生成好了这里直接赋值过来，生成token的代码在service中
+		RefreshToken: refresh_token,
 		User: models.SimpleUser{
 			Avatar:    simple_user.Avatar,
 			ID:        simple_user.ID,
@@ -103,6 +101,7 @@ func Verify(c *gin.Context) {
 		Username: claim.Username,
 		Exp:      claim.ExpiresAt,
 	}
+
 	c.JSON(http.StatusOK, res)
 }
 

@@ -94,25 +94,32 @@ func storeUser(user *models.User) error {
 // 验证用户（登录）
 // 返回(成功): JWT令牌, 用户信息, nil
 // 返回(失败): "", 空的SimpleUser, 错误信息
-func AuthenticateUser(user *models.RequestLogin) (string, models.SimpleUser, error) {
+func AuthenticateUser(user *models.RequestLogin) (string, string, models.SimpleUser, error) {
 	// 检查用户是否存在
 	storedUser, err := getUser(user.ID)
 	if err != nil {
 		log.Error("Failed to get user from database: ", err)
-		return "", models.SimpleUser{}, errors.New("failed to get user from database")
+		return "", "", models.SimpleUser{}, errors.New("failed to get user from database")
 	}
 
 	// 检查用户名对应的密码是否正确
 	if user.Password != storedUser.Password {
 		log.Error("Invalid password")
-		return "", models.SimpleUser{}, errors.New("invalid password")
+		return "", "", models.SimpleUser{}, errors.New("invalid password")
 	}
 
 	// 生成JWT令牌
 	tokenString, err := GenerateAccessToken(storedUser)
 	if err != nil {
 		log.Error("Failed to generate JWT token: ", err)
-		return "", models.SimpleUser{}, errors.New("failed to generate JWT token")
+		return "", "", models.SimpleUser{}, errors.New("failed to generate JWT token")
+	}
+
+	// 生成刷新令牌
+	fresh_token, err := GenerateRefreshToken(storedUser)
+	if err != nil {
+		log.Error("Failed to generate refresh token: ", err)
+		return "", "", models.SimpleUser{}, errors.New("failed to generate refresh token")
 	}
 
 	// 全部顺利执行，返回用户的基本信息
@@ -123,7 +130,7 @@ func AuthenticateUser(user *models.RequestLogin) (string, models.SimpleUser, err
 		Ipaddress: storedUser.Ipaddress,
 	}
 
-	return tokenString, simple_user, nil
+	return tokenString, fresh_token, simple_user, nil
 }
 
 // 从数据库获取用户
