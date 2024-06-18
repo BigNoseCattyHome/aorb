@@ -64,9 +64,8 @@ func Login(c *gin.Context) {
 
 	// 定义了好返回的数据结构models/response.go之后，这里就进行具体的处理
 	// 现在我们就是要把处理之后的User中的特定字段，放到Response中，然后返回给客户端
-	var res models.ResponseLogin // 定义一个Response变量res
 	// 具体赋值，把处理之后的user中的字段赋值给res中的字段
-	res = models.ResponseLogin{
+	res := models.ResponseLogin{
 		Message: "User registered successfully",
 		Success: true,
 		Token:   token, //这个就是经常念叨的JWT，前面生成好了这里直接赋值过来，生成token的代码在service中
@@ -79,4 +78,83 @@ func Login(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, res) // 然后就把这个res发出去就好啦
 
+}
+
+func Verify(c *gin.Context) {
+	// 从请求头中获取token
+	token := c.Request.Header.Get("Authorization")
+
+	// 如果token为空，返回错误
+	if token == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"valid": false, "error": "token is missing"})
+		return
+	}
+
+	// 验证token是否有效
+	claim, err := services.VerifyAccessToken(token)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"valid": false, "error": "invalid token"})
+		return
+	}
+
+	res := models.ResponseVerify{
+		Valid:    true,
+		UserID:   claim.UserID,
+		Username: claim.Username,
+		Exp:      claim.ExpiresAt,
+	}
+	c.JSON(http.StatusOK, res)
+}
+
+// 登出
+// 在客户端删除token，服务端吊销token
+func Logout(c *gin.Context) {
+	// 从请求头中获取token
+	token := c.Request.Header.Get("Authorization")
+	if token == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"valid": false, "error": "token is missing"})
+		return
+	}
+
+	// 从请求头中获取refresh token
+	refreshToken := c.Request.Header.Get("Refresh")
+	if refreshToken == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"valid": false, "error": "refresh token is missing"})
+		return
+	}
+
+	// 验证访问令牌，确保合法用户的操作
+	claim, err := services.VerifyAccessToken(token)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"valid": false, "error": "invalid token"})
+		return
+	}
+
+	// 撤销刷新令牌
+	err = services.RevokeRefreshToken(claim.UserID, refreshToken)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"valid": false, "error": "failed to revoke refresh token"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"valid": true, "message": "tokens revoked"})
+}
+
+// 刷新token
+func Refresh(c *gin.Context) {
+	// 从请求头中获取refresh token
+	refreshToken := c.Request.Header.Get("Refresh")
+	if refreshToken == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"valid": false, "error": "refresh token is missing"})
+		return
+	}
+
+	// 调用服务层的RefreshAccessToken方法，传递refresh token
+	newToken, err := services.RefreshAccessToken(refreshToken)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"valid": false, "error": "failed to refresh token"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"valid": true, "token": newToken})
 }

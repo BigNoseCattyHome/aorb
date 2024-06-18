@@ -109,7 +109,7 @@ func AuthenticateUser(user *models.RequestLogin) (string, models.SimpleUser, err
 	}
 
 	// 生成JWT令牌
-	tokenString, err := generateJWTToken(storedUser)
+	tokenString, err := GenerateAccessToken(storedUser)
 	if err != nil {
 		log.Error("Failed to generate JWT token: ", err)
 		return "", models.SimpleUser{}, errors.New("failed to generate JWT token")
