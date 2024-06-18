@@ -8,13 +8,13 @@ package models
 
 import "encoding/json"
 
-func UnmarshalUser(data []byte) (User, error) {
-	var r User
+func UnmarshalUser(data []byte) (SimpleUser, error) {
+	var r SimpleUser
 	err := json.Unmarshal(data, &r)
 	return r, err
 }
 
-func (r *User) Marshal() ([]byte, error) {
+func (r *SimpleUser) Marshal() ([]byte, error) {
 	return json.Marshal(r)
 }
 
@@ -46,16 +46,6 @@ type User struct {
 	QuestionsAsw []string `json:"questions_asw"`
 	// 收藏的问题
 	QuestionsCollect []string `json:"questions_collect"`
-}
-
-// 一条金币流水记录
-//
-// coin_record
-type CoinRecord struct {
-	// 消耗的金币数
-	Consume int64 `json:"consume"`
-	// 为其投币的问题ID
-	QuestionID string `json:"question_id"`
-	// 使用者的ID
-	UserID string `json:"user_id"`
+	// 用户登录名
+	Username string `json:"username"`
 }
