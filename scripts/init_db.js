@@ -4,12 +4,22 @@ conn = new Mongo();
 // 切换到数据库 aorb
 db = conn.getDB("aorb");
 
+// 检查是否存在数据库 aorb，如果存在则清空所有集合
+if (db.getCollectionInfos().length > 0) {
+  db.getCollectionNames().forEach(function (collectionName) {
+    db[collectionName].drop();
+  });
+  print("Database 'aorb' has been cleared.");
+}
+
 // 创建 users 集合并插入数据
 db.createCollection("users");
 db.users.insertMany([
   {
-    _id: ObjectId(),
+    _id: ObjectId("666fa551b248ac5bfea26a1c"),
+    username: "aichifan",
     nickname: "爱吃饭的小袁同学",
+    password: "e10adc3949ba59abbe56e057f20f883e",
     avatar: "https://s2.loli.net/2024/05/27/2MgJcvLtOVKmAdn.jpg",
     coins: 100,
     coins_record: [],
@@ -18,14 +28,17 @@ db.users.insertMany([
     blacklist: [],
     questions_ask: ["1"],
     questions_asw: [],
-    questions_collect: ["2"],
+    questions_collect: ["2yuanxue"],
     creare_at: new Date(),
     update_at: new Date(),
     delete_at: null,
+    ipaddress: "上海",
   },
   {
-    _id: ObjectId(),
+    _id: ObjectId("666fa551b248ac5bfea26a1d"),
+    username: "gopher",
     nickname: "花枝鼠gogo来帮忙",
+    password: "e10adc3949ba59abbe56e057f20f883e",
     avatar: "https://s2.loli.net/2024/05/25/icuYCOP9HB1JbIx.png",
     coins: 50,
     coins_record: [],
@@ -38,10 +51,13 @@ db.users.insertMany([
     creare_at: new Date(),
     update_at: new Date(),
     delete_at: null,
+    ipaddress: "上海",
   },
   {
-    _id: ObjectId(),
+    _id: ObjectId("666fa551b248ac5bfea26a1e"),
+    username: "siri",
     nickname: "风见澈Siri",
+    password: "e10adc3949ba59abbe56e057f20f883e",
     avatar: "https://s2.loli.net/2024/05/27/QzKM41C3Vs5FeHW.jpg",
     coins: 70,
     coins_record: [],
@@ -54,10 +70,13 @@ db.users.insertMany([
     creare_at: new Date(),
     update_at: new Date(),
     delete_at: null,
+    ipaddress: "上海",
   },
   {
-    _id: ObjectId(),
+    _id: ObjectId("666fa551b248ac5bfea26a1f"),
+    username: "anti_cris",
     nickname: "Anti Cris",
+    password: "e10adc3949ba59abbe56e057f20f883e",
     avatar: "https://s2.loli.net/2024/05/27/alt3BKPYhzmV4E7.jpg",
     coins: 90,
     coins_record: [],
@@ -70,10 +89,13 @@ db.users.insertMany([
     creare_at: new Date(),
     update_at: new Date(),
     delete_at: null,
+    ipaddress: "上海",
   },
   {
-    _id: ObjectId(),
+    _id: ObjectId("666fa551b248ac5bfea26a20"),
+    username: "sirius",
     nickname: "Sirius Wild",
+    password: "e10adc3949ba59abbe56e057f20f883e",
     avatar: "https://s2.loli.net/2024/06/07/newUserA.jpg",
     coins: 120,
     coins_record: [],
@@ -86,6 +108,7 @@ db.users.insertMany([
     creare_at: new Date(),
     update_at: new Date(),
     delete_at: null,
+    ipaddress: "上海",
   }
 ]);
 
@@ -308,3 +331,6 @@ db.votes.insertMany([
     delete_at: null,
   }
 ]);
+
+db.createCollection("refresh_tokens");
+
