@@ -22,6 +22,7 @@ func Register(c *gin.Context) {
 			"error":   "Invalid request"})
 		return
 	}
+	
 
 	// 调用service层的RegisterUser方法，把user传进去
 	// controller要做的就是把user解析出来，然后把user传递到Service中做具体的任务
@@ -53,7 +54,7 @@ func Login(c *gin.Context) {
 
 	// 这里Login方法中也是和上面的Register方法一样
 	// 把user从请求的JSON中解析出来，传递给service中的方法做具体的操作
-	token, refresh_token, simple_user, err := services.AuthenticateUser(&request) // 这里就是把user作为参数传递给了AuthenticateUser方法
+	token, exp_token, refresh_token, simple_user, err := services.AuthenticateUser(&request) // 这里就是把user作为参数传递给了AuthenticateUser方法
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
 		return
@@ -63,9 +64,10 @@ func Login(c *gin.Context) {
 	// 现在我们就是要把处理之后的User中的特定字段，放到Response中，然后返回给客户端
 	// 具体赋值，把处理之后的user中的字段赋值给res中的字段
 	res := models.ResponseLogin{
-		Message:      "User registered successfully",
+		Message:      "User login successfully",
 		Success:      true,
 		Token:        token, //这个就是经常念叨的JWT，前面生成好了这里直接赋值过来，生成token的代码在service中
+		ExpiresIn:    exp_token,
 		RefreshToken: refresh_token,
 		User: models.SimpleUser{
 			Avatar:    simple_user.Avatar,
@@ -149,11 +151,11 @@ func Refresh(c *gin.Context) {
 	}
 
 	// 调用服务层的RefreshAccessToken方法，传递refresh token
-	newToken, err := services.RefreshAccessToken(refreshToken)
+	newToken, exp_token, err := services.RefreshAccessToken(refreshToken)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"valid": false, "error": "failed to refresh token"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"valid": true, "token": newToken})
+	c.JSON(http.StatusOK, gin.H{"valid": true, "token": newToken, "expires_in": exp_token})
 }

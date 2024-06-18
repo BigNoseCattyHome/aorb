@@ -24,7 +24,7 @@ type Claims struct {
 }
 
 // GenerateAccessToken 生成JWT令牌
-func GenerateAccessToken(user *models.User) (string, error) {
+func GenerateAccessToken(user *models.User) (string, int64, error) {
 	// 创建声明对象
 	expirationTime := time.Now().Add(1 * time.Hour) // 设置令牌过期时间为1小时后
 	claims := &Claims{
@@ -43,10 +43,10 @@ func GenerateAccessToken(user *models.User) (string, error) {
 	tokenString, err := token.SignedString(jwtKey)
 	if err != nil {
 		log.Error("Failed to sign token: ", err)
-		return "", err
+		return "", 0, err
 	}
 
-	return tokenString, nil
+	return tokenString, expirationTime.Unix(), nil
 }
 
 // VerifyAccessToken 验证令牌是否有效，返回声明
@@ -82,22 +82,22 @@ func VerifyAccessToken(tokenString string) (*Claims, error) {
 }
 
 // RefreshAccessToken 刷新令牌
-func RefreshAccessToken(refreshTokenString string) (string, error) {
+func RefreshAccessToken(refreshTokenString string) (string, int64, error) {
 	// 验证刷新令牌
 	claims, err := VerifyRefreshToken(refreshTokenString)
 	if err != nil {
 		log.Error("Failed to verify refresh token: ", err)
-		return "", err
+		return "", 0, err
 	}
 
 	// 生成新的访问令牌
-	newAccessTokenString, err := GenerateAccessToken(&models.User{ID: claims.UserID, Username: claims.Username})
+	newAccessTokenString, exp_token, err := GenerateAccessToken(&models.User{ID: claims.UserID, Username: claims.Username})
 	if err != nil {
 		log.Error("Failed to generate new access token: ", err)
-		return "", err
+		return "", 0, err
 	}
 
-	return newAccessTokenString, nil
+	return newAccessTokenString, exp_token, nil
 }
 
 // VerifyRefreshToken 验证刷新令牌
@@ -146,7 +146,7 @@ func GenerateRefreshToken(user *models.User) (string, error) {
 		UserID:   user.ID,
 		Username: user.Username,
 		StandardClaims: jwt.StandardClaims{
-			// 在声明中设置过期时间
+			// 过期时间设置为24小时后
 			ExpiresAt: expirationTime.Unix(),
 		},
 	}
@@ -160,6 +160,9 @@ func GenerateRefreshToken(user *models.User) (string, error) {
 		log.Error("Failed to sign refresh token: ", err)
 		return "", err
 	}
+
+	// 保存到数据库
+	client.Database("aorb").Collection("refresh_tokens").InsertOne(context.Background(), bson.M{"user_id": user.ID, "token": tokenString, "revoked": false, "expires_at": expirationTime.Unix()})
 
 	return tokenString, nil
 }

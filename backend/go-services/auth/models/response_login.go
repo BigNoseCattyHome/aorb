@@ -19,7 +19,7 @@ func (r *ResponseLogin) Marshal() ([]byte, error) {
 }
 
 type ResponseLogin struct {
-	// 过期时间
+	// 访问令牌的过期时间
 	ExpiresIn int64 `json:"expires_in"`
 	// 消息
 	Message string `json:"message"`
