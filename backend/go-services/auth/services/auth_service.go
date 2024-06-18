@@ -48,12 +48,10 @@ func init() {
 // 注册
 func RegisterUser(user *models.User) error {
 	// 在这里写注册用户的逻辑
-	isExsitUser, err := getUser(user.ID)
-	if err == nil && isExsitUser != nil {
+	isExsitUser, err := getUserbyUsername(user.Username)
+	if err == nil && isExsitUser {
 		return errors.New("用户名已存在")
 	}
-
-	// 密码哈希过了，不用处理直接调用storeuser就保存密码了
 
 	// 生成新的ObjectID
 	user.ID = primitive.NewObjectID().Hex()
@@ -94,32 +92,32 @@ func storeUser(user *models.User) error {
 // 验证用户（登录）
 // 返回(成功): JWT令牌, 用户信息, nil
 // 返回(失败): "", 空的SimpleUser, 错误信息
-func AuthenticateUser(user *models.RequestLogin) (string, string, models.SimpleUser, error) {
+func AuthenticateUser(user *models.RequestLogin) (string, int64, string, models.SimpleUser, error) {
 	// 检查用户是否存在
-	storedUser, err := getUser(user.ID)
+	storedUser, err := getUserbyID(user.ID)
 	if err != nil {
 		log.Error("Failed to get user from database: ", err)
-		return "", "", models.SimpleUser{}, errors.New("failed to get user from database")
+		return "", 0, "", models.SimpleUser{}, errors.New("failed to get user from database")
 	}
 
 	// 检查用户名对应的密码是否正确
 	if user.Password != storedUser.Password {
 		log.Error("Invalid password")
-		return "", "", models.SimpleUser{}, errors.New("invalid password")
+		return "", 0, "", models.SimpleUser{}, errors.New("invalid password")
 	}
 
 	// 生成JWT令牌
-	tokenString, err := GenerateAccessToken(storedUser)
+	tokenString, exp_token, err := GenerateAccessToken(storedUser)
 	if err != nil {
 		log.Error("Failed to generate JWT token: ", err)
-		return "", "", models.SimpleUser{}, errors.New("failed to generate JWT token")
+		return "", 0, "", models.SimpleUser{}, errors.New("failed to generate JWT token")
 	}
 
 	// 生成刷新令牌
 	fresh_token, err := GenerateRefreshToken(storedUser)
 	if err != nil {
 		log.Error("Failed to generate refresh token: ", err)
-		return "", "", models.SimpleUser{}, errors.New("failed to generate refresh token")
+		return "", 0, "", models.SimpleUser{}, errors.New("failed to generate refresh token")
 	}
 
 	// 全部顺利执行，返回用户的基本信息
@@ -130,29 +128,54 @@ func AuthenticateUser(user *models.RequestLogin) (string, string, models.SimpleU
 		Ipaddress: storedUser.Ipaddress,
 	}
 
-	return tokenString, fresh_token, simple_user, nil
+	return tokenString, exp_token, fresh_token, simple_user, nil
 }
 
 // 从数据库获取用户
-func getUser(id string) (*models.User, error) {
+func getUserbyID(id string) (*models.User, error) {
 	user := models.User{}
 
-	// 将字符串转换为 ObjectId
+	// 将字符串转换为 ObjectID
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		log.Error("Failed to convert string to ObjectID: ", err)
-		return &models.User{}, err
+		log.Println("Failed to convert string to ObjectID: ", err)
+		return nil, err
 	}
 
-	// 使用 ObjectId 进行查询
+	// 使用 ObjectID 进行查询
 	result := client.Database("aorb").Collection("users").FindOne(context.TODO(), bson.M{"_id": objectID})
 
 	// 解码结果到 user 结构体
 	err = result.Decode(&user)
 	if err != nil {
-		log.Error("Failed to decode result: ", err)
-		return &models.User{}, err
+		if err == mongo.ErrNoDocuments {
+			log.Println("No user found with ID: ", id)
+		} else {
+			log.Println("Failed to decode result: ", err)
+		}
+		return nil, err
 	}
 
 	return &user, nil
+}
+
+// 查询是否username已经存在
+func getUserbyUsername(username string) (bool, error) {
+	collection := client.Database("aorb").Collection("users")
+
+	// 查询用户
+	filter := bson.M{"username": username}
+	var result bson.M
+	err := collection.FindOne(context.TODO(), filter).Decode(&result)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			// 没有找到匹配的用户
+			return false, err
+		}
+		log.Fatal(err)
+		return false, err
+	}
+
+	// 找到匹配的用户
+	return true, nil
 }
