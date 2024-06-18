@@ -14,6 +14,7 @@ const (
 	defaultConfigType = "toml"
 )
 
+// LoadConfig 在main.go中调用，用于加载配置文件
 func LoadConfig() error {
 	viper.AddConfigPath(defaultConfigPath)
 	viper.SetConfigName(defaultConfigName)
@@ -26,3 +27,6 @@ func LoadConfig() error {
 	AppConfig = viper.GetViper()
 	return nil
 }
+
+// AppConfig的使用方法
+// conf.AppConfig.GetString("db.mongodb_url")
