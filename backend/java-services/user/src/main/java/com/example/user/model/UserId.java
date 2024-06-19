@@ -22,5 +22,105 @@ public class UserId {
     private List<String> questionsCollect;
     private String ipaddress;
 
+    public String getId() {
+        return id;
+    }
+    public void setId(String id) {
+        this.id = id;
+    }
+    public String getPassword() {
+        return password;
+    }
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getNickname() {
+        return nickname;
+    }
+
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    public String getAvatar() {
+        return avatar;
+    }
+
+    public void setAvatar(String avatar) {
+        this.avatar = avatar;
+    }
+
+    public int getCoins() {
+        return coins;
+    }
+
+    public void setCoins(int coins) {
+        this.coins = coins;
+    }
+
+    public List<CoinRecord> getCoinsRecord() {
+        return coinsRecord;
+    }
+
+    public void setCoinsRecord(List<CoinRecord> coinsRecord) {
+        this.coinsRecord = coinsRecord;
+    }
+
+    public List<String> getFollowed() {
+        return followed;
+    }
+
+    public void setFollowed(List<String> followed) {
+        this.followed = followed;
+    }
+
+    public List<String> getFollower() {
+        return follower;
+    }
+
+    public void setFollower(List<String> follower) {
+        this.follower = follower;
+    }
+
+    public List<String> getBlacklist() {
+        return blacklist;
+    }
+
+    public void setBlacklist(List<String> blacklist) {
+        this.blacklist = blacklist;
+    }
+
+    public List<String> getQuestionsAsk() {
+        return questionsAsk;
+    }
+
+    public void setQuestionsAsk(List<String> questionsAsk) {
+        this.questionsAsk = questionsAsk;
+    }
+
+    public List<String> getQuestionsAsw() {
+        return questionsAsw;
+    }
+
+    public void setQuestionsAsw(List<String> questionsAsw) {
+        this.questionsAsw = questionsAsw;
+    }
+
+    public List<String> getQuestionsCollect() {
+        return questionsCollect;
+    }
+
+    public void setQuestionsCollect(List<String> questionsCollect) {
+        this.questionsCollect = questionsCollect;
+    }
+
+    public String getIpaddress() {
+        return ipaddress;
+    }
+
+    public void setIpaddress(String ipaddress) {
+        this.ipaddress = ipaddress;
+    }
     
 }

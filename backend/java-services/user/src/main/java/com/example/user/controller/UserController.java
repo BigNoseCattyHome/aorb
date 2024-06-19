@@ -4,7 +4,9 @@ import com.example.user.model.UserId;
 import com.example.user.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import com.example.user.exception.UserNotFoundException;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -24,7 +26,9 @@ public class UserController {
         if (userOpt.isPresent()) {
             UserId user = userOpt.get();
             if (fields != null && !fields.isEmpty()) {
-                Set<String> fieldSet = fields.stream().flatMap(f -> List.of(f.split(",")).stream()).collect(Collectors.toSet());
+                Set<String> fieldSet = fields.stream()
+            .flatMap(f -> Arrays.stream(f.split(",")))
+            .collect(Collectors.toSet());
                 return filterFields(user, fieldSet);
             }
             return user;
