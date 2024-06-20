@@ -1,5 +1,5 @@
-main\java\com\example\user\UserApplication.class
 com\example\user\exception\UserNotFoundException.class
+com\example\user\UserApplication.class
 com\example\user\model\CoinRecord.class
 com\example\user\service\UserService.class
 com\example\user\controller\UserController.class
