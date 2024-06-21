@@ -53,13 +53,21 @@ public class UserController {
         System.out.println("Response: " + response);
         return ResponseEntity.ok(response);
     }
-    //返回用户关注列表
+    //返回用户关注列表用户的头像昵称
     @GetMapping("/{user_id}/followed")
     public ResponseEntity<List<Map<String, String>>> getFollowedUsersInfo(
         @PathVariable("user_id") String userId
     ) {
         List<Map<String, String>> followedUsersInfo = userService.getFollowedUsersInfo(userId, null);
         return ResponseEntity.ok(followedUsersInfo);
+    }
+    //返回用户粉丝的头像昵称
+    @GetMapping("/{user_id}/fans")
+    public ResponseEntity<List<Map<String, String>>> getUserFans(
+        @PathVariable("user_id") String userId
+    ) {
+        List<Map<String, String>> fansInfo = userService.getUserFansInfo(userId);
+        return ResponseEntity.ok(fansInfo);
     }
     //关注/取关用户
     @PostMapping("/{user_id}/follower")
@@ -74,6 +82,42 @@ public class UserController {
         userService.toggleFollow(user_id, follow_id);
         return ResponseEntity.ok().build();
     }
+    //拉黑用户
+    @PostMapping("/{user_id}/blacklist")
+    public ResponseEntity<Void> addToBlacklist(
+        @PathVariable("user_id") String userId,
+        @RequestBody Map<String, String> requestBody
+    ) {
+        String blackId = requestBody.get("black_id");
+        if (blackId == null || blackId.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        userService.addToBlacklist(userId, blackId);
+        return ResponseEntity.ok().build();
+    }
+    //改头像和昵称
+    @PostMapping("/{user_id}")
+    public ResponseEntity<Void> updateUser(
+        @PathVariable("user_id") String userId,
+        @RequestBody Map<String, String> requestBody
+    ) {
+        String newNickname = requestBody.get("nickname");
+        String newAvatar = requestBody.get("avatar");
+        if (newNickname == null || newNickname.isEmpty() || newAvatar == null || newAvatar.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        userService.updateUser(userId, newNickname, newAvatar);
+        return ResponseEntity.ok().build();
+    }
+    //删除用户
+    @DeleteMapping("/{user_id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable("user_id") String userId) {
+        userService.deleteUser(userId);
+        return ResponseEntity.ok().build();
+    }
+
 
     private UserId filterFields(UserId user, Set<String> fields) {
         UserId filteredUser = new UserId();

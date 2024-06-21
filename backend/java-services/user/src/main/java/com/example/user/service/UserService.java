@@ -4,7 +4,11 @@ import com.example.user.exception.UserNotFoundException;
 import com.example.user.model.UserId;
 import com.example.user.repository.UserIdRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+
 import com.example.user.exception.UserNotFoundException;
 
 import java.util.Optional;
@@ -40,7 +44,7 @@ public class UserService {
         }
         return false;
     }
-    //返回用户关注列表
+    //返回用户关注列表用户的昵称头像等
     
     public List<Map<String, String>> getFollowedUsersInfo(String userId, List<String> fields) {
         List<Map<String, String>> followedUsersInfo = new ArrayList<>();
@@ -64,6 +68,30 @@ public class UserService {
         }
         return followedUsersInfo;
     }
+    //返回关注用户的粉丝的昵称头像
+    public List<Map<String, String>> getUserFansInfo(String userId) {
+        Optional<UserId> userOpt = userIdRepository.findById(userId);
+        if (userOpt.isPresent()) {
+            UserId user = userOpt.get();
+            List<String> fansIds = user.getFollower(); // 获取关注这个用户的人的ID列表
+
+            List<Map<String, String>> fansInfo = new ArrayList<>();
+            for (String fanId : fansIds) {
+                Optional<UserId> fanOpt = userIdRepository.findById(fanId);
+                if (fanOpt.isPresent()) {
+                    UserId fan = fanOpt.get();
+                    Map<String, String> fanInfo = new HashMap<>();
+                    fanInfo.put("nickname", fan.getNickname());
+                    fanInfo.put("avatar", fan.getAvatar());
+                    fanInfo.put("ipaddress", fan.getIpaddress());
+                    fansInfo.add(fanInfo);
+                }
+            }
+            return fansInfo;
+        } else {
+            throw new UserNotFoundException("User not found with ID: " + userId);
+        }
+    }
     //关注取关用户
         public void toggleFollow(String user_id, String follow_id) {
         Optional<UserId> userOpt = userIdRepository.findById(user_id);
@@ -80,5 +108,38 @@ public class UserService {
             throw new UserNotFoundException("User with ID " + user_id + " not found");
         }
     }
-
+    //拉黑用户
+    public void addToBlacklist(String userId, String blackId) {
+        Optional<UserId> userOpt = userIdRepository.findById(userId);
+        if (userOpt.isPresent()) {
+            UserId user = userOpt.get();
+            if (!user.getBlacklist().contains(blackId)) {
+                user.getBlacklist().add(blackId);
+                userIdRepository.save(user);
+            }
+        } else {
+            throw new UserNotFoundException("User not found with ID: " + userId);
+        }
+    }
+    //改头像昵称
+    public void updateUser(String userId, String newNickname, String newAvatar) {
+        Optional<UserId> userOpt = userIdRepository.findById(userId);
+        if (userOpt.isPresent()) {
+            UserId user = userOpt.get();
+            user.setNickname(newNickname);
+            user.setAvatar(newAvatar);
+            userIdRepository.save(user);
+        } else {
+            throw new UserNotFoundException("User not found with ID: " + userId);
+        }
+    }
+    //删除用户
+    public void deleteUser(String userId) {
+        Optional<UserId> userOpt = userIdRepository.findById(userId);
+        if (userOpt.isPresent()) {
+            userIdRepository.deleteById(userId);
+        } else {
+            throw new UserNotFoundException("User not found with ID: " + userId);
+        }
+    }
 }
