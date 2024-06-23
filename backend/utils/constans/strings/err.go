@@ -1,4 +1,4 @@
-package e
+package strings
 
 // Bad Request
 const (
@@ -56,6 +56,8 @@ const (
 	UnableToGetFriendListError       = "无法查询到好友列表"
 	RecommendServiceInnerErrorCode   = 50023
 	RecommendServiceInnerError       = "推荐系统内部错误"
+	FeedServiceInnerErrorCode        = 50024
+	FeedServiceInnerError            = "视频服务出现内部错误，请稍后重试！"
 )
 
 // Expected Error

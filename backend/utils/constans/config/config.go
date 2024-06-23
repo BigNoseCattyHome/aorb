@@ -18,11 +18,20 @@ type Config struct {
 	PodIP    *PodIP              `toml:"PodIp"`
 	Log      *Log                `toml:"Log"`
 	Tracing  *Tracing            `toml:"Tracing"`
+	RabbitMQ *RabbitMQ           `toml:"RabbitMQ"`
 }
 
 type Tracing struct {
 	EndPoint string `toml:"endPoint"`
 	State    string `toml:"state"`
+}
+
+type RabbitMQ struct {
+	Username    string `toml:"username"`
+	Password    string `toml:"password"`
+	Host        string `toml:"host"`
+	Port        string `toml:"port"`
+	VhostPrefix string `toml:"vhostPrefix"`
 }
 
 type Log struct {
@@ -58,6 +67,7 @@ type Redis struct {
 	Username string `toml:"username"`
 	Password string `toml:"password"`
 	Db       int    `toml:"db"`
+	Prefix   string `toml:"prefix"`
 }
 
 type JWT struct {

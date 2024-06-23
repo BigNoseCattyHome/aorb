@@ -1,4 +1,4 @@
-package common
+package strings
 
 const (
 	ServiceOKCode = 0

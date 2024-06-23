@@ -4,7 +4,7 @@ option go_package = "github.com/BigNoseCattyHome/aorb/backend/rpc/user";
 
 
 message User{
-  uint32 id = 1;  // 用户id
+  string id = 1;  // 用户id
   string name = 2;  // 用户名称
   int32 coins = 3;  // 金币数量
   optional uint32 follow_count = 4; // 关注总数
@@ -15,8 +15,8 @@ message User{
 }
 
 message UserRequest{
-  uint32 user_id = 1;   // 用户id
-  uint32 actor_id = 2;  // 发送请求的用户的id
+  string user_id = 1;   // 用户id
+  string actor_id = 2;  // 发送请求的用户的id
 }
 
 message UserResponse{
@@ -26,7 +26,7 @@ message UserResponse{
 }
 
 message UserExistRequest{
-  uint32 user_id = 1; // 用户id
+  string user_id = 1; // 用户id
 }
 
 message UserExistResponse{

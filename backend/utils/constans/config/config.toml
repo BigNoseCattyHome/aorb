@@ -30,6 +30,14 @@
     username = "root"
     password = ""
     db = 0
+    prefix = "aorb"
+
+[RabbitMQ]
+    username = "guest"
+    password = "guest"
+    host = "127.0.0.1"
+    port = 5672
+    vhostPrefix = ""
 
 [JWT]
     jwtSecrete = 38324

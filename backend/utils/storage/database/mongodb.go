@@ -8,23 +8,19 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var (
-	mongoDbClient = InitMongoDbClient()
-	mongoDatabase = mongoDbClient.Database("aorb")
-)
+var MongoDbClient *mongo.Client
 
-func InitMongoDbClient() *mongo.Client {
+func init() {
 	logging.Info("Connecting to mongodb")
 	clientOptions := options.Client().ApplyURI("mongodb://" + config.Conf.MongoDB.Host + ":" + config.Conf.MongoDB.Port)
 	var err error
-	mongoDbClient, err = mongo.Connect(context.TODO(), clientOptions)
+	MongoDbClient, err = mongo.Connect(context.TODO(), clientOptions)
 	if err != nil {
 		logging.Info(err)
 	}
-	err = mongoDbClient.Ping(context.TODO(), nil)
+	err = MongoDbClient.Ping(context.TODO(), nil)
 	if err != nil {
 		logging.Info(err)
 	}
 	logging.Info("mongodb connect success")
-	return mongoDbClient
 }

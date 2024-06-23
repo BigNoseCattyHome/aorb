@@ -2,17 +2,17 @@ package models
 
 import (
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/comment"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"time"
 )
 
 type Comment struct {
-	ID       primitive.ObjectID `json:"_id,omitempty"`
-	UserId   primitive.ObjectID `json:"user_id,omitempty"`
-	PollId   primitive.ObjectID `json:"poll_id"`
-	Content  string             `json:"comment,omitempty"`
-	CreateAt time.Time          `json:"create_at,omitempty"`
-	DeleteAt time.Time          `json:"delete_at"`
+	// 与mongodb交互的Comment实体
+	ID       string    `json:"id" bson:"_id,omitempty"`
+	UserId   string    `json:"user_id" bson:"user_id,omitempty"`
+	PollId   string    `json:"poll_id" bson:"poll_id,omitempty"`
+	Content  string    `json:"content" bson:"comment,omitempty"`
+	CreateAt time.Time `json:"create_at" bson:"create_at,omitempty"`
+	DeleteAt time.Time `json:"delete_at" bson:"delete_at"`
 }
 
 type ActionCommentReq struct {

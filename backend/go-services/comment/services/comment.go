@@ -1,164 +1,356 @@
-package services
+/*
+service层, 负责处理业务逻辑
+*/
+package main
 
 import (
-	"github.com/BigNoseCattyHome/aorb/backend/go-services/comment/models"
+	"context"
+	"encoding/json"
+	"fmt"
+	commentModels "github.com/BigNoseCattyHome/aorb/backend/go-services/comment/models"
+	"github.com/BigNoseCattyHome/aorb/backend/go-services/event/models"
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/comment"
+	"github.com/BigNoseCattyHome/aorb/backend/rpc/poll"
+	"github.com/BigNoseCattyHome/aorb/backend/rpc/user"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constans/config"
-	"github.com/BigNoseCattyHome/aorb/backend/utils/e"
+	"github.com/BigNoseCattyHome/aorb/backend/utils/constans/strings"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/extra/tracing"
 	grpc2 "github.com/BigNoseCattyHome/aorb/backend/utils/grpc"
-	"github.com/BigNoseCattyHome/aorb/backend/utils/json"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/logging"
-	"github.com/gin-gonic/gin"
+	"github.com/BigNoseCattyHome/aorb/backend/utils/rabbitmq"
+	"github.com/BigNoseCattyHome/aorb/backend/utils/storage/database"
+	"github.com/BigNoseCattyHome/aorb/backend/utils/storage/redis"
+	"github.com/go-redis/redis_rate/v10"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
-	"net/http"
+	"go.opentelemetry.io/otel/trace"
+	"sync"
 )
 
-var Client comment.CommentServiceClient
+var userClient user.UserServiceClient
+var pollClient poll.PollServiceClient
+var actionCommentLimitKeyPrefix = config.Conf.Redis.Prefix + "comment_freq_limit"
+var rateCommentLimitKeyPrefix = config.Conf.Redis.Prefix + "comment_rate_limit"
 
-func init() {
-	conn := grpc2.Connect(config.CommentRpcServiceName)
-	Client = comment.NewCommentServiceClient(conn)
+const rateCommentMaxQPM = 3   // Maximum RateComment query amount
+const actionCommentMaxQPS = 3 // Maximum ActionComment query amount of an actor per second
+
+func exitOnError(err error) {
+	if err != nil {
+		panic(err)
+	}
 }
 
-func ActionCommentHandler(c *gin.Context) {
-	var req models.ActionCommentReq
-	_, span := tracing.Tracer.Start(c.Request.Context(), "ActionCommentHandler")
+func actionCommentLimitKey(userId string) string {
+	return fmt.Sprintf("%s-%s", actionCommentLimitKeyPrefix, userId)
+}
+
+type CommentServiceImpl struct {
+	comment.CommentServiceServer
+}
+
+var conn *amqp.Connection
+var channel *amqp.Channel
+
+func (c CommentServiceImpl) New() {
+	userRpcConn := grpc2.Connect(config.UserRpcServiceName)
+	userClient = user.NewUserServiceClient(userRpcConn)
+
+	var err error
+	conn, err = amqp.Dial(rabbitmq.BuildMqConnAddr())
+	exitOnError(err)
+
+	channel, err = conn.Channel()
+	exitOnError(err)
+
+	err = channel.ExchangeDeclare(
+		strings.EventExchange,
+		"topic",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+	exitOnError(err)
+}
+
+func CloseMQConn() {
+	if err := conn.Close(); err != nil {
+		panic(err)
+	}
+	if err := channel.Close(); err != nil {
+		panic(err)
+	}
+}
+
+func productComment(ctx context.Context, event models.RecommendEvent) {
+	ctx, span := tracing.Tracer.Start(ctx, "CommentPublisher")
 	defer span.End()
 	logging.SetSpanWithHostname(span)
-	logger := logging.LogService("Gateway.ActionComment").WithContext(c.Request.Context())
-	if err := c.ShouldBindQuery(&req); err != nil {
-		c.JSON(http.StatusOK, models.ActionCommentRes{
-			StatusCode: e.GateWayParamsErrorCode,
-			StatusMsg:  e.GateWayParamsError,
-		})
-		return
-	}
-
-	var res *comment.ActionCommentResponse
-	var err error
-	if req.ActionType == 1 {
-		res, err = Client.ActionComment(c.Request.Context(), &comment.ActionCommentRequest{
-			ActorId:    uint32(req.ActorId),
-			PollId:     uint32(req.PollId),
-			ActionType: comment.ActionCommentType_ACTION_COMMENT_TYPE_ADD,
-			Action: &comment.ActionCommentRequest_CommentText{
-				CommentText: req.CommentText,
-			},
-		})
-	} else if req.ActionType == 2 {
-		res, err = Client.ActionComment(c.Request.Context(), &comment.ActionCommentRequest{
-			ActorId:    uint32(req.ActorId),
-			PollId:     uint32(req.PollId),
-			ActionType: comment.ActionCommentType_ACTION_COMMENT_TYPE_DELETE,
-			Action: &comment.ActionCommentRequest_CommentId{
-				CommentId: uint32(req.CommentId),
-			},
-		})
-	} else {
-		c.JSON(http.StatusOK, models.ActionCommentRes{
-			StatusCode: e.GateWayParamsErrorCode,
-			StatusMsg:  e.GateWayParamsError,
-		})
-		return
-	}
+	logger := logging.LogService("CommentService.CommentPublisher").WithContext(ctx)
+	data, err := json.Marshal(event)
 	if err != nil {
 		logger.WithFields(logrus.Fields{
-			"poll_id":  req.PollId,
-			"actor_id": req.ActorId,
-		}).Warnf("Error when trying to connect with ActionCommentService")
-		c.Render(http.StatusOK, json.CustomJSON{
-			Data:    res,
-			Context: c,
-		})
+			"err": err,
+		}).Errorf("Error with marshal the event model")
+		logging.SetSpanError(span, err)
 		return
 	}
 
-	logger.WithFields(logrus.Fields{
-		"poll_id":  req.PollId,
-		"actor_id": req.ActorId,
-	}).Infof("Action comment success")
+	headers := rabbitmq.InjectAMQPHeaders(ctx)
 
-	c.Render(http.StatusOK, json.CustomJSON{
-		Data:    res,
-		Context: c,
-	})
+	err = channel.PublishWithContext(ctx,
+		strings.EventExchange,
+		strings.PollCommentEvent,
+		false,
+		false,
+		amqp.Publishing{
+			ContentType: "text/plain",
+			Body:        data,
+			Headers:     headers,
+		},
+	)
+
+	if err != nil {
+		logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Errorf("Error when publishing the event model")
+		logging.SetSpanError(span, err)
+		return
+	}
 }
 
-func ListCommentHandler(c *gin.Context) {
-	var req models.ListCommentReq
-	_, span := tracing.Tracer.Start(c.Request.Context(), "ListCommentHandler")
+func (c CommentServiceImpl) ActionComment(ctx context.Context, request *comment.ActionCommentRequest) (resp *comment.ActionCommentResponse, err error) {
+	ctx, span := tracing.Tracer.Start(ctx, "CommentService.ActionComment")
 	defer span.End()
-	logger := logging.LogService("Gateway.ListComment").WithContext(c.Request.Context())
+	logging.SetSpanWithHostname(span)
+	logger := logging.LogService("CommentService.ActionComment").WithContext(ctx)
+	logger.WithFields(logrus.Fields{
+		"user_id":      request.ActorId,
+		"poll_id":      request.PollId,
+		"action_type":  request.ActionType,
+		"comment_text": request.GetCommentText(),
+		"comment_id":   request.GetCommentId(),
+	}).Debugf("Process start")
 
-	if err := c.ShouldBindQuery(&req); err != nil {
-		c.JSON(http.StatusOK, models.ListCommentRes{
-			StatusCode: e.GateWayParamsErrorCode,
-			StatusMsg:  e.GateWayParamsError,
-		})
+	var pCommentId string
+	var pCommentText string
+
+	switch request.ActionType {
+	case comment.ActionCommentType_ACTION_COMMENT_TYPE_ADD:
+		pCommentText = request.GetCommentText()
+		break
+	case comment.ActionCommentType_ACTION_COMMENT_TYPE_DELETE:
+		pCommentId = request.GetCommentId()
+	case comment.ActionCommentType_ACTION_COMMENT_TYPE_UNSPECIFIED:
+		fallthrough
+	default:
+		logger.Warnf("Invalid action type")
+		resp = &comment.ActionCommentResponse{
+			StatusCode: strings.ActionCommentTypeInvalidCode,
+			StatusMsg:  strings.ActionCommentTypeInvalid,
+		}
 		return
 	}
-	res, err := Client.ListComment(c.Request.Context(), &comment.ListCommentRequest{
-		ActorId: uint32(req.ActorId),
-		PollId:  uint32(req.PollId),
-	})
 
+	// Rate limiting
+	limiter := redis_rate.NewLimiter(redis.Client)
+	limiterKey := actionCommentLimitKey(request.ActorId)
+	limiterRes, err := limiter.Allow(ctx, limiterKey, redis_rate.PerSecond(actionCommentMaxQPS))
 	if err != nil {
 		logger.WithFields(logrus.Fields{
-			"poll_id":  req.PollId,
-			"actor_id": req.ActorId,
-		}).Warnf("Error when trying to connect with ListCommentService")
-		c.Render(http.StatusOK, json.CustomJSON{
-			Data:    res,
-			Context: c,
-		})
+			"err":      err,
+			"ActionId": request.ActorId,
+		}).Errorf("ActionComment limiter error")
+		logging.SetSpanError(span, err)
+
+		resp = &comment.ActionCommentResponse{
+			StatusCode: strings.UnableToCreateCommentErrorCode,
+			StatusMsg:  strings.UnableToCreateCommentError,
+		}
 		return
 	}
 
-	logger.WithFields(logrus.Fields{
-		"poll_id":  req.PollId,
-		"actor_id": req.ActorId,
-	}).Infof("List comment success")
+	if limiterRes.Allowed == 0 {
+		logger.WithFields(logrus.Fields{
+			"err":     err,
+			"ActorId": request.ActorId,
+		}).Infof("Action comment query too frequently by user %d", request.ActorId)
 
-	c.Render(http.StatusOK, json.CustomJSON{
-		Data:    res,
-		Context: c,
+		resp = &comment.ActionCommentResponse{
+			StatusCode: strings.ActionCommentLimitedCode,
+			StatusMsg:  strings.ActionCommentLimited,
+		}
+		return
+	}
+
+	// Check if poll exists
+	pollExistResp, err := pollClient.QueryPollExisted(ctx, &poll.PollExistRequest{
+		PollId: request.PollId,
 	})
+	if err != nil {
+		logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Errorf("Query video existence happens error")
+		logging.SetSpanError(span, err)
+		resp = &comment.ActionCommentResponse{
+			StatusCode: strings.FeedServiceInnerErrorCode,
+			StatusMsg:  strings.FeedServiceInnerError,
+		}
+		return
+	}
+
+	if !pollExistResp.Existed {
+		logger.WithFields(logrus.Fields{
+			"PollId": request.PollId,
+		}).Errorf("Video ID does not exist")
+		logging.SetSpanError(span, err)
+		resp = &comment.ActionCommentResponse{
+			StatusCode: strings.UnableToQueryVideoErrorCode,
+			StatusMsg:  strings.UnableToQueryVideoError,
+		}
+		return
+	}
+
+	// get target user
+	userResponse, err := userClient.GetUserInfo(ctx, &user.UserRequest{
+		UserId:  request.ActorId,
+		ActorId: request.ActorId,
+	})
+
+	if err != nil || userResponse.StatusCode != strings.ServiceOKCode {
+		if userResponse.StatusCode == strings.UserNotExistedCode {
+			resp = &comment.ActionCommentResponse{
+				StatusCode: strings.UserNotExistedCode,
+				StatusMsg:  strings.UserNotExisted,
+			}
+			return
+		}
+		logger.WithFields(logrus.Fields{
+			"err":     err,
+			"ActorId": request.ActorId,
+		}).Errorf("User service error")
+		logging.SetSpanError(span, err)
+		resp = &comment.ActionCommentResponse{
+			StatusCode: strings.UnableToQueryUserErrorCode,
+			StatusMsg:  strings.UnableToQueryUserError,
+		}
+		return
+	}
+
+	pUser := userResponse.User
+
+	switch request.ActionType {
+	case comment.ActionCommentType_ACTION_COMMENT_TYPE_ADD:
+		resp, err = addComment(ctx, logger, span, pUser, request.PollId, pCommentText)
+	case comment.ActionCommentType_ACTION_COMMENT_TYPE_DELETE:
+		resp, err = deleteComment(ctx, logger, span, pUser, request.PollId, pCommentId)
+	}
+
+	if err != nil {
+		return
+	}
+
+	countCommentKey := fmt.Sprintf("Comment-Count-%s", request.PollId)
+
 }
 
-func CountCommentHandler(c *gin.Context) {
-	var req models.CountCommentReq
-	_, span := tracing.Tracer.Start(c.Request.Context(), "CountCommentHandler")
-	defer span.End()
-	logger := logging.LogService("Gateway.CountComment").WithContext(c.Request.Context())
-	if err := c.ShouldBindQuery(&req); err != nil {
-		c.JSON(http.StatusOK, models.CountCommentRes{
-			StatusCode: e.GateWayParamsErrorCode,
-			StatusMsg:  e.GateWayParamsError,
-		})
+func deleteComment(ctx context.Context, logger *logrus.Entry, span trace.Span, pUser *user.User, pPollId string, commentId string) (resp *comment.ActionCommentResponse, err error) {
+	rComment := commentModels.Comment{}
+	collections := database.MongoDbClient.Database("aorb").Collection("comments")
+	result := collections.FindOne(ctx, rComment)
+	if result.Err() != nil {
+		logger.WithFields(logrus.Fields{
+			"err":        result.Err(),
+			"poll_id":    pPollId,
+			"comment_id": commentId,
+		}).Errorf("Failed to find comment")
+		logging.SetSpanError(span, result.Err())
+
+		resp = &comment.ActionCommentResponse{
+			StatusCode: strings.UnableToQueryCommentErrorCode,
+			StatusMsg:  strings.UnableToQueryCommentError,
+		}
 		return
 	}
-	res, err := Client.CountComment(c.Request.Context(), &comment.CountCommentRequest{
-		ActorId: uint32(req.ActorId),
-		PollId:  uint32(req.PollId),
-	})
+
+	if rComment.UserId != pUser.Id {
+		logger.Errorf("Comment creator and deletor not match")
+		resp = &comment.ActionCommentResponse{
+			StatusCode: strings.ActorIDNotMatchErrorCode,
+			StatusMsg:  strings.ActorIDNotMatchError,
+		}
+		return
+	}
+
+	_, err = collections.DeleteOne(ctx, rComment)
 	if err != nil {
 		logger.WithFields(logrus.Fields{
-			"poll_id":  req.PollId,
-			"actor_id": req.ActorId,
-		}).Warnf("Error when trying to connect with CountCommentService")
-		c.Render(http.StatusOK, json.CustomJSON{
-			Data:    res,
-			Context: c,
-		})
+			"err": err,
+		}).Errorf("Failed to delete comment")
+		logging.SetSpanError(span, err)
+
+		resp = &comment.ActionCommentResponse{
+			StatusCode: strings.UnableToDeleteCommentErrorCode,
+			StatusMsg:  strings.UnableToDeleteCommentError,
+		}
 		return
 	}
-	logger.WithFields(logrus.Fields{
-		"poll_id":  req.PollId,
-		"actor_id": req.ActorId,
-	}).Infof("Count comment success")
-	c.Render(http.StatusOK, json.CustomJSON{
-		Data:    res,
-		Context: c,
-	})
+
+	resp = &comment.ActionCommentResponse{
+		StatusCode: strings.ServiceOKCode,
+		StatusMsg:  strings.ServiceOK,
+		Comment:    nil,
+	}
+	return
+}
+
+func addComment(ctx context.Context, logger *logrus.Entry, span trace.Span, pUser *user.User, pPollId string, pCommentText string) (resp *comment.ActionCommentResponse, err error) {
+	rComment := commentModels.Comment{
+		UserId:  pUser.Id,
+		PollId:  pPollId,
+		Content: pCommentText,
+	}
+
+	collections := database.MongoDbClient.Database("aorb").Collection("comments")
+	_, err = collections.InsertOne(context.TODO(), rComment)
+	if err != nil {
+		logger.WithFields(logrus.Fields{
+			"err":        err,
+			"comment_id": rComment.ID,
+			"poll_id":    pPollId,
+		}).Errorf("CommentService add comment action failed to response when adding comment")
+		logging.SetSpanError(span, err)
+		resp = &comment.ActionCommentResponse{
+			StatusCode: strings.UnableToCreateCommentErrorCode,
+			StatusMsg:  strings.UnableToCreateCommentError,
+		}
+		return
+	}
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		productComment(ctx, models.RecommendEvent{
+			ActorId: pUser.Id,
+			PollId:  []string{pPollId},
+			Type:    2,
+			Source:  config.CommentRpcServiceName,
+		})
+	}()
+	wg.Wait()
+
+	resp = &comment.ActionCommentResponse{
+		StatusCode: strings.ServiceOKCode,
+		StatusMsg:  strings.ServiceOK,
+		Comment: &comment.Comment{
+			Id:       rComment.ID,
+			User:     pUser,
+			Content:  rComment.Content,
+			CreateAt: rComment.CreateAt.Format("01-02"),
+		},
+	}
+	return
 }

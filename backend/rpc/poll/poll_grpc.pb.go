@@ -19,18 +19,22 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	PollService_ActionPoll_FullMethodName = "/rpc.poll.PollService/ActionPoll"
-	PollService_ListPoll_FullMethodName   = "/rpc.poll.PollService/ListPoll"
-	PollService_CountPoll_FullMethodName  = "/rpc.poll.PollService/CountPoll"
+	PollService_ListPollsByRecommend_FullMethodName        = "/rpc.poll.PollService/ListPollsByRecommend"
+	PollService_ListPolls_FullMethodName                   = "/rpc.poll.PollService/ListPolls"
+	PollService_QueryPolls_FullMethodName                  = "/rpc.poll.PollService/QueryPolls"
+	PollService_QueryPollExisted_FullMethodName            = "/rpc.poll.PollService/QueryPollExisted"
+	PollService_QueryPollSummaryAndKeywords_FullMethodName = "/rpc.poll.PollService/QueryPollSummaryAndKeywords"
 )
 
 // PollServiceClient is the client API for PollService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PollServiceClient interface {
-	ActionPoll(ctx context.Context, in *ActionPollRequest, opts ...grpc.CallOption) (*ActionPollResponse, error)
-	ListPoll(ctx context.Context, in *ListPollRequest, opts ...grpc.CallOption) (*ListPollResponse, error)
-	CountPoll(ctx context.Context, in *CountPollRequest, opts ...grpc.CallOption) (*CountPollResponse, error)
+	ListPollsByRecommend(ctx context.Context, in *ListPollRequest, opts ...grpc.CallOption) (*ListPollResponse, error)
+	ListPolls(ctx context.Context, in *ListPollRequest, opts ...grpc.CallOption) (*ListPollResponse, error)
+	QueryPolls(ctx context.Context, in *QueryPollRequest, opts ...grpc.CallOption) (*QueryPollResponse, error)
+	QueryPollExisted(ctx context.Context, in *PollExistRequest, opts ...grpc.CallOption) (*PollExistResponse, error)
+	QueryPollSummaryAndKeywords(ctx context.Context, in *QueryPollSummaryAndKeywordsRequest, opts ...grpc.CallOption) (*QueryPollSummaryAndKeywordsResponse, error)
 }
 
 type pollServiceClient struct {
@@ -41,27 +45,45 @@ func NewPollServiceClient(cc grpc.ClientConnInterface) PollServiceClient {
 	return &pollServiceClient{cc}
 }
 
-func (c *pollServiceClient) ActionPoll(ctx context.Context, in *ActionPollRequest, opts ...grpc.CallOption) (*ActionPollResponse, error) {
-	out := new(ActionPollResponse)
-	err := c.cc.Invoke(ctx, PollService_ActionPoll_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *pollServiceClient) ListPoll(ctx context.Context, in *ListPollRequest, opts ...grpc.CallOption) (*ListPollResponse, error) {
+func (c *pollServiceClient) ListPollsByRecommend(ctx context.Context, in *ListPollRequest, opts ...grpc.CallOption) (*ListPollResponse, error) {
 	out := new(ListPollResponse)
-	err := c.cc.Invoke(ctx, PollService_ListPoll_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, PollService_ListPollsByRecommend_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *pollServiceClient) CountPoll(ctx context.Context, in *CountPollRequest, opts ...grpc.CallOption) (*CountPollResponse, error) {
-	out := new(CountPollResponse)
-	err := c.cc.Invoke(ctx, PollService_CountPoll_FullMethodName, in, out, opts...)
+func (c *pollServiceClient) ListPolls(ctx context.Context, in *ListPollRequest, opts ...grpc.CallOption) (*ListPollResponse, error) {
+	out := new(ListPollResponse)
+	err := c.cc.Invoke(ctx, PollService_ListPolls_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *pollServiceClient) QueryPolls(ctx context.Context, in *QueryPollRequest, opts ...grpc.CallOption) (*QueryPollResponse, error) {
+	out := new(QueryPollResponse)
+	err := c.cc.Invoke(ctx, PollService_QueryPolls_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *pollServiceClient) QueryPollExisted(ctx context.Context, in *PollExistRequest, opts ...grpc.CallOption) (*PollExistResponse, error) {
+	out := new(PollExistResponse)
+	err := c.cc.Invoke(ctx, PollService_QueryPollExisted_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *pollServiceClient) QueryPollSummaryAndKeywords(ctx context.Context, in *QueryPollSummaryAndKeywordsRequest, opts ...grpc.CallOption) (*QueryPollSummaryAndKeywordsResponse, error) {
+	out := new(QueryPollSummaryAndKeywordsResponse)
+	err := c.cc.Invoke(ctx, PollService_QueryPollSummaryAndKeywords_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -72,9 +94,11 @@ func (c *pollServiceClient) CountPoll(ctx context.Context, in *CountPollRequest,
 // All implementations must embed UnimplementedPollServiceServer
 // for forward compatibility
 type PollServiceServer interface {
-	ActionPoll(context.Context, *ActionPollRequest) (*ActionPollResponse, error)
-	ListPoll(context.Context, *ListPollRequest) (*ListPollResponse, error)
-	CountPoll(context.Context, *CountPollRequest) (*CountPollResponse, error)
+	ListPollsByRecommend(context.Context, *ListPollRequest) (*ListPollResponse, error)
+	ListPolls(context.Context, *ListPollRequest) (*ListPollResponse, error)
+	QueryPolls(context.Context, *QueryPollRequest) (*QueryPollResponse, error)
+	QueryPollExisted(context.Context, *PollExistRequest) (*PollExistResponse, error)
+	QueryPollSummaryAndKeywords(context.Context, *QueryPollSummaryAndKeywordsRequest) (*QueryPollSummaryAndKeywordsResponse, error)
 	mustEmbedUnimplementedPollServiceServer()
 }
 
@@ -82,14 +106,20 @@ type PollServiceServer interface {
 type UnimplementedPollServiceServer struct {
 }
 
-func (UnimplementedPollServiceServer) ActionPoll(context.Context, *ActionPollRequest) (*ActionPollResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ActionPoll not implemented")
+func (UnimplementedPollServiceServer) ListPollsByRecommend(context.Context, *ListPollRequest) (*ListPollResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListPollsByRecommend not implemented")
 }
-func (UnimplementedPollServiceServer) ListPoll(context.Context, *ListPollRequest) (*ListPollResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListPoll not implemented")
+func (UnimplementedPollServiceServer) ListPolls(context.Context, *ListPollRequest) (*ListPollResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListPolls not implemented")
 }
-func (UnimplementedPollServiceServer) CountPoll(context.Context, *CountPollRequest) (*CountPollResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CountPoll not implemented")
+func (UnimplementedPollServiceServer) QueryPolls(context.Context, *QueryPollRequest) (*QueryPollResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QueryPolls not implemented")
+}
+func (UnimplementedPollServiceServer) QueryPollExisted(context.Context, *PollExistRequest) (*PollExistResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QueryPollExisted not implemented")
+}
+func (UnimplementedPollServiceServer) QueryPollSummaryAndKeywords(context.Context, *QueryPollSummaryAndKeywordsRequest) (*QueryPollSummaryAndKeywordsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QueryPollSummaryAndKeywords not implemented")
 }
 func (UnimplementedPollServiceServer) mustEmbedUnimplementedPollServiceServer() {}
 
@@ -104,56 +134,92 @@ func RegisterPollServiceServer(s grpc.ServiceRegistrar, srv PollServiceServer) {
 	s.RegisterService(&PollService_ServiceDesc, srv)
 }
 
-func _PollService_ActionPoll_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ActionPollRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PollServiceServer).ActionPoll(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: PollService_ActionPoll_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PollServiceServer).ActionPoll(ctx, req.(*ActionPollRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _PollService_ListPoll_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PollService_ListPollsByRecommend_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListPollRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PollServiceServer).ListPoll(ctx, in)
+		return srv.(PollServiceServer).ListPollsByRecommend(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: PollService_ListPoll_FullMethodName,
+		FullMethod: PollService_ListPollsByRecommend_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PollServiceServer).ListPoll(ctx, req.(*ListPollRequest))
+		return srv.(PollServiceServer).ListPollsByRecommend(ctx, req.(*ListPollRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PollService_CountPoll_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CountPollRequest)
+func _PollService_ListPolls_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListPollRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PollServiceServer).CountPoll(ctx, in)
+		return srv.(PollServiceServer).ListPolls(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: PollService_CountPoll_FullMethodName,
+		FullMethod: PollService_ListPolls_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PollServiceServer).CountPoll(ctx, req.(*CountPollRequest))
+		return srv.(PollServiceServer).ListPolls(ctx, req.(*ListPollRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PollService_QueryPolls_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryPollRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PollServiceServer).QueryPolls(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PollService_QueryPolls_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PollServiceServer).QueryPolls(ctx, req.(*QueryPollRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PollService_QueryPollExisted_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PollExistRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PollServiceServer).QueryPollExisted(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PollService_QueryPollExisted_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PollServiceServer).QueryPollExisted(ctx, req.(*PollExistRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PollService_QueryPollSummaryAndKeywords_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryPollSummaryAndKeywordsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PollServiceServer).QueryPollSummaryAndKeywords(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PollService_QueryPollSummaryAndKeywords_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PollServiceServer).QueryPollSummaryAndKeywords(ctx, req.(*QueryPollSummaryAndKeywordsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -166,16 +232,24 @@ var PollService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*PollServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "ActionPoll",
-			Handler:    _PollService_ActionPoll_Handler,
+			MethodName: "ListPollsByRecommend",
+			Handler:    _PollService_ListPollsByRecommend_Handler,
 		},
 		{
-			MethodName: "ListPoll",
-			Handler:    _PollService_ListPoll_Handler,
+			MethodName: "ListPolls",
+			Handler:    _PollService_ListPolls_Handler,
 		},
 		{
-			MethodName: "CountPoll",
-			Handler:    _PollService_CountPoll_Handler,
+			MethodName: "QueryPolls",
+			Handler:    _PollService_QueryPolls_Handler,
+		},
+		{
+			MethodName: "QueryPollExisted",
+			Handler:    _PollService_QueryPollExisted_Handler,
+		},
+		{
+			MethodName: "QueryPollSummaryAndKeywords",
+			Handler:    _PollService_QueryPollSummaryAndKeywords_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
