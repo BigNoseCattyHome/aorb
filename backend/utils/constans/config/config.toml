@@ -17,6 +17,11 @@
     port = 4000
     version = "1.0"
 
+[Pyroscope]
+    host = "127.0.0.1"
+    port = 4040
+    state = "disable"
+
 [MongoDB]
     host = "127.0.0.1"
     port = 27017

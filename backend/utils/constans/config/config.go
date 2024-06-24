@@ -8,17 +8,24 @@ import (
 var Conf *Config
 
 type Config struct {
-	Consul   *Consul             `toml:"Consul"`
-	Server   *Server             `toml:"Server"`
-	MongoDB  *MongoDB            `toml:"MongoDB"`
-	Redis    *Redis              `toml:"Redis"`
-	JWT      *JWT                `toml:"JWT"`
-	Etcd     *Etcd               `toml:"Etcd"`
-	Services map[string]*Service `toml:"Services"`
-	PodIP    *PodIP              `toml:"PodIp"`
-	Log      *Log                `toml:"Log"`
-	Tracing  *Tracing            `toml:"Tracing"`
-	RabbitMQ *RabbitMQ           `toml:"RabbitMQ"`
+	Consul    *Consul             `toml:"Consul"`
+	Server    *Server             `toml:"Server"`
+	MongoDB   *MongoDB            `toml:"MongoDB"`
+	Redis     *Redis              `toml:"Redis"`
+	JWT       *JWT                `toml:"JWT"`
+	Etcd      *Etcd               `toml:"Etcd"`
+	Services  map[string]*Service `toml:"Services"`
+	PodIP     *PodIP              `toml:"PodIp"`
+	Log       *Log                `toml:"Log"`
+	Tracing   *Tracing            `toml:"Tracing"`
+	RabbitMQ  *RabbitMQ           `toml:"RabbitMQ"`
+	PyroScope *PyroScope          `toml:"PyroScope"`
+}
+
+type PyroScope struct {
+	Host  string `toml:"Host"`
+	Port  int    `toml:"Port"`
+	State string `toml:"State"`
 }
 
 type Tracing struct {
