@@ -8,22 +8,30 @@ import (
 var Conf *Config
 
 type Config struct {
-	Consul   *Consul             `toml:"Consul"`
-	Server   *Server             `toml:"Server"`
-	MongoDB  *MongoDB            `toml:"MongoDB"`
-	Redis    *Redis              `toml:"Redis"`
-	JWT      *JWT                `toml:"JWT"`
-	Etcd     *Etcd               `toml:"Etcd"`
-	Services map[string]*Service `toml:"Services"`
-	PodIP    *PodIP              `toml:"PodIp"`
-	Log      *Log                `toml:"Log"`
-	Tracing  *Tracing            `toml:"Tracing"`
-	RabbitMQ *RabbitMQ           `toml:"RabbitMQ"`
+	Consul    *Consul             `toml:"Consul"`
+	Server    *Server             `toml:"Server"`
+	MongoDB   *MongoDB            `toml:"MongoDB"`
+	Redis     *Redis              `toml:"Redis"`
+	JWT       *JWT                `toml:"JWT"`
+	Etcd      *Etcd               `toml:"Etcd"`
+	Services  map[string]*Service `toml:"Services"`
+	Pod       *Pod                `toml:"Pod"`
+	Log       *Log                `toml:"Log"`
+	Tracing   *Tracing            `toml:"Tracing"`
+	RabbitMQ  *RabbitMQ           `toml:"RabbitMQ"`
+	PyroScope *PyroScope          `toml:"PyroScope"`
+}
+
+type PyroScope struct {
+	Host  string `toml:"host"`
+	Port  int    `toml:"port"`
+	State string `toml:"state"`
 }
 
 type Tracing struct {
-	EndPoint string `toml:"endPoint"`
-	State    string `toml:"state"`
+	EndPoint string  `toml:"endPoint"`
+	State    string  `toml:"state"`
+	Sampler  float64 `toml:"sampler"`
 }
 
 type RabbitMQ struct {
@@ -44,7 +52,7 @@ type Consul struct {
 	AnonymityName string `toml:"anonymityName"`
 }
 
-type PodIP struct {
+type Pod struct {
 	PodIpAddress string `toml:"podIp"`
 }
 
@@ -86,7 +94,7 @@ type Service struct {
 	Port        string `toml:"port"`
 }
 
-func InitConfig() {
+func init() {
 	work, _ := os.Getwd()
 	viper.SetConfigName("config")
 	viper.SetConfigType("toml")

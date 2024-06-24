@@ -1,21 +1,27 @@
 [Consul]
     host = "127.0.0.1"
     port = 8500
-    anonymityName = "paraparty"
+    anonymityName = "paraparty."
 
-[POD]
-    podIp = "127.0.0.1"
+[Pod]
+    podIp = "localhost"
 
 [Log]
-    loggerLevel = "DEBUG"
+    loggerLevel = "INFO"
 
 [Tracing]
     endPoint = "http://localhost:14268/api/traces"
     state = "disable"       # disable / enable
+    sampler = 0.01
 
 [Server]
     port = 4000
     version = "1.0"
+
+[Pyroscope]
+    host = "127.0.0.1"
+    port = 4040
+    state = "disable"
 
 [MongoDB]
     host = "127.0.0.1"

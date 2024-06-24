@@ -8,6 +8,5 @@ import (
 // 运行整个项目
 
 func main() {
-	config.InitConfig()
-	fmt.Println(config.Conf.Consul.Port)
+	fmt.Println(config.Conf.Pod)
 }

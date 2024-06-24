@@ -22,7 +22,7 @@ import (
 var Client comment.CommentServiceClient
 
 func init() {
-	conn := grpc2.Connect(config.CommentRpcServiceName)
+	conn := grpc2.Connect(config.CommentRpcServerName)
 	Client = comment.NewCommentServiceClient(conn)
 }
 

@@ -1,23 +1,30 @@
 package config
 
 // 微服务的名字以及端口
-const WebServiceName = "AorB-Gateway"
-const WebServiceAddr = ":37000"
+const WebServerName = "AorB-Gateway"
+const WebServerAddr = ":37000"
 
-const AuthRpcServiceName = "AorB-AuthService"
-const AuthRpcServiceAddr = ":37001"
+const AuthRpcServerName = "AorB-AuthService"
+const AuthRpcServerAddr = ":37001"
 
-const UserRpcServiceName = "AorB-UserService"
-const UserRpcServiceAddr = ":37002"
+const UserRpcServerName = "AorB-UserService"
+const UserRpcServerAddr = ":37002"
 
-const CommentRpcServiceName = "AorB-CommentService"
-const CommentRpcServiceAddr = ":37003"
+const CommentRpcServerName = "AorB-CommentService"
+const CommentRpcServerAddr = ":37003"
 
-const VoteRpcServiceName = "AorB-VoteService"
-const VoteRpcServiceAddr = ":37004"
+const VoteRpcServerName = "AorB-VoteService"
+const VoteRpcServerAddr = ":37004"
 
-const QuestionRpcServiceName = "AorB-QuestionService"
-const QuestionRpcServiceAddr = ":37005"
+const QuestionRpcServerName = "AorB-QuestionService"
+const QuestionRpcServerAddr = ":37005"
 
-const RecommendRpcServiceName = "AorB-RecommendService"
-const RecommendRpcServiceAddr = ":37006"
+const RecommendRpcServerName = "AorB-RecommendService"
+const RecommendRpcServerAddr = ":37006"
+
+const Metrics = ":37099"
+const PollProcessorRpcServiceName = "GuGoTik-PollProcessorService"
+
+const Event = "GuGoTik-Recommend"
+const MsgConsumer = "GuGoTik-MgsConsumer"
+const BloomRedisChannel = "GuGoTik-Bloom"

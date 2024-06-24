@@ -34,7 +34,7 @@ func SetTraceProvider(name string) (*trace.TracerProvider, error) {
 	if config.Conf.Tracing.State == "disable" {
 		sampler = trace.NeverSample()
 	} else {
-		sampler = trace.TraceIDRatioBased(config.EnvCfg.OtelSampler)
+		sampler = trace.TraceIDRatioBased(config.Conf.Tracing.Sampler)
 	}
 
 	tp := trace.NewTracerProvider(

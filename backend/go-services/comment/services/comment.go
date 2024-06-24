@@ -1,7 +1,7 @@
 /*
 service层, 负责处理业务逻辑
 */
-package main
+package services
 
 import (
 	"context"
@@ -34,9 +34,7 @@ import (
 var userClient user.UserServiceClient
 var pollClient poll.PollServiceClient
 var actionCommentLimitKeyPrefix = config.Conf.Redis.Prefix + "comment_freq_limit"
-var rateCommentLimitKeyPrefix = config.Conf.Redis.Prefix + "comment_rate_limit"
 
-const rateCommentMaxQPM = 3   // Maximum RateComment query amount
 const actionCommentMaxQPS = 3 // Maximum ActionComment query amount of an actor per second
 
 func exitOnError(err error) {
@@ -57,7 +55,7 @@ var conn *amqp.Connection
 var channel *amqp.Channel
 
 func (c CommentServiceImpl) New() {
-	userRpcConn := grpc2.Connect(config.UserRpcServiceName)
+	userRpcConn := grpc2.Connect(config.UserRpcServerName)
 	userClient = user.NewUserServiceClient(userRpcConn)
 
 	var err error
@@ -544,7 +542,7 @@ func addComment(ctx context.Context, logger *logrus.Entry, span trace.Span, pUse
 			ActorId: pUser.Id,
 			PollId:  []string{pPollId},
 			Type:    2,
-			Source:  config.CommentRpcServiceName,
+			Source:  config.CommentRpcServerName,
 		})
 	}()
 	wg.Wait()
