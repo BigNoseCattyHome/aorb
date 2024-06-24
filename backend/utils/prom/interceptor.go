@@ -12,7 +12,7 @@ func ExtractContext(ctx context.Context) prometheus.Labels {
 		return prometheus.Labels{
 			"traceId": span.TraceID().String(),
 			"spanId":  span.SpanID().String(),
-			"podId":   config.Conf.PodIP.PodIpAddress,
+			"podId":   config.Conf.Pod.PodIpAddress,
 		}
 	}
 	return nil

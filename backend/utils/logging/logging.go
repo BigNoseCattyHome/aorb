@@ -1,6 +1,7 @@
 package logging
 
 import (
+	"fmt"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constans/config"
 	log "github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/attribute"
@@ -15,6 +16,8 @@ var hostname string
 
 func init() {
 	hostname, _ = os.Hostname()
+
+	fmt.Println(hostname)
 
 	switch config.Conf.Log.LoggerLevel {
 	case "DEBUG":
@@ -31,7 +34,7 @@ func init() {
 		log.SetLevel(log.TraceLevel)
 	}
 
-	filePath := path.Join("/var", "log", "gugotik", "gugotik.log")
+	filePath := path.Join("/Users", "jinziguan", "desktop", "aorb", "log", "aorb.log")
 	dir := path.Dir(filePath)
 	if err := os.MkdirAll(dir, os.FileMode(0755)); err != nil {
 		panic(err)
@@ -48,7 +51,7 @@ func init() {
 
 	Logger = log.WithFields(log.Fields{
 		"Hostname": hostname,
-		"PodIP":    config.Conf.PodIP.PodIpAddress,
+		"Pod":      config.Conf.Pod.PodIpAddress,
 	})
 }
 
@@ -98,5 +101,5 @@ func SetSpanErrorWithDesc(span trace.Span, err error, desc string) {
 
 func SetSpanWithHostname(span trace.Span) {
 	span.SetAttributes(attribute.String("hostname", hostname))
-	span.SetAttributes(attribute.String("podIP", config.Conf.PodIP.PodIpAddress))
+	span.SetAttributes(attribute.String("podIP", config.Conf.Pod.PodIpAddress))
 }

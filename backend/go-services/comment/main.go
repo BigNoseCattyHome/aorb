@@ -41,7 +41,7 @@ func main() {
 	}()
 
 	log := logging.LogService(config.CommentRpcServerName)
-	lis, err := net.Listen("tcp", config.Conf.PodIP.PodIpAddress+config.CommentRpcServerAddr)
+	lis, err := net.Listen("tcp", config.Conf.Pod.PodIpAddress+config.CommentRpcServerAddr)
 
 	if err != nil {
 		log.Panicf("Rpc %s listen happens error: %v", config.CommentRpcServerName, err)
@@ -88,7 +88,7 @@ func main() {
 	})
 
 	httpSrv := &http.Server{
-		Addr: config.Conf.PodIP.PodIpAddress + config.Metrics,
+		Addr: config.Conf.Pod.PodIpAddress + config.Metrics,
 	}
 	g.Add(func() error {
 		m := http.NewServeMux()
