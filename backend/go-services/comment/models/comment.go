@@ -17,11 +17,11 @@ type Comment struct {
 
 type ActionCommentReq struct {
 	Token       string `json:"token" binding:"required"`
-	ActorId     int    `json:"actor_id"`
-	PollId      int    `json:"poll_id"`
+	ActorId     string `json:"actor_id"`
+	PollId      string `json:"poll_id"`
 	ActionType  int    `json:"action_type"`
 	CommentText string `json:"comment_text"`
-	CommentId   int    `json:"comment_id"`
+	CommentId   string `json:"comment_id"`
 }
 
 type ActionCommentRes struct {
@@ -32,8 +32,8 @@ type ActionCommentRes struct {
 
 type ListCommentReq struct {
 	Token   string `json:"token"`
-	ActorId int    `json:"actor_id"`
-	PollId  int    `json:"poll_id" binding:"-"`
+	ActorId string `json:"actor_id"`
+	PollId  string `json:"poll_id" binding:"-"`
 }
 
 type ListCommentRes struct {
@@ -44,8 +44,8 @@ type ListCommentRes struct {
 
 type CountCommentReq struct {
 	Token   string `json:"token"`
-	ActorId int    `json:"actor_id"`
-	PollId  int    `json:"poll_id"`
+	ActorId string `json:"actor_id"`
+	PollId  string `json:"poll_id"`
 }
 
 type CountCommentRes struct {
