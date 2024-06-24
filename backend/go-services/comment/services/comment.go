@@ -18,12 +18,16 @@ import (
 	grpc2 "github.com/BigNoseCattyHome/aorb/backend/utils/grpc"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/logging"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/rabbitmq"
+	"github.com/BigNoseCattyHome/aorb/backend/utils/storage/cached"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/storage/database"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/storage/redis"
 	"github.com/go-redis/redis_rate/v10"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.opentelemetry.io/otel/trace"
+	"strconv"
 	"sync"
 )
 
@@ -253,7 +257,210 @@ func (c CommentServiceImpl) ActionComment(ctx context.Context, request *comment.
 	}
 
 	countCommentKey := fmt.Sprintf("Comment-Count-%s", request.PollId)
+	cached.TagDelete(ctx, countCommentKey)
 
+	logger.WithFields(logrus.Fields{
+		"response": resp,
+	}).Debugf("Process done.")
+
+	return
+}
+
+func (c CommentServiceImpl) ListComment(ctx context.Context, request *comment.ListCommentRequest) (resp *comment.ListCommentResponse, err error) {
+	ctx, span := tracing.Tracer.Start(ctx, "ListCommentService")
+	defer span.End()
+	logging.SetSpanWithHostname(span)
+	logger := logging.LogService("CommentService.ListComment").WithContext(ctx)
+	logger.WithFields(logrus.Fields{
+		"user_id":  request.ActorId,
+		"video_id": request.PollId,
+	}).Debugf("Process start")
+
+	// 查看poll是否存在
+	pollExistResp, err := pollClient.QueryPollExisted(ctx, &poll.PollExistRequest{
+		PollId: request.PollId,
+	})
+	if err != nil {
+		logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Errorf("Query poll existence happens error")
+		logging.SetSpanError(span, err)
+		resp = &comment.ListCommentResponse{
+			StatusCode: strings.FeedServiceInnerErrorCode,
+			StatusMsg:  strings.FeedServiceInnerError,
+		}
+		return
+	}
+
+	if !pollExistResp.Existed {
+		logger.WithFields(logrus.Fields{
+			"PollId": request.PollId,
+		}).Errorf("Poll ID does not exist")
+		logging.SetSpanError(span, err)
+		resp = &comment.ListCommentResponse{
+			StatusCode: strings.UnableToQueryVideoErrorCode,
+			StatusMsg:  strings.UnableToQueryVideoError,
+		}
+		return
+	}
+
+	var pCommentList []commentModels.Comment
+	collections := database.MongoDbClient.Database("aorb").Collection("comments")
+	searchPollId := request.PollId
+	filter := bson.M{"poll_id": searchPollId}
+	sort := bson.M{"create_at": -1}
+	cursor, err := collections.Find(ctx, filter, &options.FindOptions{
+		Sort: sort,
+	})
+	if err != nil {
+		logger.WithFields(logrus.Fields{
+			"err": cursor.Err(),
+		}).Errorf("CommentService list comment failed to response when listing comments")
+		logging.SetSpanError(span, err)
+
+		resp = &comment.ListCommentResponse{
+			StatusCode: strings.UnableToQueryCommentErrorCode,
+			StatusMsg:  strings.UnableToQueryCommentError,
+		}
+		return
+	}
+	err = cursor.All(ctx, &pCommentList)
+	if err != nil {
+		logger.WithFields(logrus.Fields{
+			"err": cursor.Err(),
+		}).Errorf("CommentService list comment failed to response when extracting comments")
+		logging.SetSpanError(span, err)
+
+		resp = &comment.ListCommentResponse{
+			StatusCode: strings.UnableToQueryCommentErrorCode,
+			StatusMsg:  strings.UnableToQueryCommentError,
+		}
+		return
+	}
+
+	// 获取每条评论的用户信息
+	rCommentList := make([]*comment.Comment, 0, len(pCommentList))
+	userMap := make(map[string]*user.User)
+	for _, pComment := range pCommentList {
+		userMap[pComment.UserId] = &user.User{}
+	}
+	getUserInfoError := false
+
+	wg := sync.WaitGroup{}
+	wg.Add(len(userMap))
+	for userId := range userMap {
+		go func(userId string) {
+			defer wg.Done()
+			userResponse, getUserErr := userClient.GetUserInfo(ctx, &user.UserRequest{
+				UserId:  userId,
+				ActorId: request.ActorId,
+			})
+			if err != nil || userResponse.StatusCode != strings.ServiceOKCode {
+				logger.WithFields(logrus.Fields{
+					"err":     getUserErr,
+					"user_id": userId,
+				}).Errorf("Unable to get user info")
+				logging.SetSpanError(span, getUserErr)
+				getUserInfoError = true
+				err = getUserErr
+			}
+			userMap[userId] = userResponse.User
+		}(userId)
+	}
+	wg.Wait()
+
+	if getUserInfoError {
+		resp = &comment.ListCommentResponse{
+			StatusCode: strings.UnableToQueryUserErrorCode,
+			StatusMsg:  strings.UnableToQueryUserError,
+		}
+		return
+	}
+
+	// 创建rCommentList
+	for _, pComment := range pCommentList {
+		curUser := userMap[pComment.UserId]
+
+		rCommentList = append(rCommentList, &comment.Comment{
+			Id:       pComment.ID,
+			User:     curUser,
+			Content:  pComment.Content,
+			CreateAt: pComment.CreateAt.Format("01-02"),
+		})
+	}
+
+	resp = &comment.ListCommentResponse{
+		StatusCode:  strings.ServiceOKCode,
+		StatusMsg:   strings.ServiceOK,
+		CommentList: rCommentList,
+	}
+
+	logger.WithFields(logrus.Fields{
+		"response": resp,
+	}).Debugf("Process done.")
+
+	return
+}
+
+func (c CommentServiceImpl) CountComment(ctx context.Context, request *comment.CountCommentRequest) (resp *comment.CountCommentResponse, err error) {
+	ctx, span := tracing.Tracer.Start(ctx, "CountCommentService")
+	defer span.End()
+	logging.SetSpanWithHostname(span)
+	logger := logging.LogService("CommentService.CountComment").WithContext(ctx)
+	logger.WithFields(logrus.Fields{
+		"user_id": request.ActorId,
+		"poll_id": request.PollId,
+	}).Debugf("Process start")
+
+	countStringKey := fmt.Sprintf("CommentCount-%s", request.PollId)
+	countString, err := cached.GetWithFunc(ctx, countStringKey,
+		func(ctx context.Context, key string) (string, error) {
+			rCount, err := count(ctx, request.PollId)
+			return strconv.FormatInt(rCount, 10), err
+		})
+
+	if err != nil {
+		cached.TagDelete(ctx, "CommentCount")
+		logger.WithFields(logrus.Fields{
+			"err":     err,
+			"poll_id": request.PollId,
+		}).Errorf("Unable to get comment count")
+		logging.SetSpanError(span, err)
+
+		resp = &comment.CountCommentResponse{
+			StatusCode: strings.UnableToQueryCommentErrorCode,
+			StatusMsg:  strings.UnableToQueryCommentError,
+		}
+		return
+	}
+	rCount, _ := strconv.ParseUint(countString, 10, 64)
+	resp = &comment.CountCommentResponse{
+		StatusCode:   strings.ServiceOKCode,
+		StatusMsg:    strings.ServiceOK,
+		CommentCount: uint32(rCount),
+	}
+	logger.WithFields(logrus.Fields{
+		"response": resp,
+	}).Debugf("Process done.")
+	return
+}
+
+func count(ctx context.Context, pollId string) (count int64, err error) {
+	ctx, span := tracing.Tracer.Start(ctx, "CountComment")
+	defer span.End()
+	logger := logging.LogService("CommentService.CountComment").WithContext(ctx)
+
+	collections := database.MongoDbClient.Database("aorb").Collection("comments")
+	searchPollId := pollId
+	filter := bson.M{"poll_id": searchPollId}
+	count, err = collections.CountDocuments(ctx, filter)
+	if err != nil {
+		logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Errorf("Faild to count comments")
+		logging.SetSpanError(span, err)
+	}
+	return count, err
 }
 
 func deleteComment(ctx context.Context, logger *logrus.Entry, span trace.Span, pUser *user.User, pPollId string, commentId string) (resp *comment.ActionCommentResponse, err error) {
@@ -314,7 +521,7 @@ func addComment(ctx context.Context, logger *logrus.Entry, span trace.Span, pUse
 	}
 
 	collections := database.MongoDbClient.Database("aorb").Collection("comments")
-	_, err = collections.InsertOne(context.TODO(), rComment)
+	_, err = collections.InsertOne(ctx, rComment)
 	if err != nil {
 		logger.WithFields(logrus.Fields{
 			"err":        err,
