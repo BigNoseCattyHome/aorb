@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/BigNoseCattyHome/aorb/backend/go-services/auth/models"
+
 	"github.com/dgrijalva/jwt-go"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
@@ -18,17 +19,17 @@ var jwtKey = []byte(os.Getenv("AORB_SECRET_KEY")) // 从环境变量中获取JWT
 
 // Claims 结构体，用于存储JWT声明
 type Claims struct {
-	UserID   string `json:"user_id"`
+	UserId   string `json:"user_id"`
 	Username string `json:"username"`
 	jwt.StandardClaims
 }
 
 // GenerateAccessToken 生成JWT令牌
-func GenerateAccessToken(user *models.User) (string, int64, error) {
+func GenerateAccessToken(user models.User) (string, int64, error) {
 	// 创建声明对象
 	expirationTime := time.Now().Add(1 * time.Hour) // 设置令牌过期时间为1小时后
 	claims := &Claims{
-		UserID:   user.ID,
+		UserId:   user.Id,
 		Username: user.Username,
 		StandardClaims: jwt.StandardClaims{
 			// 在声明中设置过期时间
@@ -61,20 +62,20 @@ func VerifyAccessToken(tokenString string) (*Claims, error) {
 			log.Println("Invalid token signature")
 			return nil, errors.New("invalid token signature")
 		}
-		log.Println("Failed to parse token: ", err)
+		log.Error("Failed to parse token: ", err)
 		return nil, err
 	}
 
 	// 获取声明
 	claims, ok := token.Claims.(*Claims)
 	if !ok || !token.Valid {
-		log.Println("Failed to get claims from token or token is invalid")
+		log.Error("Failed to get claims from token or token is invalid")
 		return nil, errors.New("invalid token")
 	}
 
 	// 检查令牌是否过期
 	if time.Unix(claims.ExpiresAt, 0).Before(time.Now()) {
-		log.Println("Token has expired")
+		log.Error("Token has expired")
 		return nil, errors.New("token expired")
 	}
 
@@ -91,7 +92,7 @@ func RefreshAccessToken(refreshTokenString string) (string, int64, error) {
 	}
 
 	// 生成新的访问令牌
-	newAccessTokenString, exp_token, err := GenerateAccessToken(&models.User{ID: claims.UserID, Username: claims.Username})
+	newAccessTokenString, exp_token, err := GenerateAccessToken(models.User{Id: claims.UserId, Username: claims.Username})
 	if err != nil {
 		log.Error("Failed to generate new access token: ", err)
 		return "", 0, err
@@ -130,7 +131,7 @@ func VerifyRefreshToken(refreshTokenString string) (*Claims, error) {
 	}
 
 	// 检查刷新令牌是否被撤销
-	if CheckTokenRevoked(claims.UserID, refreshTokenString) {
+	if CheckTokenRevoked(claims.UserId, refreshTokenString) {
 		log.Println("Refresh token has been revoked")
 		return nil, errors.New("revoked refresh token")
 	}
@@ -139,11 +140,11 @@ func VerifyRefreshToken(refreshTokenString string) (*Claims, error) {
 }
 
 // GenerateRefreshToken 生成新的刷新令牌
-func GenerateRefreshToken(user *models.User) (string, error) {
+func GenerateRefreshToken(user models.User) (string, error) {
 	// 创建声明对象
 	expirationTime := time.Now().Add(24 * time.Hour) // 设置刷新令牌过期时间为24小时后
 	claims := &Claims{
-		UserID:   user.ID,
+		UserId:   user.Id,
 		Username: user.Username,
 		StandardClaims: jwt.StandardClaims{
 			// 过期时间设置为24小时后
@@ -162,7 +163,7 @@ func GenerateRefreshToken(user *models.User) (string, error) {
 	}
 
 	// 保存到数据库
-	client.Database("aorb").Collection("refresh_tokens").InsertOne(context.Background(), bson.M{"user_id": user.ID, "token": tokenString, "revoked": false, "expires_at": expirationTime.Unix()})
+	client.Database("aorb").Collection("refresh_tokens").InsertOne(context.Background(), bson.M{"user_id": user.Id, "token": tokenString, "revoked": false, "expires_at": expirationTime.Unix()})
 
 	return tokenString, nil
 }

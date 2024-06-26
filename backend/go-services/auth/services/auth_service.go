@@ -5,13 +5,13 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/BigNoseCattyHome/aorb/backend/go-services/auth/models"
+	"github.com/BigNoseCattyHome/aorb/backend/utils/constans/config"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"github.com/BigNoseCattyHome/aorb/backend/go-services/auth/conf"
-	"github.com/BigNoseCattyHome/aorb/backend/go-services/auth/models"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -19,13 +19,8 @@ var client *mongo.Client // MongoDB客户端
 
 // init函数在main函数之前执行
 func init() {
-	// 初始化AppConfig
-	if err := conf.LoadConfig(); err != nil {
-		log.Fatalf("Failed to load configuration: %v", err)
-	}
-
-	// 设置客户端选项，从AppConfig中获取MongoDB的URL
-	clientOptions := options.Client().ApplyURI(conf.AppConfig.GetString("db.mongodb_url"))
+	// 从配置文件中读取MongoDB的主机和端口
+	clientOptions := options.Client().ApplyURI(config.Conf.MongoDB.Host + ":" + config.Conf.MongoDB.Port)
 
 	// 连接到MongoDB
 	var err error
@@ -46,28 +41,28 @@ func init() {
 }
 
 // 注册
-func RegisterUser(user *models.User) error {
+func RegisterUser(newuser models.User) error {
 	// 在这里写注册用户的逻辑
-	isExsitUser, err := getUserbyUsername(user.Username)
+	isExsitUser, err := getUserbyUsername(newuser.Username)
 	if err == nil && isExsitUser {
 		return errors.New("用户名已存在")
 	}
 
 	// 生成新的ObjectID
-	user.ID = primitive.NewObjectID().Hex()
+	newuser.Id = primitive.NewObjectID().Hex()
 
 	// 初始化其他字段
-	user.Coins = 0
-	user.Blacklist = []string{}
-	user.CoinsRecord = []models.CoinRecord{}
-	user.Followed = []string{}
-	user.Follower = []string{}
-	user.QuestionsAsk = []string{}
-	user.QuestionsAsw = []string{}
-	user.QuestionsCollect = []string{}
+	newuser.Coins = 0
+	newuser.Blacklist = []string{}
+	newuser.CoinsRecord = []models.CoinRecord{}
+	newuser.Followed = []string{}
+	newuser.Follower = []string{}
+	newuser.QuestionsAsk = []string{}
+	newuser.QuestionsAsw = []string{}
+	newuser.QuestionsCollect = []string{}
 
 	// 保存用户到数据库
-	if err := storeUser(user); err != nil {
+	if err := storeUser(newuser); err != nil {
 		log.Error("注册失败", err)
 		return errors.New("注册失败")
 	}
@@ -76,7 +71,7 @@ func RegisterUser(user *models.User) error {
 }
 
 // 将用户保存到数据库
-func storeUser(user *models.User) error {
+func storeUser(user models.User) error {
 	collection := client.Database("aorb").Collection("users")
 
 	// 将用户信息插入到数据库中
@@ -89,12 +84,10 @@ func storeUser(user *models.User) error {
 	return nil
 }
 
-// 验证用户（登录）
-// 返回(成功): JWT令牌, 用户信息, nil
-// 返回(失败): "", 空的SimpleUser, 错误信息
-func AuthenticateUser(user *models.RequestLogin) (string, int64, string, models.SimpleUser, error) {
+// 验证用户密码是否正确，返回 JWT令牌，过期时间，刷新令牌，用户基本信息，错误信息
+func AuthenticateUser(user models.LoginRequest) (string, int64, string, models.SimpleUser, error) {
 	// 检查用户是否存在
-	storedUser, err := getUserbyID(user.ID)
+	storedUser, err := getUserbyID(user.Id)
 	if err != nil {
 		log.Error("Failed to get user from database: ", err)
 		return "", 0, "", models.SimpleUser{}, errors.New("failed to get user from database")
@@ -122,7 +115,7 @@ func AuthenticateUser(user *models.RequestLogin) (string, int64, string, models.
 
 	// 全部顺利执行，返回用户的基本信息
 	simple_user := models.SimpleUser{
-		ID:        storedUser.ID,
+		Id:        storedUser.Id,
 		Nickname:  storedUser.Nickname,
 		Avatar:    storedUser.Avatar,
 		Ipaddress: storedUser.Ipaddress,
@@ -132,14 +125,14 @@ func AuthenticateUser(user *models.RequestLogin) (string, int64, string, models.
 }
 
 // 从数据库获取用户
-func getUserbyID(id string) (*models.User, error) {
+func getUserbyID(id string) (models.User, error) {
 	user := models.User{}
 
 	// 将字符串转换为 ObjectID
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		log.Println("Failed to convert string to ObjectID: ", err)
-		return nil, err
+		return models.User{}, err
 	}
 
 	// 使用 ObjectID 进行查询
@@ -153,10 +146,10 @@ func getUserbyID(id string) (*models.User, error) {
 		} else {
 			log.Println("Failed to decode result: ", err)
 		}
-		return nil, err
+		return models.User{}, err
 	}
 
-	return &user, nil
+	return user, nil
 }
 
 // 查询是否username已经存在

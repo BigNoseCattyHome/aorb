@@ -1,17 +1,32 @@
+// idl目录下执行 protoc --proto_path=./ --go_out=../../../  --go-grpc_out=../../../ ./user.proto
+
 syntax = "proto3";
 package rpc.user;
-option go_package = "github.com/BigNoseCattyHome/aorb/backend/rpc/user";
+option go_package = "aorb/backend/rpc/user;user";
 
 
-message User{
-  string id = 1;  // 用户id
-  string name = 2;  // 用户名称
-  int32 coins = 3;  // 金币数量
-  optional uint32 follow_count = 4; // 关注总数
-  optional uint32 follower_count = 5; //粉丝总数
-  bool is_follow = 6; // true-已经关注，false-未关注
-  optional string avatar = 7; // 头像
-  optional uint32 question_count = 8; // 提问总数
+message CoinRecord {
+  int64 consume = 1; // 消耗的金币数
+  string question_id = 2; // 为其投币的问题ID
+  string user_id = 3; // 使用者的ID
+}
+
+// TODO optional 字段在后续开发过程中应该逐步取消
+message User {
+  string avatar = 1; // 用户头像
+  repeated string blacklist = 2; // 屏蔽好友
+  optional double coins = 3; // 用户的金币数
+  repeated CoinRecord coins_record = 4; // 用户金币流水记录
+  repeated string followed = 5; // 关注者
+  repeated string follower = 6; // 被关注者
+  string id = 7; // 用户ID
+  optional string ipaddress = 8; // IP归属地
+  string nickname = 9; // 用户昵称
+  string password = 10; // 用户密码
+  repeated string questions_ask = 11; // 发起过的问题
+  repeated string questions_asw = 12; // 回答过的问题
+  repeated string questions_collect = 13; // 收藏的问题
+  string username = 14; // 用户登录名
 }
 
 message UserRequest{
