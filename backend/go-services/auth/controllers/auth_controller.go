@@ -22,7 +22,6 @@ func Register(c *gin.Context) {
 			"error":   "Invalid request"})
 		return
 	}
-	
 
 	// 调用service层的RegisterUser方法，把user传进去
 	// controller要做的就是把user解析出来，然后把user传递到Service中做具体的任务
