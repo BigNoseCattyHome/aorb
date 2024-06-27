@@ -46,7 +46,7 @@ void main() {
         title: '',
         description: '',
         options: [],
-        options_rate: [],
+        optionsRate: [],
         time: DateTime.now(),
         ipaddress: '',
         comments: []));
@@ -82,7 +82,7 @@ void main() {
         description:
             '想了半天没有想出来到底要吃什么，好纠结，真可恶！再不吃饭我真的就要饿死了，下午还要上课，我宝贵的吃饭时间啊啊，来人速速帮我决定一下！',
         options: ['火锅', '大火腿'],
-        options_rate: [0.3, 0.7],
+        optionsRate: [0.3, 0.7],
         time: DateTime.parse('2024-01-01 00:00:00'),
         ipaddress: '上海',
         comments: [

@@ -26,28 +26,28 @@ class CommentPiece extends StatelessWidget {
             CircleAvatar(
               backgroundImage: NetworkImage(avatar),
             ),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   nickname,
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 Text(
                   ipdress,
-                  style: TextStyle(color: Colors.grey, fontSize: 12),
+                  style: const TextStyle(color: Colors.grey, fontSize: 12),
                 ),
               ],
             ),
           ],
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         Text(content),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         Text(
           DateFormat('yyyy-MM-dd HH:mm').format(time),
-          style: TextStyle(color: Colors.grey, fontSize: 12),
+          style: const TextStyle(color: Colors.grey, fontSize: 12),
         ),
       ],
     );

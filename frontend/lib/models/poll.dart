@@ -7,7 +7,7 @@ class Poll {
   final String title;
   final String description;
   final List<String> options;
-  final List<double> options_rate;
+  final List<double> optionsRate;
   final DateTime time;
   final String ipaddress;
   final String sponsor;
@@ -25,7 +25,7 @@ class Poll {
     required this.title,
     required this.description,
     required this.options,
-    required this.options_rate,
+    required this.optionsRate,
     required this.time,
     required this.ipaddress,
     required this.sponsor,
@@ -45,7 +45,7 @@ class Poll {
       title: json['title'],
       description: json['description'],
       options: List<String>.from(json['options']),
-      options_rate: List<double>.from(json['options_rate']),
+      optionsRate: List<double>.from(json['options_rate']),
       time: json['time'],
       ipaddress: json['ipaddress'],
       sponsor: json['sponsor'],
@@ -66,7 +66,7 @@ class Poll {
       'title': title,
       'description': description,
       'options': options,
-      'options_rate': options_rate,
+      'options_rate': optionsRate,
       'time': time,
       'ipaddress': ipaddress,
       'sponsor': sponsor,

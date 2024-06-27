@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class msg_published extends StatelessWidget {
-  const msg_published({super.key});
+class MessagePublished extends StatelessWidget {
+  const MessagePublished({super.key});
 
   @override
   Widget build(BuildContext context) {

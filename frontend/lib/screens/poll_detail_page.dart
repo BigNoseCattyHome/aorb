@@ -42,7 +42,7 @@ class PollDetailPageState extends State<PollDetailPage>
     UserService()
         .fetchUserInfo(widget.userId, ['nickname', 'avatar']).then((user) {
       setState(() {
-        this.user = user as User;
+        this.user = user;
       });
     });
 
@@ -132,7 +132,7 @@ class PollDetailPageState extends State<PollDetailPage>
             title: poll.title,
             content: poll.description,
             options: poll.options,
-            votePercentage: poll.options_rate,
+            votePercentage: poll.optionsRate,
             time: poll.time,
             ipaddress: poll.ipaddress),
 

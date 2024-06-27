@@ -54,7 +54,7 @@ class SearchPageState extends State<SearchPage>
       ),
       body: TabBarView(
         controller: _tabController,
-        children: [
+        children: const [
           // 搜索结果
         ],
       ),
