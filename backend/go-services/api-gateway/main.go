@@ -1,33 +1,77 @@
 package main
 
 import (
-	"log"
-
-	"github.com/BigNoseCattyHome/aorb/backend/go-services/api-gateway/conf"
-	"github.com/BigNoseCattyHome/aorb/backend/go-services/api-gateway/routes"
+	"context"
+	"github.com/BigNoseCattyHome/aorb/backend/go-services/api-gateway/middleware"
+	auth2 "github.com/BigNoseCattyHome/aorb/backend/go-services/auth/web"
+	comment2 "github.com/BigNoseCattyHome/aorb/backend/go-services/comment/web"
+	user2 "github.com/BigNoseCattyHome/aorb/backend/go-services/user/web"
+	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
+	"github.com/BigNoseCattyHome/aorb/backend/utils/extra/tracing"
+	"github.com/BigNoseCattyHome/aorb/backend/utils/logging"
+	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
+	ginprometheus "github.com/zsais/go-gin-prometheus"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
+	"net/http"
 )
 
-func init() {
-	// 初始化配置文件
-	if err := conf.LoadConfig(); err != nil {
-		log.Fatalf("Failed to load configuration: %v", err)
-	}
-}
-
 func main() {
-	// 读取配置api的前缀和版本
-	apiPrefix := conf.AppConfig.GetString("api.prefix")
-	apiVersion := conf.AppConfig.GetString("api.version")
+	tp, err := tracing.SetTraceProvider(config.WebServerName)
+	if err != nil {
+		logging.Logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Panicf("Error to set the trace")
+	}
+	defer func() {
+		if err := tp.Shutdown(context.Background()); err != nil {
+			logging.Logger.WithFields(logrus.Fields{
+				"err": err,
+			}).Errorf("Error to set the trace")
+		}
+	}()
 
-	router := gin.Default()
+	g := gin.Default()
+	p := ginprometheus.NewPrometheus("aorb-WebGateway")
+	p.Use(g)
+	g.Use(gzip.Gzip(gzip.DefaultCompression))
+	g.Use(otelgin.Middleware(config.WebServerName))
+	g.Use(middleware.TokenAuthMiddleware())
 
-	// 设置api前缀，返回一个新的RouterGroup
-	apiGroup := router.Group(apiPrefix + "/" + apiVersion)
+	// prometheus，检测有关内存分配、垃圾回收效率、并发级别的洞察，并帮助识别性能瓶颈或潜在的内存泄漏
+	//http.Handle("/metrics", promhttp.Handler())
+	//go func() {
+	//	http.ListenAndServe(":30000", nil)
+	//}()
 
-	// 注册路由，RegisterRoutes函数在routes/gateway_routes.go中定义
-	routes.RegisterRoutes(apiGroup)
+	// 注册路由
+	g.GET("/ping", func(c *gin.Context) {
+		//c.Redirect(http.StatusPermanentRedirect, "/login")
+		c.JSON(http.StatusOK, "success")
+	})
+	rootPath := g.Group("/aorb")
+	user := rootPath.Group("/user")
+	{
+		user.GET("/", user2.UserHandler)
+		user.POST("/login/", auth2.LoginHandler)
+		user.POST("/register/", auth2.RegisterHandler)
+	}
 
-	// 启动服务器
-	router.Run(":8080")
+	//feed := rootPath.Group("/feed")
+	//{
+	//	feed.GET("/", feed2.ListVideosByRecommendHandle)
+	//}
+
+	comment := rootPath.Group("/comment")
+	{
+		comment.POST("/action/", comment2.ActionCommentHandler)
+		comment.GET("/list/", comment2.ListCommentHandler)
+		comment.GET("/count/", comment2.CountCommentHandler)
+	}
+
+	// run
+	if err := g.Run(config.WebServerAddr); err != nil {
+		panic("Can not run aorb Gateway, binding port: " + config.WebServerAddr)
+	}
 }

@@ -2,7 +2,7 @@ package grpc
 
 import (
 	"fmt"
-	"github.com/BigNoseCattyHome/aorb/backend/utils/constans/config"
+	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
 	logger "github.com/sirupsen/logrus"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
@@ -17,7 +17,7 @@ func Connect(serviceName string) (conn *grpc.ClientConn) {
 		Timeout:             1 * time.Second,  // wait 1 second for ping ack before considering the connection dead
 		PermitWithoutStream: false,            // send pings even without active streams
 	}
-	consulAddr := config.Conf.Consul.Port + ":" + config.Conf.Consul.Port
+	consulAddr := config.Conf.Consul.Address
 	conn, err := grpc.Dial(
 		fmt.Sprintf("consul://%s/%s?wait=15s", consulAddr, config.Conf.Consul.AnonymityName+serviceName),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),

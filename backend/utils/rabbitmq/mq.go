@@ -2,7 +2,7 @@ package rabbitmq
 
 import (
 	"fmt"
-	"github.com/BigNoseCattyHome/aorb/backend/utils/constans/config"
+	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
 )
 
 func BuildMqConnAddr() string {

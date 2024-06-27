@@ -9,7 +9,7 @@ import (
 var AppConfig *viper.Viper
 
 const (
-	defaultConfigPath = "conf/"
+	defaultConfigPath = "backend/go-services/auth/conf/"
 	defaultConfigName = "config"
 	defaultConfigType = "toml"
 )

@@ -4,11 +4,11 @@ package consul
 
 import (
 	"fmt"
-	"github.com/BigNoseCattyHome/aorb/backend/utils/constans/config"
+	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/logging"
 	"github.com/google/uuid"
 	capi "github.com/hashicorp/consul/api"
-	logger "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"strconv"
 )
 
@@ -16,7 +16,7 @@ var consulClient *capi.Client
 
 func init() {
 	cfg := capi.DefaultConfig()
-	cfg.Address = fmt.Sprintf("%s:%s", config.Conf.Consul.Host, config.Conf.Consul.Port)
+	cfg.Address = config.Conf.Consul.Address
 	if c, err := capi.NewClient(cfg); err == nil {
 		consulClient = c
 		return
@@ -26,12 +26,13 @@ func init() {
 }
 
 func RegisterConsul(name string, port string) error {
-	parsedPort, err := strconv.Atoi(port[1:])
-	logging.Logger.WithFields(logger.Fields{
+	parsedPort, err := strconv.Atoi(port[1:]) // port start with ':' which like ':37001'
+	logging.Logger.WithFields(logrus.Fields{
 		"name": name,
 		"port": parsedPort,
 	}).Infof("Services Register Consul")
 	name = config.Conf.Consul.AnonymityName + name
+
 	if err != nil {
 		return err
 	}
