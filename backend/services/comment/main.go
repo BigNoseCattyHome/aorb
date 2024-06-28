@@ -9,7 +9,7 @@ import (
 	"os"
 	"syscall"
 
-	commentServices "github.com/BigNoseCattyHome/aorb/backend/go-services/comment/services"
+	commentServices "github.com/BigNoseCattyHome/aorb/backend/services/comment/services"
 	commentRpc "github.com/BigNoseCattyHome/aorb/backend/rpc/comment"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constans/config"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/consul"

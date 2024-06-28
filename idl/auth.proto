@@ -2,7 +2,6 @@ syntax = "proto3";
 package rpc.auth;
 option go_package = "github.com/BigNoseCattyHome/aorb/backend/rpc/auth;auth";
 
-
 // 导入必要的protobuf类型
 import "google/protobuf/timestamp.proto";
 

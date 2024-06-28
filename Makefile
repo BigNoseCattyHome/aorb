@@ -1,8 +1,33 @@
-# 设置默认目标不是文件
-.PHONY: all clean test build deploy run_backend run_frontend
+.PHONY: all clean test build deploy run_backend run_frontend proto
 
 # 默认执行的命令
-all: build
+all: build proto
+
+PROTO_PATH=./idl
+GOOGLE_PROTO_PATH=/usr/local/include/google/protobuf
+OUTPUT_DART_PATH=./frontend/lib/generated/
+GO_OUT_PATH=./backend/rpc
+PROTOC_GEN_DART=$(shell which protoc-gen-dart)
+
+proto:
+	@echo "Creating golang and dart grpc files..."
+	@for file in $(PROTO_PATH)/*.proto; do \
+        if [ -f "$$file" ]; then \
+            prefix=$$(basename "$$file" .proto); \
+            mkdir -p $(GO_OUT_PATH)/"$${prefix}"; \
+            mkdir -p $(OUTPUT_DART_PATH); \
+            echo "Created directory for $$prefix"; \
+            protoc -I$(PROTO_PATH) \
+                --go_out=$(GO_OUT_PATH)/$$prefix --go_opt=paths=source_relative \
+                --go-grpc_out=$(GO_OUT_PATH)/$$prefix --go-grpc_opt=paths=source_relative \
+                --dart_out=grpc:$(OUTPUT_DART_PATH) \
+                --plugin=protoc-gen-dart=$(PROTOC_GEN_DART) \
+                $$file; \
+            echo "Generated gRPC code for $$prefix"; \
+        fi; \
+    done
+	
+
 
 # 运行Flutter应用，用于开发和测试
 run_frontend:
