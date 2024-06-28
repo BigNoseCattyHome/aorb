@@ -37,10 +37,16 @@ dependencies:
   cupertino_icons: ^1.0.2
 
   flutter_svg: ^0.22.0
-
+  grpc: ^3.1.0
+  protobuf: ^2.1.0
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  
+  protoc_plugin: ^20.0.1
+
+
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

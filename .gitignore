@@ -103,3 +103,7 @@ android/app/build/
 /ios/Flutter/project.xcworkspace
 /.build/
 /build/
+
+# 排除proto的生成文件
+frontend/lib/generated/
+backend/rpc
