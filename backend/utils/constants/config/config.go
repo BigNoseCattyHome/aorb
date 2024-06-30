@@ -9,6 +9,10 @@ var Conf *Config
 
 type Config struct {
 	Consul   *Consul             `toml:"Consul"`
+<<<<<<< HEAD:backend/utils/constans/config/config.go
+=======
+	Server   *Server             `toml:"Server"`
+>>>>>>> 5e8d2c22af3906e3c3f602401640cd91d87f4ef7:backend/utils/constants/config/config.go
 	MongoDB  *MongoDB            `toml:"MongoDB"`
 	Redis    *Redis              `toml:"Redis"`
 	JWT      *JWT                `toml:"JWT"`
@@ -19,17 +23,18 @@ type Config struct {
 	Tracing  *Tracing            `toml:"Tracing"`
 	RabbitMQ *RabbitMQ           `toml:"RabbitMQ"`
 	Other    *Other              `toml:"Other"`
+<<<<<<< HEAD:backend/utils/constans/config/config.go
 	//PyroScope *PyroScope          `toml:"PyroScope"`
 }
 
 type Other struct {
 	AnonymityUser string `toml:"anonymityUser"`
+=======
+>>>>>>> 5e8d2c22af3906e3c3f602401640cd91d87f4ef7:backend/utils/constants/config/config.go
 }
 
-type PyroScope struct {
-	Host  string `toml:"host"`
-	Port  int    `toml:"port"`
-	State string `toml:"state"`
+type Other struct {
+	AnonymityUser string `toml:"anonymity_user"`
 }
 
 type Tracing struct {
@@ -51,7 +56,11 @@ type Log struct {
 }
 
 type Consul struct {
+<<<<<<< HEAD:backend/utils/constans/config/config.go
 	Addr          string `toml:"addr"`
+=======
+	Address       string `toml:"address"`
+>>>>>>> 5e8d2c22af3906e3c3f602401640cd91d87f4ef7:backend/utils/constants/config/config.go
 	AnonymityName string `toml:"anonymityName"`
 }
 
@@ -101,7 +110,7 @@ func init() {
 	work, _ := os.Getwd()
 	viper.SetConfigName("config")
 	viper.SetConfigType("toml")
-	viper.AddConfigPath(work + "/backend/utils/constans/config")
+	viper.AddConfigPath(work + "/backend/utils/constants/config")
 	err := viper.ReadInConfig()
 	if err != nil {
 		panic(err)

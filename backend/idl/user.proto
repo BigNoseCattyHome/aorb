@@ -1,0 +1,37 @@
+syntax = "proto3";
+package rpc.user;
+option go_package = "github.com/BigNoseCattyHome/aorb/backend/rpc/user";
+
+
+message User{
+  uint32 id = 1;  // 用户id
+  string username = 2;  // 用户名称
+  string nickname = 3;  // 昵称
+  optional string avatar = 4; // 头像
+}
+
+message UserRequest{
+  uint32 user_id = 1;   // 用户id
+  uint32 actor_id = 2;  // 发送请求的用户的id
+}
+
+message UserResponse{
+  int32 status_code = 1;  // 状态码，0-成功，其他值-失败
+  string status_msg = 2;  // 返回状态描述
+  User user = 3;  // 用户信息
+}
+
+message UserExistRequest{
+  uint32 user_id = 1; // 用户id
+}
+
+message UserExistResponse{
+  int32 status_code = 1;  // 状态码，0-成功，其他值-失败
+  string status_msg = 2;  // 返回状态描述
+  bool existed = 3;  // 是否存在用户
+}
+
+service UserService{
+  rpc GetUserInfo(UserRequest) returns (UserResponse);
+  rpc GetUserExistInformation(UserExistRequest) returns (UserExistResponse);
+}

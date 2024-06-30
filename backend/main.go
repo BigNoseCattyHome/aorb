@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/BigNoseCattyHome/aorb/backend/utils/constans/config"
+	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
 )
 
 // 运行整个项目
