@@ -1,0 +1,54 @@
+syntax = "proto3";
+package user;
+option go_package = "github.com/BigNoseCattyHome/aorb/backend/rpc/user;user";
+
+
+message CoinRecord {
+  int64 consume = 1; // 消耗的金币数
+  string question_id = 2; // 为其投币的问题ID
+  string user_id = 3; // 使用者的ID
+}
+
+// TODO optional 字段在后续开发过程中应该逐步取消
+message User {
+  string avatar = 1; // 用户头像
+  repeated string blacklist = 2; // 屏蔽好友
+  optional double coins = 3; // 用户的金币数
+  repeated CoinRecord coins_record = 4; // 用户金币流水记录
+  repeated string followed = 5; // 关注者
+  repeated string follower = 6; // 被关注者
+  string id = 7; // 用户ID
+  optional string ipaddress = 8; // IP归属地
+  string nickname = 9; // 用户昵称
+  string password = 10; // 用户密码
+  repeated string questions_ask = 11; // 发起过的问题
+  repeated string questions_asw = 12; // 回答过的问题
+  repeated string questions_collect = 13; // 收藏的问题
+  string username = 14; // 用户登录名
+}
+
+message UserRequest{
+  string user_id = 1;   // 用户id
+  string actor_id = 2;  // 发送请求的用户的id
+}
+
+message UserResponse{
+  int32 status_code = 1;  // 状态码，0-成功，其他值-失败
+  string status_msg = 2;  // 返回状态描述
+  User user = 3;  // 用户信息
+}
+
+message UserExistRequest{
+  string user_id = 1; // 用户id
+}
+
+message UserExistResponse{
+  int32 status_code = 1;  // 状态码，0-成功，其他值-失败
+  string status_msg = 2;  // 返回状态描述
+  bool existed = 3;  // 是否存在用户
+}
+
+service UserService{
+  rpc GetUserInfo(UserRequest) returns (UserResponse);
+  rpc GetUserExistInformation(UserExistRequest) returns (UserExistResponse);
+}

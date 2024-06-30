@@ -87,6 +87,23 @@ mongosh
 load("scripts/init_db.js")
 ```
 
+### 后台各个服务的开启
+rabbitMQ(MAC):
+```shell
+brew services start rabbitmq
+```
+consul(MAC):
+```shell
+consul agent -dev
+```
+redis(MAC)
+```shell
+redis-server
+```
+
+### 微服务的启动
+执行go-services中每一个模块的main.go文件
+
 ## 📝 开发文档
 
 [Flutter开发过程用到组件指南](https://obyi4vacom.feishu.cn/file/E9vdbu0RBocg4yxfV0NcS1kHnwe)

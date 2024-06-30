@@ -8,12 +8,52 @@ import (
 var Conf *Config
 
 type Config struct {
-	Server   *Server             `toml:"Server"`
-	MongoDB  *MongoDB            `toml:"MongoDB"`
-	Redis    *Redis              `toml:"Redis"`
-	JWT      *JWT                `toml:"JWT"`
-	Etcd     *Etcd               `toml:"Etcd"`
-	Services map[string]*Service `toml:"Services"`
+	Consul    *Consul             `toml:"Consul"`
+	Server    *Server             `toml:"Server"`
+	MongoDB   *MongoDB            `toml:"MongoDB"`
+	Redis     *Redis              `toml:"Redis"`
+	JWT       *JWT                `toml:"JWT"`
+	Etcd      *Etcd               `toml:"Etcd"`
+	Services  map[string]*Service `toml:"Services"`
+	Pod       *Pod                `toml:"Pod"`
+	Log       *Log                `toml:"Log"`
+	Tracing   *Tracing            `toml:"Tracing"`
+	RabbitMQ  *RabbitMQ           `toml:"RabbitMQ"`
+	PyroScope *PyroScope          `toml:"PyroScope"`
+}
+
+type PyroScope struct {
+	Host  string `toml:"host"`
+	Port  int    `toml:"port"`
+	State string `toml:"state"`
+}
+
+type Tracing struct {
+	EndPoint string  `toml:"endPoint"`
+	State    string  `toml:"state"`
+	Sampler  float64 `toml:"sampler"`
+}
+
+type RabbitMQ struct {
+	Username    string `toml:"username"`
+	Password    string `toml:"password"`
+	Host        string `toml:"host"`
+	Port        string `toml:"port"`
+	VhostPrefix string `toml:"vhostPrefix"`
+}
+
+type Log struct {
+	LoggerLevel string `toml:"loggerLevel"`
+}
+
+type Consul struct {
+	Host          string `toml:"host"`
+	Port          string `toml:"port"`
+	AnonymityName string `toml:"anonymityName"`
+}
+
+type Pod struct {
+	PodIpAddress string `toml:"podIp"`
 }
 
 type Server struct {
@@ -35,6 +75,7 @@ type Redis struct {
 	Username string `toml:"username"`
 	Password string `toml:"password"`
 	Db       int    `toml:"db"`
+	Prefix   string `toml:"prefix"`
 }
 
 type JWT struct {
@@ -53,7 +94,7 @@ type Service struct {
 	Port        string `toml:"port"`
 }
 
-func InitConfig() {
+func init() {
 	work, _ := os.Getwd()
 	viper.SetConfigName("config")
 	viper.SetConfigType("toml")

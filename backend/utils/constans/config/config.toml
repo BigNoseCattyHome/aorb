@@ -1,6 +1,27 @@
+[Consul]
+    host = "127.0.0.1"
+    port = 8500
+    anonymityName = "paraparty."
+
+[Pod]
+    podIp = "localhost"
+
+[Log]
+    loggerLevel = "INFO"
+
+[Tracing]
+    endPoint = "http://localhost:14268/api/traces"
+    state = "disable"       # disable / enable
+    sampler = 0.01
+
 [Server]
     port = 4000
     version = "1.0"
+
+[Pyroscope]
+    host = "127.0.0.1"
+    port = 4040
+    state = "disable"
 
 [MongoDB]
     host = "127.0.0.1"
@@ -15,6 +36,14 @@
     username = "root"
     password = ""
     db = 0
+    prefix = "aorb"
+
+[RabbitMQ]
+    username = "guest"
+    password = "guest"
+    host = "127.0.0.1"
+    port = 5672
+    vhostPrefix = ""
 
 [JWT]
     jwtSecrete = 38324

@@ -35,6 +35,8 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
   flutter_svg: ^0.22.0
+  grpc: ^3.1.0
+  protobuf: ^2.1.0
   http: ^0.13.3
   intl: ^0.19.0
   graphql_flutter: ^5.0.0
@@ -44,6 +46,10 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  
+  protoc_plugin: ^20.0.1
+
+
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

@@ -1,0 +1,66 @@
+syntax = "proto3";
+package rpc.poll;
+import "user.proto";
+option go_package = "github.com/BigNoseCattyHome/aorb/backend/rpc/poll;poll";
+
+message Poll{
+  string id = 1;  // 问题id
+  user.User user = 2; // 用户信息
+  string title = 3; // 问题标题
+  string choice_a = 4;  // 选项a
+  string choice_b = 5;  // 选项b
+  uint32 comment_count = 6;
+}
+
+message ListPollRequest{
+  optional string actor_id = 1;
+  optional string latest_time = 2;
+}
+
+message ListPollResponse{
+  int32 status_code = 1;
+  string status_msg = 2;
+  optional uint64 next_time = 3;
+  repeated Poll poll_list = 4;
+}
+
+message QueryPollRequest{
+  string actor_id = 1;
+  repeated string poll_ids = 2;
+}
+
+message QueryPollResponse{
+  int32 status_code = 1;
+  string status_msg = 2;
+  repeated Poll poll_list = 3;
+}
+
+message PollExistRequest{
+  string poll_id = 1;
+}
+
+message PollExistResponse{
+  int32 status_code = 1;
+  string status_msg = 2;
+  bool existed = 3;
+}
+
+message QueryPollSummaryAndKeywordsRequest{
+  string actor_id = 1;
+  string poll_id = 2;
+}
+
+message QueryPollSummaryAndKeywordsResponse{
+  int32 status_code = 1;
+  string status_msg = 2;
+  string summary = 3;
+  string keywords = 4;
+}
+
+service PollService{
+  rpc ListPollsByRecommend(ListPollRequest) returns (ListPollResponse);
+  rpc ListPolls(ListPollRequest) returns (ListPollResponse);
+  rpc QueryPolls(QueryPollRequest) returns (QueryPollResponse);
+  rpc QueryPollExisted(PollExistRequest) returns (PollExistResponse);
+  rpc QueryPollSummaryAndKeywords(QueryPollSummaryAndKeywordsRequest) returns (QueryPollSummaryAndKeywordsResponse);
+}
