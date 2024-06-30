@@ -19,7 +19,7 @@ var jwtKey = []byte(os.Getenv("AORB_SECRET_KEY")) // 从环境变量中获取JWT
 
 // Claims 结构体，用于存储JWT声明
 type Claims struct {
-	UserId   string `json:"user_id"`
+	UserId   uint32 `json:"user_id"`
 	Username string `json:"username"`
 	jwt.StandardClaims
 }
@@ -169,7 +169,7 @@ func GenerateRefreshToken(user models.User) (string, error) {
 }
 
 // CheckTokenRevoked 检查令牌是否被撤销
-func CheckTokenRevoked(userID, tokenString string) bool {
+func CheckTokenRevoked(userID uint32, tokenString string) bool {
 	collection := client.Database("aorb").Collection("refresh_tokens")
 	filter := bson.M{"user_id": userID, "token": tokenString}
 

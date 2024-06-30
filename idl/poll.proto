@@ -58,9 +58,9 @@ message QueryPollSummaryAndKeywordsResponse{
 }
 
 service PollService{
-  rpc ListPollsByRecommend(ListPollRequest) returns (ListPollResponse);
+//  rpc ListPollsByRecommend(ListPollRequest) returns (ListPollResponse);
   rpc ListPolls(ListPollRequest) returns (ListPollResponse);
   rpc QueryPolls(QueryPollRequest) returns (QueryPollResponse);
   rpc QueryPollExisted(PollExistRequest) returns (PollExistResponse);
-  rpc QueryPollSummaryAndKeywords(QueryPollSummaryAndKeywordsRequest) returns (QueryPollSummaryAndKeywordsResponse);
+//  rpc QueryPollSummaryAndKeywords(QueryPollSummaryAndKeywordsRequest) returns (QueryPollSummaryAndKeywordsResponse);
 }

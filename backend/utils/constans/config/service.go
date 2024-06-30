@@ -16,8 +16,8 @@ const CommentRpcServerAddr = ":37003"
 const VoteRpcServerName = "AorB-VoteService"
 const VoteRpcServerAddr = ":37004"
 
-const QuestionRpcServerName = "AorB-QuestionService"
-const QuestionRpcServerAddr = ":37005"
+const PollRpcServerName = "AorB-QuestionService"
+const PollRpcServerAddr = ":37005"
 
 const RecommendRpcServerName = "AorB-RecommendService"
 const RecommendRpcServerAddr = ":37006"

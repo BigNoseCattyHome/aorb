@@ -79,7 +79,7 @@ type User struct {
 	// 被关注者
 	Follower []string `json:"follower" bson:"follower"`
 	// 用户ID，这个是Objectid
-	Id string `json:"id" bson:"_id"`
+	Id uint32 `json:"id" bson:"_id"`
 	// IP归属地
 	Ipaddress string `json:"ipaddress" bson:"ipaddress"`
 	// 用户昵称
