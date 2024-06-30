@@ -8,5 +8,5 @@ import (
 // 运行整个项目
 
 func main() {
-	fmt.Println(config.Conf.Pod)
+	fmt.Println(config.Conf.Consul.Addr)
 }

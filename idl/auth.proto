@@ -3,7 +3,7 @@ package rpc.auth;
 option go_package = "github.com/BigNoseCattyHome/aorb/backend/rpc/auth;auth";
 
 // 导入必要的protobuf类型
-import "google/protobuf/timestamp.proto";
+import "timestamp.proto";
 
 // 定义消息，用于请求和响应结构
 message LoginRequest {
@@ -37,7 +37,7 @@ message VerifyRequest {
 
 message VerifyResponse {
   bool success = 1; // 是否有效
-  string user_id = 2; // 用户ID
+  uint32 user_id = 2; // 用户ID
   string username = 3; // 用户名
   int64 expires_at = 4; // 过期时间
 }

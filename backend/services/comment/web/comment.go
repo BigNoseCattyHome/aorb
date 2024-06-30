@@ -8,8 +8,8 @@ package web
 import (
 	"net/http"
 
-	"github.com/BigNoseCattyHome/aorb/backend/services/comment/models"
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/comment"
+	"github.com/BigNoseCattyHome/aorb/backend/services/comment/models"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constans/config"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constans/strings"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/extra/tracing"
@@ -45,8 +45,8 @@ func ActionCommentHandler(c *gin.Context) {
 	var err error
 	if req.ActionType == 1 {
 		res, err = Client.ActionComment(c.Request.Context(), &comment.ActionCommentRequest{
-			ActorId:    req.ActorId,
-			PollId:     req.PollId,
+			ActorId:    uint32(req.ActorId),
+			PollId:     uint32(req.PollId),
 			ActionType: comment.ActionCommentType_ACTION_COMMENT_TYPE_ADD,
 			Action: &comment.ActionCommentRequest_CommentText{
 				CommentText: req.CommentText,
@@ -54,11 +54,11 @@ func ActionCommentHandler(c *gin.Context) {
 		})
 	} else if req.ActionType == 2 {
 		res, err = Client.ActionComment(c.Request.Context(), &comment.ActionCommentRequest{
-			ActorId:    req.ActorId,
-			PollId:     req.PollId,
+			ActorId:    uint32(req.ActorId),
+			PollId:     uint32(req.PollId),
 			ActionType: comment.ActionCommentType_ACTION_COMMENT_TYPE_DELETE,
 			Action: &comment.ActionCommentRequest_CommentId{
-				CommentId: req.CommentId,
+				CommentId: uint32(req.CommentId),
 			},
 		})
 	} else {
@@ -105,8 +105,8 @@ func ListCommentHandler(c *gin.Context) {
 		return
 	}
 	res, err := Client.ListComment(c.Request.Context(), &comment.ListCommentRequest{
-		ActorId: req.ActorId,
-		PollId:  req.PollId,
+		ActorId: uint32(req.ActorId),
+		PollId:  uint32(req.PollId),
 	})
 
 	if err != nil {
@@ -145,8 +145,8 @@ func CountCommentHandler(c *gin.Context) {
 		return
 	}
 	res, err := Client.CountComment(c.Request.Context(), &comment.CountCommentRequest{
-		ActorId: req.ActorId,
-		PollId:  req.PollId,
+		ActorId: uint32(req.ActorId),
+		PollId:  uint32(req.PollId),
 	})
 	if err != nil {
 		logger.WithFields(logrus.Fields{

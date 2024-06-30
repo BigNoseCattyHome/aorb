@@ -17,9 +17,8 @@ func Connect(serviceName string) (conn *grpc.ClientConn) {
 		Timeout:             1 * time.Second,  // wait 1 second for ping ack before considering the connection dead
 		PermitWithoutStream: false,            // send pings even without active streams
 	}
-	consulAddr := config.Conf.Consul.Port + ":" + config.Conf.Consul.Port
 	conn, err := grpc.Dial(
-		fmt.Sprintf("consul://%s/%s?wait=15s", consulAddr, config.Conf.Consul.AnonymityName+serviceName),
+		fmt.Sprintf("consul://%s/%s?wait=15s", config.Conf.Consul.Addr, config.Conf.Consul.AnonymityName+serviceName),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`),
 		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),

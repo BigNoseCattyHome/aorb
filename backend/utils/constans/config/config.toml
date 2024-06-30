@@ -1,22 +1,24 @@
 [Consul]
-    host = "127.0.0.1"
-    port = 8500
+    addr = "127.0.0.1:8500"
     anonymityName = "paraparty."
 
 [Pod]
     podIp = "localhost"
 
 [Log]
-    loggerLevel = "INFO"
+    loggerLevel = "DEBUG"
 
 [Tracing]
     endPoint = "http://localhost:14268/api/traces"
     state = "disable"       # disable / enable
     sampler = 0.01
 
-[Server]
-    port = 4000
-    version = "1.0"
+#[Server]
+#    port = 4000
+#    version = "1.0"
+
+[Other]
+    anonymityUser = 1
 
 [Pyroscope]
     host = "127.0.0.1"

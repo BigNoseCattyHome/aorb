@@ -47,7 +47,7 @@ func main() {
 	// 设置日志记录器
 	log := logging.LogService(config.AuthRpcServerName)
 	// 创建 TCP 监听器
-	lis, err := net.Listen("tcp", config.Conf.Pod.PodIpAddress+config.AuthRpcServerAddr)
+	lis, err := net.Listen("tcp", config.Conf.Pod.PodIp+config.AuthRpcServerAddr)
 	if err != nil {
 		// 如果监听失败，记录错误并 panic
 		log.Panicf("Rpc %s listen happens error: %v", config.AuthRpcServerName, err)
@@ -103,7 +103,7 @@ func main() {
 
 	// 启动 HTTP 服务器以提供 Prometheus 指标
 	httpSrv := &http.Server{
-		Addr: config.Conf.Pod.PodIpAddress + config.Metrics,
+		Addr: config.Conf.Pod.PodIp + config.Metrics,
 	}
 	g.Add(func() error {
 		// 设置 HTTP 处理函数

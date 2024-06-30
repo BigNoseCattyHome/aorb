@@ -8,18 +8,22 @@ import (
 var Conf *Config
 
 type Config struct {
-	Consul    *Consul             `toml:"Consul"`
-	Server    *Server             `toml:"Server"`
-	MongoDB   *MongoDB            `toml:"MongoDB"`
-	Redis     *Redis              `toml:"Redis"`
-	JWT       *JWT                `toml:"JWT"`
-	Etcd      *Etcd               `toml:"Etcd"`
-	Services  map[string]*Service `toml:"Services"`
-	Pod       *Pod                `toml:"Pod"`
-	Log       *Log                `toml:"Log"`
-	Tracing   *Tracing            `toml:"Tracing"`
-	RabbitMQ  *RabbitMQ           `toml:"RabbitMQ"`
-	PyroScope *PyroScope          `toml:"PyroScope"`
+	Consul   *Consul             `toml:"Consul"`
+	MongoDB  *MongoDB            `toml:"MongoDB"`
+	Redis    *Redis              `toml:"Redis"`
+	JWT      *JWT                `toml:"JWT"`
+	Etcd     *Etcd               `toml:"Etcd"`
+	Services map[string]*Service `toml:"Services"`
+	Pod      *Pod                `toml:"Pod"`
+	Log      *Log                `toml:"Log"`
+	Tracing  *Tracing            `toml:"Tracing"`
+	RabbitMQ *RabbitMQ           `toml:"RabbitMQ"`
+	Other    *Other              `toml:"Other"`
+	//PyroScope *PyroScope          `toml:"PyroScope"`
+}
+
+type Other struct {
+	AnonymityUser string `toml:"anonymityUser"`
 }
 
 type PyroScope struct {
@@ -47,13 +51,12 @@ type Log struct {
 }
 
 type Consul struct {
-	Host          string `toml:"host"`
-	Port          string `toml:"port"`
+	Addr          string `toml:"addr"`
 	AnonymityName string `toml:"anonymityName"`
 }
 
 type Pod struct {
-	PodIpAddress string `toml:"podIp"`
+	PodIp string `toml:"podIp"`
 }
 
 type Server struct {

@@ -4,7 +4,7 @@ import "user.proto";
 option go_package = "github.com/BigNoseCattyHome/aorb/backend/rpc/poll;poll";
 
 message Poll{
-  string id = 1;  // 问题id
+  uint32 id = 1;  // 问题id
   user.User user = 2; // 用户信息
   string title = 3; // 问题标题
   string choice_a = 4;  // 选项a
@@ -13,7 +13,7 @@ message Poll{
 }
 
 message ListPollRequest{
-  optional string actor_id = 1;
+  optional uint32 actor_id = 1;
   optional string latest_time = 2;
 }
 
@@ -25,8 +25,8 @@ message ListPollResponse{
 }
 
 message QueryPollRequest{
-  string actor_id = 1;
-  repeated string poll_ids = 2;
+  uint32 actor_id = 1;
+  repeated uint32 poll_ids = 2;
 }
 
 message QueryPollResponse{
@@ -36,7 +36,7 @@ message QueryPollResponse{
 }
 
 message PollExistRequest{
-  string poll_id = 1;
+  uint32 poll_id = 1;
 }
 
 message PollExistResponse{
@@ -46,8 +46,8 @@ message PollExistResponse{
 }
 
 message QueryPollSummaryAndKeywordsRequest{
-  string actor_id = 1;
-  string poll_id = 2;
+  uint32 actor_id = 1;
+  uint32 poll_id = 2;
 }
 
 message QueryPollSummaryAndKeywordsResponse{

@@ -17,19 +17,18 @@ message User {
   repeated CoinRecord coins_record = 4; // 用户金币流水记录
   repeated string followed = 5; // 关注者
   repeated string follower = 6; // 被关注者
-  string id = 7; // 用户ID
+  uint32 id = 7; // 用户ID
   optional string ipaddress = 8; // IP归属地
   string nickname = 9; // 用户昵称
-  string password = 10; // 用户密码
-  repeated string questions_ask = 11; // 发起过的问题
-  repeated string questions_asw = 12; // 回答过的问题
-  repeated string questions_collect = 13; // 收藏的问题
-  string username = 14; // 用户登录名
+  repeated uint32 questions_ask = 10; // 发起过的问题
+  repeated uint32 questions_asw = 11; // 回答过的问题
+  repeated uint32 questions_collect = 12; // 收藏的问题
+  string username = 13; // 用户登录名
 }
 
 message UserRequest{
-  string user_id = 1;   // 用户id
-  string actor_id = 2;  // 发送请求的用户的id
+  uint32 user_id = 1;   // 用户id
+  uint32 actor_id = 2;  // 发送请求的用户的id
 }
 
 message UserResponse{
@@ -39,7 +38,7 @@ message UserResponse{
 }
 
 message UserExistRequest{
-  string user_id = 1; // 用户id
+  uint32 user_id = 1; // 用户id
 }
 
 message UserExistResponse{

@@ -20,8 +20,6 @@ proto:
             protoc -I$(PROTO_PATH) \
                 --go_out=$(GO_OUT_PATH)/$$prefix --go_opt=paths=source_relative \
                 --go-grpc_out=$(GO_OUT_PATH)/$$prefix --go-grpc_opt=paths=source_relative \
-                --dart_out=grpc:$(OUTPUT_DART_PATH) \
-                --plugin=protoc-gen-dart=$(PROTOC_GEN_DART) \
                 $$file; \
             echo "Generated gRPC code for $$prefix"; \
         fi; \

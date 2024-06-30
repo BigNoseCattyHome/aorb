@@ -1,33 +1,70 @@
 package main
 
 import (
-	"log"
-
-	"github.com/BigNoseCattyHome/aorb/backend/api-gateway/conf"
-	"github.com/BigNoseCattyHome/aorb/backend/api-gateway/routes"
+	"context"
+	"github.com/BigNoseCattyHome/aorb/backend/api-gateway/middleware"
+	"github.com/BigNoseCattyHome/aorb/backend/utils/constans/config"
+	"github.com/BigNoseCattyHome/aorb/backend/utils/extra/tracing"
+	"github.com/BigNoseCattyHome/aorb/backend/utils/logging"
+	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
+
+	comment2 "github.com/BigNoseCattyHome/aorb/backend/services/comment/web"
+	ginprometheus "github.com/zsais/go-gin-prometheus"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 )
 
-func init() {
-	// 初始化配置文件
-	if err := conf.LoadConfig(); err != nil {
-		log.Fatalf("Failed to load configuration: %v", err)
-	}
-}
-
 func main() {
-	// 读取配置api的前缀和版本
-	apiPrefix := conf.AppConfig.GetString("api.prefix")
-	apiVersion := conf.AppConfig.GetString("api.version")
+	tp, err := tracing.SetTraceProvider(config.WebServerName)
+	if err != nil {
+		logging.Logger.WithFields(logrus.Fields{
+			"error": err,
+		}).Panicf("Error to set the trace")
+	}
+	defer func() {
+		if err := tp.Shutdown(context.Background()); err != nil {
+			logging.Logger.WithFields(logrus.Fields{
+				"error": err,
+			}).Errorf("Error to set the trace")
+		}
+	}()
 
-	router := gin.Default()
+	g := gin.Default()
+	// 配置prometheus
+	p := ginprometheus.NewPrometheus("aorb-WebGateway")
+	p.Use(g)
+	// 配置gzip
+	g.Use(gzip.Gzip(gzip.DefaultCompression))
+	// 配置tracing
+	g.Use(otelgin.Middleware(config.WebServerName))
+	g.Use(middleware.Authenticate())
 
-	// 设置api前缀，返回一个新的RouterGroup
-	apiGroup := router.Group(apiPrefix + "/" + apiVersion)
+	rootPath := g.Group("/aorb")
+	ping := rootPath.Group("/ping")
+	{
+		ping.GET("/", func(c *gin.Context) {
+			c.JSON(200, gin.H{
+				"message": "pong",
+			})
+		})
+	}
 
-	// 注册路由，RegisterRoutes函数在routes/gateway_routes.go中定义
-	routes.RegisterRoutes(apiGroup)
+	user := rootPath.Group("/user")
+	{
+		user.GET("", func(c *gin.Context) {})
+	}
 
-	// 启动服务器
-	router.Run(":8080")
+	comment := rootPath.Group("/comment")
+	{
+		comment.GET("/action/", comment2.ActionCommentHandler)
+		comment.POST("/list/", comment2.ListCommentHandler)
+		comment.POST("/count/", comment2.CountCommentHandler)
+	}
+
+	// run
+	if err := g.Run(config.WebServerAddr); err != nil {
+		panic("Can not run aorb Gateway, binding port: " + config.WebServerAddr)
+	}
+
 }
