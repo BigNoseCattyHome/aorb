@@ -1,21 +1,24 @@
 package models
 
+import "time"
+
 type User struct {
-	// 与数据库交互的实体，需修改
-	ID       uint32 `gorm:"not null; primary_key; autoIncrement"`               // 用户id
-	UserName string `gorm:"not null; unique; size: 32; index" redis:"UserName"` // 用户名
-	Password string `gorm:"not null" redis:"Password"`                          // 密码
-	Role     int    `gorm:"default:1" redis:"Role"`                             // 角色(普通用户或者管理员)
-	Coins    int32  `gorm:"default:0" redis:"Coins"`                            // 金币数量
-	Avatar   string `redis:"Avatar"`                                            // 头像地址
+	ID       uint32    `json:"id" bson:"_id,omitempty"`
+	Username string    `json:"username" bson:"username,omitempty"`
+	Nickname string    `json:"nickname" bson:"nickname,omitempty"`
+	Password string    `json:"password" bson:"password,omitempty"`
+	Avatar   string    `json:"avatar" bson:"avatar,omitempty"`
+	CreateAt time.Time `json:"create_at" bson:"create_at,omitempty"`
+	UpdateAt time.Time `json:"update_at" bson:"update_at,omitempty"`
+	DeleteAt time.Time `json:"delete_at" bson:"delete_at,omitempty"`
 }
 
-type UserRequest struct {
-	UserId  uint32 `json:"user_id" binding:"required"`
-	ActorId uint32 `json:"actor_id" binding:"required"`
+type UserReq struct {
+	UserId  uint32 `form:"user_id" binding:"required"`
+	ActorId uint32 `form:"actor_id" binding:"required"`
 }
 
-type UserResponse struct {
+type UserRes struct {
 	StatusCode int32  `json:"status_code"` // 状态码，0-成功，其他值-失败
 	StatusMsg  string `json:"status_msg"`  // 返回状态描述
 }

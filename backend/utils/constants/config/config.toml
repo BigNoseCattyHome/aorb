@@ -1,21 +1,29 @@
 [Consul]
-    address = "127.0.0.1:8500"
+    addr = "127.0.0.1:8500"
     anonymityName = "paraparty."
 
 [Pod]
-    podIp = ""
+    podIp = "localhost"
 
 [Log]
     loggerLevel = "DEBUG"
 
 [Tracing]
-    endPoint = "localhost:14268/api/traces"
+    endPoint = "http://localhost:14268/api/traces"
     state = "disable"       # disable / enable
     sampler = 0.01
 
 #[Server]
 #    port = 4000
 #    version = "1.0"
+
+[Other]
+    anonymityUser = 1
+
+[Pyroscope]
+    host = "127.0.0.1"
+    port = 4040
+    state = "disable"
 
 [MongoDB]
     host = "127.0.0.1"
@@ -42,41 +50,38 @@
 [JWT]
     jwtSecrete = 38324
 
-#[Etcd]
-#    host = "127.0.0.1"
-#    port = 2379
+[Etcd]
+    host = "127.0.0.1"
+    port = 2379
 
-[Other]
-    anonymity_user = "BigNoseCat"
-
-#[Services]
-#    [Services.Auth]
-#        name = "auth"
-#        loadBalance = "true"
-#        host = "127.0.0.1"
-#        port = 10001
-#    [Services.Comment]
-#        name = "comment"
-#        loadBalance = "true"
-#        host = "127.0.0.1"
-#        port = 10002
-#    [Services.Question]
-#        name = "question"
-#        loadBalance = "true"
-#        host = "127.0.0.1"
-#        port = 10003
-#    [Services.Recommend]
-#        name = "recommend"
-#        loadBalance = "true"
-#        host = "127.0.0.1"
-#        port = 10004
-#    [Services.User]
-#        name = "user"
-#        loadBalance = "true"
-#        host = "127.0.0.1"
-#        port = 10005
-#    [Services.Vote]
-#        name = "vote"
-#        loadBalance = "true"
-#        host = "127.0.0.1"
-#        port = 10006
+[Services]
+    [Services.Auth]
+        name = "auth"
+        loadBalance = "true"
+        host = "127.0.0.1"
+        port = 10001
+    [Services.Comment]
+        name = "comment"
+        loadBalance = "true"
+        host = "127.0.0.1"
+        port = 10002
+    [Services.Question]
+        name = "question"
+        loadBalance = "true"
+        host = "127.0.0.1"
+        port = 10003
+    [Services.Recommend]
+        name = "recommend"
+        loadBalance = "true"
+        host = "127.0.0.1"
+        port = 10004
+    [Services.User]
+        name = "user"
+        loadBalance = "true"
+        host = "127.0.0.1"
+        port = 10005
+    [Services.Vote]
+        name = "vote"
+        loadBalance = "true"
+        host = "127.0.0.1"
+        port = 10006

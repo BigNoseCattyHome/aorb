@@ -17,10 +17,6 @@ func Connect(serviceName string) (conn *grpc.ClientConn) {
 		Timeout:             1 * time.Second,  // wait 1 second for ping ack before considering the connection dead
 		PermitWithoutStream: false,            // send pings even without active streams
 	}
-<<<<<<< HEAD
-=======
-	consulAddr := config.Conf.Consul.Address
->>>>>>> 5e8d2c22af3906e3c3f602401640cd91d87f4ef7
 	conn, err := grpc.Dial(
 		fmt.Sprintf("consul://%s/%s?wait=15s", config.Conf.Consul.Addr, config.Conf.Consul.AnonymityName+serviceName),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),

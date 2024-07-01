@@ -1,7 +1,7 @@
 package web
 
 import (
-	userModels "github.com/BigNoseCattyHome/aorb/backend/go-services/user/models"
+	userModel "github.com/BigNoseCattyHome/aorb/backend/go-services/user/models"
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/user"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/strings"
@@ -22,14 +22,14 @@ func init() {
 }
 
 func UserHandler(c *gin.Context) {
-	var req userModels.UserRequest
+	var req userModel.UserReq
 	_, span := tracing.Tracer.Start(c.Request.Context(), "UserInfoHandler")
 	defer span.End()
 	logging.SetSpanWithHostname(span)
 	logger := logging.LogService("GateWay.UserInfo").WithContext(c.Request.Context())
 
 	if err := c.ShouldBindQuery(&req); err != nil {
-		c.JSON(http.StatusOK, userModels.UserResponse{
+		c.JSON(http.StatusOK, userModel.UserRes{
 			StatusCode: strings.GateWayParamsErrorCode,
 			StatusMsg:  strings.GateWayParamsError,
 		})

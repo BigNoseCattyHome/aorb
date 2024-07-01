@@ -2,8 +2,8 @@ package middleware
 
 import (
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/auth"
-	"github.com/BigNoseCattyHome/aorb/backend/utils/constans/config"
-	"github.com/BigNoseCattyHome/aorb/backend/utils/constans/strings"
+	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
+	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/strings"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/extra/tracing"
 	grpc2 "github.com/BigNoseCattyHome/aorb/backend/utils/grpc"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/logging"

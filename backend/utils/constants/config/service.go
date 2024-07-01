@@ -4,27 +4,27 @@ package config
 const WebServerName = "AorB-Gateway"
 const WebServerAddr = ":37000"
 
-const AuthRpcServerName = "AorB-AuthServer"
+const AuthRpcServerName = "AorB-AuthService"
 const AuthRpcServerAddr = ":37001"
 
-const UserRpcServerName = "AorB-UserServer"
+const UserRpcServerName = "AorB-UserService"
 const UserRpcServerAddr = ":37002"
 
-const CommentRpcServerName = "AorB-CommentServer"
+const CommentRpcServerName = "AorB-CommentService"
 const CommentRpcServerAddr = ":37003"
 
-const VoteServerName = "AorB-VoteServer"
-const VoteServerAddr = ":37004"
+const VoteRpcServerName = "AorB-VoteService"
+const VoteRpcServerAddr = ":37004"
 
-const PollRpcServerName = "AorB-PollServer"
+const PollRpcServerName = "AorB-QuestionService"
 const PollRpcServerAddr = ":37005"
 
-const RecommendRpcServerName = "AorB-RecommendServer"
+const RecommendRpcServerName = "AorB-RecommendService"
 const RecommendRpcServerAddr = ":37006"
 
 const Metrics = ":37099"
-const PollProcessorRpcServiceName = "AorB-PollProcessorServer"
+const PollProcessorRpcServiceName = "GuGoTik-PollProcessorService"
 
-const Event = "AorB-Recommend"
-const MsgConsumer = "AorB-MgsConsumer"
-const BloomRedisChannel = "AorB-Bloom"
+const Event = "GuGoTik-Recommend"
+const MsgConsumer = "GuGoTik-MgsConsumer"
+const BloomRedisChannel = "GuGoTik-Bloom"

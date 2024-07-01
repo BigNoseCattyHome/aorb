@@ -3,14 +3,15 @@ package main
 import (
 	"context"
 	"github.com/BigNoseCattyHome/aorb/backend/api-gateway/middleware"
-	"github.com/BigNoseCattyHome/aorb/backend/utils/constans/config"
+	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/extra/tracing"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/logging"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 
-	comment2 "github.com/BigNoseCattyHome/aorb/backend/services/comment/web"
+	comment2 "github.com/BigNoseCattyHome/aorb/backend/go-services/comment/web"
+	user2 "github.com/BigNoseCattyHome/aorb/backend/go-services/user/web"
 	ginprometheus "github.com/zsais/go-gin-prometheus"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 )
@@ -52,13 +53,13 @@ func main() {
 
 	user := rootPath.Group("/user")
 	{
-		user.GET("", func(c *gin.Context) {})
+		user.GET("/", user2.UserHandler)
 	}
 
 	comment := rootPath.Group("/comment")
 	{
 		comment.GET("/action/", comment2.ActionCommentHandler)
-		comment.POST("/list/", comment2.ListCommentHandler)
+		comment.GET("/list/", comment2.ListCommentHandler)
 		comment.POST("/count/", comment2.CountCommentHandler)
 	}
 
