@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:aorb/screens/home_page.dart';
 import 'package:aorb/screens/messages_page.dart';
 import 'package:aorb/screens/me_page.dart';
+import 'package:aorb/screens/login_page.dart';
 import 'package:aorb/widgets/top_bar_index.dart';
 import 'package:aorb/services/auth_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -24,11 +25,7 @@ class MainPageState extends State<MainPage>
   late String avatar; // 在initstate中从本地读取，用于底部状态栏的icon的展示
 
   // TODO 根据登录状态调整“我的”页面，当登录的时候就展示“我的”页面，当没有登录的时候展示Login页面
-  late final List<Widget> _pages = [
-    HomePage(tabController: tabController), // 传递 _tabController 给 HomePage
-    MessagesPage(tabController: tabController),
-    MePage(userId: userId),
-  ];
+  late List<Widget> _pages;
 
   @override
   void initState() {
@@ -37,12 +34,57 @@ class MainPageState extends State<MainPage>
     tabController = TabController(length: 2, vsync: this);
     _currentIndex = widget.initialIndex;
 
-    // 获取登录状态，没有触发UI更新
-    AuthService().checkLoginStatus().then((value) => isLoggedIn = value);
+    // 获取登录状态
+    AuthService()
+        .checkLoginStatus() // 用户要是登录了就返回true，否则返回false
+        .then((value) {
+      setState(() {
+        isLoggedIn = value;
+      });
 
-    // 从本地中读取userId，传递给_pages，本地userId的来源是登录的时候写进去的
-    SharedPreferences.getInstance().then((prefs) => prefs.getString('userId'));
-    SharedPreferences.getInstance().then((prefs) => prefs.getString('avtar'));
+      // 如果用户登录了
+      if (isLoggedIn) {
+        // 从本地中读取userId，传递给_pages，本地userId的来源是登录的时候写进去的
+        SharedPreferences.getInstance().then((prefs) {
+          setState(() {
+            userId = prefs.getString('userId') ?? ''; // 确保有默认值
+            avatar = prefs.getString('avatar') ?? ''; // 确保有默认值
+            _pages = [
+              HomePage(tabController: tabController),
+              MessagesPage(tabController: tabController),
+              MePage(userId: userId),
+            ];
+          });
+        });
+      } else {
+        // 用户没有登录的时候，将第三个页面赋值为登录页面
+        setState(() {
+          userId = '';
+          avatar = '';
+          _pages = [
+            HomePage(
+                tabController: tabController), // 传递 _tabController 给 HomePage
+            MessagesPage(tabController: tabController),
+            const LoginPage(),
+          ];
+        });
+      }
+    }).catchError((e) {
+      // 处理错误情况
+      setState(() {
+        userId = '';
+        avatar = '';
+        _pages = [
+          HomePage(
+              tabController: tabController), // 传递 _tabController 给 HomePage
+          MessagesPage(tabController: tabController),
+          const LoginPage(),
+        ];
+      });
+
+      // 打印错误信息
+      print("Error on mainpage: $e");
+    });
   }
 
   // 底部导航栏切换
