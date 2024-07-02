@@ -10,14 +10,12 @@ import (
 	"github.com/BigNoseCattyHome/aorb/backend/utils/prom"
 	grpcprom "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
 	"github.com/oklog/run"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"net"
-	"net/http"
 	"os"
 	"syscall"
 )
@@ -39,7 +37,7 @@ func main() {
 	}()
 
 	log := logging.LogService(config.UserRpcServerName)
-	lis, err := net.Listen("tcp", config.Conf.Consul.Addr+config.UserRpcServerAddr)
+	lis, err := net.Listen("tcp", config.Conf.Pod.PodIp+config.UserRpcServerAddr)
 
 	if err != nil {
 		log.Panicf("Rpc %s listen happens error: %v", config.UserRpcServerName, err)
@@ -80,25 +78,25 @@ func main() {
 		log.Errorf("Rpc %s listen happens error for: %v", config.UserRpcServerName, err)
 	})
 
-	httpSrv := &http.Server{
-		Addr: config.Conf.Pod.PodIp + config.Metrics,
-	}
-	g.Add(func() error {
-		m := http.NewServeMux()
-		m.Handle("/metrics", promhttp.HandlerFor(
-			reg,
-			promhttp.HandlerOpts{
-				EnableOpenMetrics: true,
-			},
-		))
-		httpSrv.Handler = m
-		log.Infof("Promethus now running")
-		return httpSrv.ListenAndServe()
-	}, func(err error) {
-		if err := httpSrv.Close(); err != nil {
-			log.Errorf("Prometheus %s listen happens error for: %v", config.UserRpcServerName, err)
-		}
-	})
+	//httpSrv := &http.Server{
+	//	Addr: config.Conf.Pod.PodIp + config.Metrics,
+	//}
+	//g.Add(func() error {
+	//	m := http.NewServeMux()
+	//	m.Handle("/metrics", promhttp.HandlerFor(
+	//		reg,
+	//		promhttp.HandlerOpts{
+	//			EnableOpenMetrics: true,
+	//		},
+	//	))
+	//	httpSrv.Handler = m
+	//	log.Infof("Promethus now running")
+	//	return httpSrv.ListenAndServe()
+	//}, func(err error) {
+	//	if err := httpSrv.Close(); err != nil {
+	//		log.Errorf("Prometheus %s listen happens error for: %v", config.UserRpcServerName, err)
+	//	}
+	//})
 
 	g.Add(run.SignalHandler(context.Background(), syscall.SIGINT, syscall.SIGTERM))
 

@@ -5,7 +5,6 @@ package main
 import (
 	"context"
 	"net"
-	"net/http"
 	"os"
 	"syscall"
 
@@ -17,7 +16,6 @@ import (
 	"github.com/BigNoseCattyHome/aorb/backend/utils/prom"
 	grpcprom "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
 	"github.com/oklog/run"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
@@ -81,9 +79,9 @@ func main() {
 	defer CloseMQConn()
 
 	// 再次注册到 Consul
-	if err := consul.RegisterConsul(config.CommentRpcServerName, config.CommentRpcServerAddr); err != nil {
-		log.Panicf("Rpc %s register consul happens error for: %v", config.CommentRpcServerName, err)
-	}
+	//if err := consul.RegisterConsul(config.CommentRpcServerName, config.CommentRpcServerAddr); err != nil {
+	//	log.Panicf("Rpc %s register consul happens error for: %v", config.CommentRpcServerName, err)
+	//}
 	srv.New()
 	srvMetrics.InitializeMetrics(s)
 
@@ -100,27 +98,27 @@ func main() {
 	})
 
 	// 启动 HTTP 服务器以提供 Prometheus 指标
-	httpSrv := &http.Server{
-		Addr: config.Conf.Pod.PodIp + config.Metrics,
-	}
-	g.Add(func() error {
-		// 设置 HTTP 处理函数
-		m := http.NewServeMux()
-		m.Handle("/metrics", promhttp.HandlerFor(
-			reg,
-			promhttp.HandlerOpts{
-				EnableOpenMetrics: true,
-			},
-		))
-		httpSrv.Handler = m
-		log.Infof("Promethus now running")
-		return httpSrv.ListenAndServe()
-	}, func(err error) {
-		// 关闭 HTTP 服务器
-		if err := httpSrv.Close(); err != nil {
-			log.Errorf("Prometheus %s listen happens error for: %v", config.CommentRpcServerName, err)
-		}
-	})
+	//httpSrv := &http.Server{
+	//	Addr: config.Conf.Pod.PodIp + config.Metrics,
+	//}
+	//g.Add(func() error {
+	//	// 设置 HTTP 处理函数
+	//	m := http.NewServeMux()
+	//	m.Handle("/metrics", promhttp.HandlerFor(
+	//		reg,
+	//		promhttp.HandlerOpts{
+	//			EnableOpenMetrics: true,
+	//		},
+	//	))
+	//	httpSrv.Handler = m
+	//	log.Infof("Promethus now running")
+	//	return httpSrv.ListenAndServe()
+	//}, func(err error) {
+	//	// 关闭 HTTP 服务器
+	//	if err := httpSrv.Close(); err != nil {
+	//		log.Errorf("Prometheus %s listen happens error for: %v", config.CommentRpcServerName, err)
+	//	}
+	//})
 
 	// 添加信号处理函数，处理 SIGINT 和 SIGTERM 信号
 	g.Add(run.SignalHandler(context.Background(), syscall.SIGINT, syscall.SIGTERM))

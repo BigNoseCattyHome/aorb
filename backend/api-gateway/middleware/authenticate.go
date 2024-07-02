@@ -61,7 +61,7 @@ func Authenticate() gin.HandlerFunc {
 		span.SetAttributes(attribute.String("token", token))
 
 		// 验证token
-		authenticate, err := client.Verify(c.Request.Context(), &auth.VerifyRequest{
+		authenticate, err := client.Authenticate(c.Request.Context(), &auth.AuthenticateRequest{
 			Token: token,
 		})
 		if err != nil {
@@ -77,7 +77,7 @@ func Authenticate() gin.HandlerFunc {
 			return
 		}
 
-		if authenticate.Success == false {
+		if authenticate.StatusCode != 0 {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"status_code": strings.AuthUserNeededCode,
 				"status_msg":  strings.AuthUserNeeded,

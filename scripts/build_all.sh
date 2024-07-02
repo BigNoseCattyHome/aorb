@@ -1,4 +1,4 @@
-echo "Please run me at root dir"
+echo "Please Run Me on the root dir, not in scripts dir."
 
 if [ -d "output" ]; then
     echo "Output dir existed, deleting and recreating..."
@@ -9,13 +9,13 @@ mkdir -p output/services
 pushd backend/go-services || exit
 
 for i in *; do
-  cd services
-  if [ "$i" != "health" ]; then
-    echo "$i"
-    capName="${name}"
-    cd "$i" || exit
-    go build -o "../../../output/services/$i/${capName}Service"
-    cd ..
+  if [ -d "$i" ] && [ "$i" != "health" ]; then
+      echo "$i"
+      name="$i"
+      capName="${name}"
+      cd "$i"/services
+      go build -o "../../../../output/services/$i/${capName}Service"
+      cd ../..
   fi
 done
 
@@ -28,6 +28,3 @@ cd backend/api-gateway || exit
 go build -o "../../output/gateway/Gateway"
 
 echo "OK!"
-
-
-

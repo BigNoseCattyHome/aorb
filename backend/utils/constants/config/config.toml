@@ -13,6 +13,10 @@
     state = "disable"       # disable / enable
     sampler = 0.01
 
+[Gorse]
+    gorseAddr = ""
+    gorseApikey = ""
+
 #[Server]
 #    port = 4000
 #    version = "1.0"

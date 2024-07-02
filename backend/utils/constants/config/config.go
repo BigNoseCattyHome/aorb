@@ -18,6 +18,7 @@ type Config struct {
 	Log      *Log                `toml:"Log"`
 	Tracing  *Tracing            `toml:"Tracing"`
 	RabbitMQ *RabbitMQ           `toml:"RabbitMQ"`
+	Gorse    *Gorse              `toml:"Gorse"`
 	Other    *Other              `toml:"Other"`
 	// Etcd     *Etcd               `toml:"Etcd"`
 	//PyroScope *PyroScope          `toml:"PyroScope"`
@@ -25,6 +26,11 @@ type Config struct {
 
 type Other struct {
 	AnonymityUser string `toml:"anonymityUser"`
+}
+
+type Gorse struct {
+	GorseAddr   string `toml:"gorseAddr"`
+	GorseApikey string `toml:"gorseApikey"`
 }
 
 type Tracing struct {
