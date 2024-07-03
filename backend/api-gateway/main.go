@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 
+	auth2 "github.com/BigNoseCattyHome/aorb/backend/go-services/auth/web"
 	comment2 "github.com/BigNoseCattyHome/aorb/backend/go-services/comment/web"
 	user2 "github.com/BigNoseCattyHome/aorb/backend/go-services/user/web"
 	ginprometheus "github.com/zsais/go-gin-prometheus"
@@ -33,7 +34,7 @@ func main() {
 
 	g := gin.Default()
 	// 配置prometheus
-	p := ginprometheus.NewPrometheus("aorb-WebGateway")
+	p := ginprometheus.NewPrometheus("AorB-WebGateway")
 	p.Use(g)
 	// 配置gzip
 	g.Use(gzip.Gzip(gzip.DefaultCompression))
@@ -54,6 +55,8 @@ func main() {
 	user := rootPath.Group("/user")
 	{
 		user.GET("/", user2.UserHandler)
+		user.POST("/login/", auth2.LoginHandler)
+		user.POST("/register/", auth2.RegisterHandle)
 	}
 
 	comment := rootPath.Group("/comment")

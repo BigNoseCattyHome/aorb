@@ -1,7 +1,7 @@
 package config
 
 // 微服务的名字以及端口
-const WebServerName = "AorB-Gateway"
+const WebServerName = "AorB-WebGateway"
 const WebServerAddr = ":37000"
 
 const AuthRpcServerName = "AorB-AuthService"
@@ -16,7 +16,7 @@ const CommentRpcServerAddr = ":37003"
 const VoteRpcServerName = "AorB-VoteService"
 const VoteRpcServerAddr = ":37004"
 
-const PollRpcServerName = "AorB-QuestionService"
+const PollRpcServerName = "AorB-PollService"
 const PollRpcServerAddr = ":37005"
 
 const RecommendRpcServerName = "AorB-RecommendService"
