@@ -7,7 +7,7 @@ class LoginPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(32.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -15,19 +15,20 @@ class LoginPage extends StatelessWidget {
             const Text(
               '欢迎来到Aorb',
               style: TextStyle(
-                fontSize: 24,
+                fontSize: 40,
                 fontWeight: FontWeight.bold,
               ),
-              textAlign: TextAlign.center,
+              textAlign: TextAlign.left, // 左对齐
             ),
             const SizedBox(height: 8),
             const Text(
               '登录账户解锁更多功能~',
               style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
+                fontSize: 20,
+                color: Colors.black87,
+                fontWeight: FontWeight.bold,
               ),
-              textAlign: TextAlign.center,
+              textAlign: TextAlign.left, // 左对齐
             ),
             const SizedBox(height: 32),
             CircleAvatar(
@@ -55,12 +56,17 @@ class LoginPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-            ElevatedButton(
-              child: const Text('登录'),
+            // 圆形的按钮，内含右边的箭头，表示登录的按钮
+            MaterialButton(
+              color: Colors.blue,
+              textColor: Colors.white,
+              padding: const EdgeInsets.all(16),
+              shape: const CircleBorder(),
+              child: const Icon(Icons.arrow_forward),
               onPressed: () {
-                // 处理登录逻辑
+                // TODO: 登录逻辑
               },
-            ),
+            )
           ],
         ),
       ),
