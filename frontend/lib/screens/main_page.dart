@@ -19,7 +19,7 @@ class MainPage extends StatefulWidget {
 class MainPageState extends State<MainPage>
     with SingleTickerProviderStateMixin {
   late int _currentIndex; // 用于控制底部到行栏的切换
-  late TabController tabController; // 顶部导航栏控制器
+  late TabController tabController; // tabController用于控制子页面的顶部导航栏的切换
   late bool isLoggedIn; // 是否登录
   late String userId; // 在initstate中从本地读取，用于传递给 _pages中的MePage
   late String avatar; // 在initstate中从本地读取，用于底部状态栏的icon的展示
@@ -27,64 +27,48 @@ class MainPageState extends State<MainPage>
   // TODO 根据登录状态调整“我的”页面，当登录的时候就展示“我的”页面，当没有登录的时候展示Login页面
   late List<Widget> _pages;
 
+  // 将异步初始化逻辑移到单独的方法中
+  Future<void> _initializeData() async {
+    try {
+      bool loginStatus = await AuthService().checkLoginStatus();
+      setState(() {
+        isLoggedIn = loginStatus;
+      });
+
+      if (isLoggedIn) {
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        setState(() {
+          userId = prefs.getString('userId') ?? '';
+          avatar = prefs.getString('avatar') ?? '';
+          _pages[2] = MePage(userId: userId);
+        });
+      }
+    } catch (e) {
+      print("Error on mainpage: $e");
+      // 可以在这里处理错误,例如显示一个错误提示
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    // vsync: this 表示使用当前的 SingleTickerProviderStateMixin
+    // vsync是一个同步的信号，用于保证动画的同步性
     tabController = TabController(length: 2, vsync: this);
     _currentIndex = widget.initialIndex;
 
-    // 获取登录状态
-    AuthService()
-        .checkLoginStatus() // 用户要是登录了就返回true，否则返回false
-        .then((value) {
-      setState(() {
-        isLoggedIn = value;
-      });
-
-      // 如果用户登录了
-      if (isLoggedIn) {
-        // 从本地中读取userId，传递给_pages，本地userId的来源是登录的时候写进去的
-        SharedPreferences.getInstance().then((prefs) {
-          setState(() {
-            userId = prefs.getString('userId') ?? ''; // 确保有默认值
-            avatar = prefs.getString('avatar') ?? ''; // 确保有默认值
-            _pages = [
-              HomePage(tabController: tabController),
-              MessagesPage(tabController: tabController),
-              MePage(userId: userId),
-            ];
-          });
-        });
-      } else {
-        // 用户没有登录的时候，将第三个页面赋值为登录页面
-        setState(() {
-          userId = '';
-          avatar = '';
-          _pages = [
-            HomePage(
-                tabController: tabController), // 传递 _tabController 给 HomePage
-            MessagesPage(tabController: tabController),
-            const LoginPage(),
-          ];
-        });
-      }
-    }).catchError((e) {
-      // 处理错误情况
-      setState(() {
-        userId = '';
-        avatar = '';
-        _pages = [
-          HomePage(
-              tabController: tabController), // 传递 _tabController 给 HomePage
-          MessagesPage(tabController: tabController),
-          const LoginPage(),
-        ];
-      });
-
-      // 打印错误信息
-      print("Error on mainpage: $e");
+    // 提供初始值
+    setState(() {
+      userId = '';
+      avatar = '';
+      _pages = [
+        HomePage(tabController: tabController),
+        MessagesPage(tabController: tabController),
+        const LoginPage(),
+      ];
     });
+
+    // 异步获取登录状态
+    _initializeData();
   }
 
   // 底部导航栏切换
@@ -100,6 +84,12 @@ class MainPageState extends State<MainPage>
 
   @override
   Widget build(BuildContext context) {
+    if (_pages == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       // appBar随底部栏进行切换
       appBar: _currentIndex == 2
@@ -142,30 +132,68 @@ class MainPageState extends State<MainPage>
         items: <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: _currentIndex == 0
-                ? SvgPicture.asset('images/home_selected.svg')
-                : SvgPicture.asset('images/home_unselected.svg'),
+                ? SvgPicture.asset(
+                    'images/home_selected.svg',
+                    width: 35,
+                    height: 35,
+                    fit: BoxFit.contain,
+                  )
+                : SvgPicture.asset(
+                    'images/home_unselected.svg',
+                    width: 35,
+                    height: 35,
+                    fit: BoxFit.contain,
+                  ),
             label: '首页',
           ),
           BottomNavigationBarItem(
             icon: _currentIndex == 1
-                ? SvgPicture.asset('images/msg_selected.svg')
-                : SvgPicture.asset('images/msg_unselected.svg'),
+                ? SvgPicture.asset(
+                    'images/msg_selected.svg',
+                    width: 35,
+                    height: 35,
+                    fit: BoxFit.contain,
+                  )
+                : SvgPicture.asset(
+                    'images/msg_unselected.svg',
+                    width: 35,
+                    height: 35,
+                    fit: BoxFit.contain,
+                  ),
             label: '消息',
           ),
-          BottomNavigationBarItem(
-            icon: ClipOval(
-                child: CircleAvatar(
-              radius: 24,
-              backgroundColor:
-                  _currentIndex == 2 ? Colors.blue[700] : Colors.white,
-              child: CircleAvatar(
-                radius: 22, // 确保边框宽度
-                backgroundImage: NetworkImage(avatar),
-                backgroundColor: Colors.transparent,
-              ),
-            )),
-            label: '我',
-          ),
+          // 如果用户没有登录的话，就展示默认的icon，否则展示用户头像
+          avatar == ''
+              ? BottomNavigationBarItem(
+                  icon: _currentIndex == 2
+                      ? SvgPicture.asset(
+                          'images/me_selected.svg',
+                          width: 40,
+                          height: 40,
+                          fit: BoxFit.contain,
+                        )
+                      : SvgPicture.asset(
+                          'images/me_unselected.svg',
+                          width: 40,
+                          height: 40,
+                          fit: BoxFit.contain,
+                        ),
+                  label: '我',
+                )
+              : BottomNavigationBarItem(
+                  icon: ClipOval(
+                      child: CircleAvatar(
+                    radius: 24,
+                    backgroundColor:
+                        _currentIndex == 2 ? Colors.blue[700] : Colors.white,
+                    child: CircleAvatar(
+                      radius: 22, // 确保边框宽度
+                      backgroundImage: NetworkImage(avatar),
+                      backgroundColor: Colors.transparent,
+                    ),
+                  )),
+                  label: '我',
+                ),
         ],
         currentIndex: _currentIndex,
         selectedItemColor: Colors.blue[700],
