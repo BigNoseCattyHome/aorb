@@ -254,7 +254,7 @@ func (c CommentServiceImpl) ActionComment(ctx context.Context, request *comment.
 		return
 	}
 
-	countCommentKey := fmt.Sprintf("Comment-Count-%s", request.PollId)
+	countCommentKey := fmt.Sprintf("Comment-Count-%d", request.PollId)
 	cached.TagDelete(ctx, countCommentKey)
 
 	logger.WithFields(logrus.Fields{

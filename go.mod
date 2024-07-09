@@ -33,15 +33,16 @@ require (
 	go.opentelemetry.io/otel/trace v1.27.0
 	google.golang.org/grpc v1.64.0
 	google.golang.org/protobuf v1.34.1
-	gorm.io/gorm v1.25.10
 )
 
 require (
 	github.com/golang/protobuf v1.5.4 // indirect
-	github.com/jinzhu/inflection v1.0.0 // indirect
-	github.com/jinzhu/now v1.1.5 // indirect
+	github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/willf/bitset v1.1.11 // indirect
+	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
+	github.com/xdg-go/scram v1.1.2 // indirect
+	github.com/xdg-go/stringprep v1.0.4 // indirect
 )
 
 require (
