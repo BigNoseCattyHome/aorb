@@ -75,8 +75,7 @@ void main() {
         type: 'public',
         sponsor: '1',
         votes: [
-          Vote(choice: '大火腿', userId: '3'),
-          Vote(choice: '火锅', userId: '4')
+
         ],
         title: '午饭吃什么呀？',
         description:

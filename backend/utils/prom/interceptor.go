@@ -2,7 +2,7 @@ package prom
 
 import (
 	"context"
-	"github.com/BigNoseCattyHome/aorb/backend/utils/constans/config"
+	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -12,7 +12,7 @@ func ExtractContext(ctx context.Context) prometheus.Labels {
 		return prometheus.Labels{
 			"traceId": span.TraceID().String(),
 			"spanId":  span.SpanID().String(),
-			"podId":   config.Conf.Pod.PodIpAddress,
+			"podId":   config.Conf.Pod.PodIp,
 		}
 	}
 	return nil

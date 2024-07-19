@@ -22,25 +22,25 @@ class AuthService {
   }
 
   Future<LoginResponse> login(
-      String id, String password, String deviceId) async {
+      String username, String password, String deviceId) async {
     final request = LoginRequest()
-      ..id = id // 相当于 request.id = id
+      ..username = username // 相当于 request.username = username
       ..password = password
       ..deviceId = deviceId;
     final LoginResponse response = await _client.login(request);
     try {
-      if (response.success) {
+      if (response.statusCode) {
         logger.i('Login successful');
 
         // 存储用户信息到本地
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('authToken', response.token);
         await prefs.setString('refreshToken', response.refreshToken);
-        await prefs.setString('userId', response.simpleUser.id);
+        await prefs.setString('userId', response.simpleUser.username);
         await prefs.setString('avatar', response.simpleUser.avatar);
         await prefs.setString('nickname', response.simpleUser.nickname);
       } else {
-        logger.w('Login failed: ${response.message}');
+        logger.w('Login failed: ${response.statusMsg}');
       }
     } on GrpcError catch (e) {
       // 处理gRPC错误

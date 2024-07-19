@@ -2,7 +2,7 @@ package logging
 
 import (
 	"fmt"
-	"github.com/BigNoseCattyHome/aorb/backend/utils/constans/config"
+	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
 	log "github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -51,7 +51,7 @@ func init() {
 
 	Logger = log.WithFields(log.Fields{
 		"Hostname": hostname,
-		"Pod":      config.Conf.Pod.PodIpAddress,
+		"Pod":      config.Conf.Pod.PodIp,
 	})
 }
 
@@ -101,5 +101,5 @@ func SetSpanErrorWithDesc(span trace.Span, err error, desc string) {
 
 func SetSpanWithHostname(span trace.Span) {
 	span.SetAttributes(attribute.String("hostname", hostname))
-	span.SetAttributes(attribute.String("podIP", config.Conf.Pod.PodIpAddress))
+	span.SetAttributes(attribute.String("podIP", config.Conf.Pod.PodIp))
 }

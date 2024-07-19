@@ -6,7 +6,7 @@ option go_package = "github.com/BigNoseCattyHome/aorb/backend/rpc/comment;commen
 
 
 message Comment{
-  string id = 1;
+  uint32 id = 1;
   user.User user = 2;
   string content = 3;
   string create_at = 4;
@@ -19,12 +19,12 @@ enum ActionCommentType{
 }
 
 message ActionCommentRequest{
-  string actor_id = 1;
-  string poll_id = 2;
+  uint32 actor_id = 1;
+  uint32 poll_id = 2;
   ActionCommentType action_type = 3;
   oneof action{
     string comment_text = 4;
-    string comment_id = 5;
+    uint32 comment_id = 5;
   }
 }
 
@@ -35,8 +35,8 @@ message ActionCommentResponse{
 }
 
 message ListCommentRequest{
-  string actor_id = 1;
-  string poll_id = 2;
+  uint32 actor_id = 1;
+  uint32 poll_id = 2;
 }
 
 message ListCommentResponse{
@@ -46,8 +46,8 @@ message ListCommentResponse{
 }
 
 message CountCommentRequest{
-  string actor_id = 1;
-  string poll_id = 2;
+  uint32 actor_id = 1;
+  uint32 poll_id = 2;
 }
 
 message CountCommentResponse{

@@ -2,7 +2,7 @@ package tracing
 
 import (
 	"context"
-	"github.com/BigNoseCattyHome/aorb/backend/utils/constans/config"
+	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/logging"
 	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel"

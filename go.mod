@@ -6,6 +6,7 @@ go 1.22.1
 // replace github.com/BigNoseCattyHome/aorb => ../aorb
 
 require (
+	github.com/gin-contrib/gzip v1.0.1
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-redis/redis_rate/v10 v10.0.1
 	github.com/golang-jwt/jwt v3.2.2+incompatible
@@ -21,7 +22,9 @@ require (
 	github.com/redis/go-redis/v9 v9.5.3
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/viper v1.19.0
+	github.com/zsais/go-gin-prometheus v0.1.0
 	go.mongodb.org/mongo-driver v1.15.1
+	go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin v0.52.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.49.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.49.0
 	go.opentelemetry.io/otel v1.27.0
@@ -31,6 +34,12 @@ require (
 	go.opentelemetry.io/otel/trace v1.27.0
 	google.golang.org/grpc v1.64.0
 	google.golang.org/protobuf v1.34.1
+)
+
+require (
+	github.com/spaolacci/murmur3 v1.1.0 // indirect
+	github.com/willf/bitset v1.1.11 // indirect
+	github.com/willf/bloom v2.0.3+incompatible // indirect
 )
 
 require (
@@ -59,7 +68,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.20.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
-	github.com/hashicorp/go-hclog v1.5.0 // indirect
+	github.com/hashicorp/go-hclog v1.6.3 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/go-rootcerts v1.0.2 // indirect
