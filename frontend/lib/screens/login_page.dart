@@ -1,7 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:aorb/screens/register_page.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
+  
+  @override
+  LoginPageState createState() => LoginPageState();
+}
+
+class LoginPageState extends State<LoginPage> {
+  bool _obscureText = true;
+  void _toggleObscureText() {
+    setState(() {
+      _obscureText = !_obscureText;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,19 +53,42 @@ class LoginPage extends StatelessWidget {
                 color: Colors.grey[600],
               ),
             ),
+
             const SizedBox(height: 32),
-            const TextField(
-              decoration: InputDecoration(
-                hintText: '用户名',
-                border: OutlineInputBorder(),
+
+            TextFormField(
+              decoration: const InputDecoration(
+                labelText: '用户名',
+                border: InputBorder.none,
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey),
+                ),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.blue),
+                ),
+                prefixIcon: Icon(Icons.person),
               ),
             ),
+
             const SizedBox(height: 16),
-            const TextField(
-              obscureText: true,
+            TextFormField(
+              obscureText: _obscureText,
               decoration: InputDecoration(
-                hintText: '密码',
-                border: OutlineInputBorder(),
+                labelText: '密码',
+                border: InputBorder.none,
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey),
+                ),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.blue),
+                ),
+                prefixIcon: Icon(Icons.key),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscureText ? Icons.visibility : Icons.visibility_off,
+                  ),
+                  onPressed: _toggleObscureText,
+                ),
               ),
             ),
             const SizedBox(height: 24),
@@ -66,7 +102,18 @@ class LoginPage extends StatelessWidget {
               onPressed: () {
                 // TODO: 登录逻辑
               },
-            )
+            ),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => RegisterPage(),
+                  ),
+                );
+              },
+              child: const Text('没有账户？注册'),
+            ),
           ],
         ),
       ),

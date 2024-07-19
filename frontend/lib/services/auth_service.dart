@@ -1,10 +1,96 @@
 // auth_service.dart
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:aorb/conf/config.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:grpc/grpc.dart';
+// import 'package:aorb/generated/auth.pb.dart';
+import 'package:aorb/generated/auth.pbgrpc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class AuthService extends Object {
+// @sirius2alpha 2024-07-17
+class AuthService {
+  late final AuthServiceClient _client;
+  late final ClientChannel _channel;
+
+  // 初始化_channel和_client
+  AuthService(String host, int port) {
+    _channel = ClientChannel(
+      host,
+      port: port,
+      options: const ChannelOptions(
+          credentials: ChannelCredentials.insecure()), // ! 生产环境需要更改
+    );
+    _client = AuthServiceClient(_channel);
+  }
+
+  Future<LoginResponse> login(
+      String id, String password, String deviceId) async {
+    final request = LoginRequest()
+      ..id = id // 相当于 request.id = id
+      ..password = password
+      ..deviceId = deviceId;
+    final LoginResponse response = await _client.login(request);
+    try {
+      if (response.success) {
+        logger.i('Login successful');
+
+        // 存储用户信息到本地
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('authToken', response.token);
+        await prefs.setString('refreshToken', response.refreshToken);
+        await prefs.setString('userId', response.simpleUser.id);
+        await prefs.setString('avatar', response.simpleUser.avatar);
+        await prefs.setString('nickname', response.simpleUser.nickname);
+      } else {
+        logger.w('Login failed: ${response.message}');
+      }
+    } on GrpcError catch (e) {
+      // 处理gRPC错误
+      logger.e('gRPC error during login: ${e.message}');
+      throw Exception('Failed to login: ${e.message}');
+    } catch (e) {
+      // 处理其他错误
+      logger.e('Unexpected error during login: $e');
+      throw Exception('Failed to login: $e');
+    }
+    return response;
+  }
+
+  Future<VerifyResponse> verify(String token) async {
+    final request = VerifyRequest()..token = token;
+    return await _client.verify(request);
+  }
+
+  Future<RefreshResponse> refresh(String refreshToken) async {
+    final request = RefreshRequest()..refreshToken = refreshToken;
+    return await _client.refresh(request);
+  }
+
+  // 退出登录
+  Future<LogoutResponse> logout(String accessToken, String refreshToken) async {
+    final request = LogoutRequest()
+      ..accessToken = accessToken
+      ..refreshToken = refreshToken;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('authToken');
+    return await _client.logout(request);
+  }
+
+  Future<RegisterResponse> register(String username, String password,
+      {String? nickname, String? avatar, String? ipaddress}) async {
+    final request = RegisterRequest()
+      ..username = username
+      ..password = password;
+
+    if (nickname != null) request.nickname = nickname;
+    if (avatar != null) request.avatar = avatar;
+    if (ipaddress != null) request.ipaddress = ipaddress;
+
+    return await _client.regesiter(request);
+  }
+
+  Future<void> dispose() async {
+    await _channel.shutdown();
+  }
+
   var logger = getLogger();
 
   // 检查登录状态
@@ -19,39 +105,41 @@ class AuthService extends Object {
       return false;
     }
   }
-
-  // 登录
-  // 这里的password已经是md5摘要了
-  Future<void> login(String username, String password) async {
-    final response = await http.post(
-      Uri.parse('$apiDomain/api/v1/auth/login'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(<String, String>{
-        'username': username,
-        'password': password,
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      logger.i('Login successful');
-      // 把JWT,userid,avtar,nickname存储在本地
-      final prefs = await SharedPreferences.getInstance();
-      final data = jsonDecode(response.body);
-      await prefs.setString('authToken', data['token']);
-      await prefs.setString('userId', data['user']['id']);
-      await prefs.setString('avatar', data['user']['avatar']);
-      await prefs.setString('nickname', data['user']['nickname']);
-    } else {
-      logger.e('Failed to login');
-      throw Exception('Failed to login');
-    }
-  }
-
-  // 退出登录
-  Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('authToken');
-  }
 }
+
+// void main() async {
+//   final authService = AuthService('localhost', 9000);
+
+//   try {
+//     // 登录
+//     final loginResponse =
+//         await authService.login('user_id', 'password', 'device_id');
+//     print('Login success: ${loginResponse.success}');
+//     print('Token: ${loginResponse.token}');
+
+//     // 验证 token
+//     final verifyResponse = await authService.verify(loginResponse.token);
+//     print('Verify success: ${verifyResponse.success}');
+
+//     // 刷新 token
+//     final refreshResponse =
+//         await authService.refresh(loginResponse.refreshToken);
+//     print('Refresh success: ${refreshResponse.success}');
+//     print('New token: ${refreshResponse.token}');
+
+//     // 注册新用户
+//     final registerResponse = await authService
+//         .register('new_username', 'new_password', nickname: 'New User');
+//     print('Register success: ${registerResponse.success}');
+
+//     // 登出
+//     final logoutResponse = await authService.logout(
+//         loginResponse.token, loginResponse.refreshToken);
+//     print('Logout success: ${logoutResponse.success}');
+//   } catch (e) {
+//     print('Error: $e');
+//   } finally {
+//     // 关闭连接
+//     await authService.dispose();
+//   }
+// }

@@ -23,14 +23,12 @@ class MainPageState extends State<MainPage>
   late bool isLoggedIn; // 是否登录
   late String userId; // 在initstate中从本地读取，用于传递给 _pages中的MePage
   late String avatar; // 在initstate中从本地读取，用于底部状态栏的icon的展示
-
-  // TODO 根据登录状态调整“我的”页面，当登录的时候就展示“我的”页面，当没有登录的时候展示Login页面
   late List<Widget> _pages;
 
   // 将异步初始化逻辑移到单独的方法中
   Future<void> _initializeData() async {
     try {
-      bool loginStatus = await AuthService().checkLoginStatus();
+      bool loginStatus = await AuthService('localhost', 9000).checkLoginStatus();
       setState(() {
         isLoggedIn = loginStatus;
       });
@@ -63,7 +61,7 @@ class MainPageState extends State<MainPage>
       _pages = [
         HomePage(tabController: tabController),
         MessagesPage(tabController: tabController),
-        const LoginPage(),
+        LoginPage(),
       ];
     });
 
@@ -84,12 +82,6 @@ class MainPageState extends State<MainPage>
 
   @override
   Widget build(BuildContext context) {
-    if (_pages == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
     return Scaffold(
       // appBar随底部栏进行切换
       appBar: _currentIndex == 2
@@ -127,7 +119,6 @@ class MainPageState extends State<MainPage>
       ),
 
       // 底部导航栏
-      // TODO 根据登录状态调整底部栏中的icon，当登录的时候展示用户头像，当没有登录的时候展示默认icon
       bottomNavigationBar: BottomNavigationBar(
         items: <BottomNavigationBarItem>[
           BottomNavigationBarItem(

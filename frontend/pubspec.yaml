@@ -43,6 +43,7 @@ dependencies:
   graphql_flutter: ^5.0.0
   shared_preferences: ^2.0.9
   logger: ^1.4.0
+  dart_ipify: ^1.1.1
   
 dev_dependencies:
   flutter_test:
@@ -72,7 +73,6 @@ flutter:
     - images/home_selected.svg
     - images/home_unselected.svg
     - images/me_selected.svg
-    - images/me_selected.png
     - images/me_unselected.svg
     - images/msg_selected.svg
     - images/msg_unselected.svg
