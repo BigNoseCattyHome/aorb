@@ -7,15 +7,15 @@ import (
 
 	"github.com/BigNoseCattyHome/aorb/backend/go-services/auth/models"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
+	"github.com/BigNoseCattyHome/aorb/backend/utils/logging"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-
-	log "github.com/sirupsen/logrus"
 )
 
-var client *mongo.Client // MongoDB客户端
+var client *mongo.Client                               // MongoDB客户端
+var log = logging.LogService(config.AuthRpcServerName) // 使用logging库，添加日志字段为微服务的名字
 
 // init函数在main函数之前执行
 func init() {

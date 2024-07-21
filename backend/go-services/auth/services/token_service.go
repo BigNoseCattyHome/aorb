@@ -9,7 +9,6 @@ import (
 	"github.com/BigNoseCattyHome/aorb/backend/go-services/auth/models"
 
 	"github.com/golang-jwt/jwt"
-	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )

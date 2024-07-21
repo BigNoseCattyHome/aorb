@@ -26,26 +26,26 @@ import (
 	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
+var log = logging.LogService(config.AuthRpcServerName) // 使用logging库，添加字段日志AuthRpcServer
+
 func main() {
 	// 设置分布式跟踪提供者
 	tp, err := tracing.SetTraceProvider(config.AuthRpcServerName)
 	if err != nil {
 		// 如果设置跟踪失败，记录错误并 panic
-		logging.Logger.WithFields(logrus.Fields{
+		log.WithFields(logrus.Fields{
 			"err": err,
 		}).Panicf("Error to set the trace")
 	}
 	// 确保在 main 函数结束时关闭跟踪提供者
 	defer func() {
 		if err := tp.Shutdown(context.Background()); err != nil {
-			logging.Logger.WithFields(logrus.Fields{
+			log.WithFields(logrus.Fields{
 				"err": err,
 			}).Errorf("Error to set the trace")
 		}
 	}()
 
-	// 设置日志记录器
-	log := logging.LogService(config.AuthRpcServerName)
 	// 创建 TCP 监听器
 	lis, err := net.Listen("tcp", config.Conf.Pod.PodIp+config.AuthRpcServerAddr)
 	if err != nil {

@@ -6,7 +6,6 @@ import 'package:aorb/screens/poll_detail_page.dart';
 import 'package:aorb/services/user_service.dart';
 import 'package:aorb/services/poll_service.dart';
 import 'package:aorb/models/comment.dart';
-import 'package:aorb/models/vote.dart';
 import 'package:aorb/models/user.dart';
 import 'package:aorb/models/poll.dart';
 
