@@ -1,9 +1,10 @@
 echo "Please Run Me on the root dir, not in scripts dir."
+echo "If here is no build dir, please run build script first."
 
 gateway_directory="build/gateway"
 service_directory="build/services"
 
-log_directory="log"
+log_directory="logs"
 
 mkdir -p "$log_directory"
 
