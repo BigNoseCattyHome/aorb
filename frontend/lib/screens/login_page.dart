@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:aorb/screens/register_page.dart';
+import 'package:aorb/conf/config.dart';
+import 'package:aorb/utils/ip_locator.dart';
+import 'package:aorb/services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -9,12 +12,46 @@ class LoginPage extends StatefulWidget {
 }
 
 class LoginPageState extends State<LoginPage> {
-  bool _obscureText = true;
+  
+  final _usernameController = TextEditingController(); //控制输入框
+  final _passwordController = TextEditingController();
+  final AuthService _authService = AuthService(backendHost, backendPort);
+  String _province = 'Loading...'; // 用户IP的归属地
+  final logger = getLogger();
+
+  bool _obscureText = true; //控制密码可见
   void _toggleObscureText() {
     setState(() {
       _obscureText = !_obscureText;
     });
   }
+
+void _login() async {
+  try {
+    //等待
+    final loginResponse = await _authService.login(
+      _usernameController.text,
+      _passwordController.text,
+      _province  //ip地址，对应login参数，这里只是一个字符串，等待实现获取地址的方法(对应第19行)
+    );
+
+    logger.i('loginResponse: $loginResponse');
+    
+    if (loginResponse.statusCode) {
+      // 登录成功后的处理逻辑
+      Navigator.pushReplacementNamed(context, '/home');
+    } else {
+      // 登录失败后的处理逻辑，弹出错误提示
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('登录失败: ${loginResponse.statusMsg}')),
+      );
+    }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('登录失败: $e')),
+    );
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -99,9 +136,7 @@ class LoginPageState extends State<LoginPage> {
               padding: const EdgeInsets.all(16),
               shape: const CircleBorder(),
               child: const Icon(Icons.arrow_forward),
-              onPressed: () {
-                // TODO: 登录逻辑
-              },
+              onPressed: _login,
             ),
             const SizedBox(height: 16),
             TextButton(
