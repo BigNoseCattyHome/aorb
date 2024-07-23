@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:aorb/conf/config.dart';
 import 'package:aorb/services/auth_service.dart';
 import 'package:aorb/utils/ip_locator.dart';
+import 'package:grpc/grpc.dart';
+import 'package:crypto/crypto.dart';
+import 'dart:convert';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -40,6 +43,14 @@ class RegisterPageState extends State<RegisterPage> {
     setState(() {
       _obscureText = !_obscureText;
     });
+  }
+
+  // 对密码进行哈希处理
+  String hash(String password) {
+    List<int> bytes = utf8.encode(password); // Convert the string to bytes
+    Digest digest = sha256.convert(bytes); // Generate the SHA-256 hash
+    String hashString = digest.toString();
+    return hashString;
   }
 
   // 注册逻辑
@@ -86,12 +97,20 @@ class RegisterPageState extends State<RegisterPage> {
     // 调用AuthService的register方法进行注册
     try {
       // ~ 控制台输出后端的主机和端口号
-      logger.i('backendHost: $backendHost, backendPort: $backendPort');
+      logger.d('Attempting to connect to backend at $backendHost:$backendPort');
+      logger.d('Register request parameters:');
+      logger.d('Username: ${_usernameController.text}');
+      logger.d('Password: [REDACTED]'); // 不输出实际密码
+      logger.d('Nickname: ${_usernameController.text}');
+      logger.d('IP Address: $_province');
+      logger.d('Avatar: [Empty]');
+      final startTime = DateTime.now(); // 记录开始调用 register 方法的时间
+      logger.d('Starting register call at $startTime');
 
       // username和password是必填项，nickname, avatar, ipaddress是可选项
       final registerResponse = await _authService.register(
         _usernameController.text,
-        _passwordController.text,
+        hash(_passwordController.text), // 对用户的密码进行哈希处理
         nickname: _usernameController.text,
         ipaddress: _province,
         avatar: '',
@@ -99,7 +118,15 @@ class RegisterPageState extends State<RegisterPage> {
 
       // ~ 控制台输出注册结果
       logger.i('registerResponse: $registerResponse');
-      
+      final endTime = DateTime.now();      // 记录结束调用的时间和耗时
+      final duration = endTime.difference(startTime);
+      logger.i(
+          'Register call completed at $endTime (Duration: ${duration.inMilliseconds}ms)');
+      // 输出注册响应
+      logger.i('Register response:');
+      logger.i('Success: ${registerResponse.success}');
+      logger.i('Message: ${registerResponse.message}');
+
       if (registerResponse.success) {
         // 注册成功后的处理逻辑
         Navigator.pop(context);
@@ -109,7 +136,18 @@ class RegisterPageState extends State<RegisterPage> {
           const SnackBar(content: Text('注册失败，请检查输入或网络连接。')),
         );
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      // 捕获并记录异常
+      logger.e('Exception occurred during registration');
+      logger.e('Error type: ${e.runtimeType}');
+
+      // 如果是 gRPC 特定的错误，可以添加更多详细信息
+      if (e is GrpcError) {
+        logger.e('gRPC error code: ${e.code}');
+        logger.e('gRPC error details: ${e.details}');
+        logger.e('gRPC error trailers: ${e.trailers}');
+        logger.e('gRPC error message: ${e.message}');
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('注册失败: $e')),
       );

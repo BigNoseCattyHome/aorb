@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
+
+	"github.com/BigNoseCattyHome/aorb/backend/utils/storage/database"
 
 	"github.com/BigNoseCattyHome/aorb/backend/go-services/auth/models"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
@@ -11,40 +14,22 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var client *mongo.Client                               // MongoDB客户端
 var log = logging.LogService(config.AuthRpcServerName) // 使用logging库，添加日志字段为微服务的名字
-
-// init函数在main函数之前执行
-func init() {
-	// 从配置文件中读取MongoDB的主机和端口
-	clientOptions := options.Client().ApplyURI(config.Conf.MongoDB.Host + ":" + config.Conf.MongoDB.Port)
-
-	// 连接到MongoDB
-	var err error
-	client, err = mongo.Connect(context.TODO(), clientOptions)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// 检查连接
-	err = client.Ping(context.TODO(), nil)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println("Connected to MongoDB!")
-}
 
 // 注册
 func RegisterUser(newuser models.User) error {
-	// 在这里写注册用户的逻辑
-	isExsitUser, err := getUserbyUsername(newuser.Username)
-	if err == nil && isExsitUser {
+	log.Infof("Attempting to register user: %s", newuser.Username)
+
+	// 注册用户的逻辑
+	isExistUser, err := getUserByUsername(newuser.Username)
+	if err != nil {
+		log.Errorf("while checking existing user: %v", err)
+		return fmt.Errorf("while checking existing user: %w", err)
+	}
+	if isExistUser {
+		log.Warnf("User already exists: %s", newuser.Username)
 		return errors.New("用户名已存在")
 	}
 
@@ -60,19 +45,24 @@ func RegisterUser(newuser models.User) error {
 	newuser.QuestionsAsk = []string{}
 	newuser.QuestionsAsw = []string{}
 	newuser.QuestionsCollect = []string{}
+	newuser.CreateAt = time.Now()
+	newuser.UpdateAt = time.Now()
+	newuser.DeleteAt = time.Time{}
 
 	// 保存用户到数据库
 	if err := storeUser(newuser); err != nil {
-		log.Error("注册失败", err)
+		log.Errorf("Failed to store user: %v", err)
 		return errors.New("注册失败")
 	}
+
+	log.Infof("User registered successfully: %s", newuser.Username)
 
 	return nil
 }
 
 // 将用户保存到数据库
 func storeUser(user models.User) error {
-	collection := client.Database("aorb").Collection("users")
+	collection := database.MongoDbClient.Database("aorb").Collection("users")
 
 	// 将用户信息插入到数据库中
 	_, err := collection.InsertOne(context.TODO(), user)
@@ -136,7 +126,7 @@ func getUserbyID(id string) (models.User, error) {
 	}
 
 	// 使用 ObjectID 进行查询
-	result := client.Database("aorb").Collection("users").FindOne(context.TODO(), bson.M{"_id": objectID})
+	result := database.MongoDbClient.Database("aorb").Collection("users").FindOne(context.TODO(), bson.M{"_id": objectID})
 
 	// 解码结果到 user 结构体
 	err = result.Decode(&user)
@@ -153,8 +143,9 @@ func getUserbyID(id string) (models.User, error) {
 }
 
 // 查询是否username已经存在
-func getUserbyUsername(username string) (bool, error) {
-	collection := client.Database("aorb").Collection("users")
+// 只有在数据库查询的时候遇到除了mongo.ErrNoDocuments之外的错误才会返回错误
+func getUserByUsername(username string) (bool, error) {
+	collection := database.MongoDbClient.Database("aorb").Collection("users")
 
 	// 查询用户
 	filter := bson.M{"username": username}
@@ -162,9 +153,10 @@ func getUserbyUsername(username string) (bool, error) {
 	err := collection.FindOne(context.TODO(), filter).Decode(&result)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			// 没有找到匹配的用户
-			return false, err
+			// 没有找到匹配的用户，返回false而不是错误
+			return false, nil
 		}
+		// 其他错误
 		log.Fatal(err)
 		return false, err
 	}

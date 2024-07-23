@@ -6,14 +6,17 @@ import (
 	"github.com/BigNoseCattyHome/aorb/backend/go-services/auth/models"
 	"github.com/BigNoseCattyHome/aorb/backend/go-services/auth/services"
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/auth"
+	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
+	"github.com/BigNoseCattyHome/aorb/backend/utils/logging"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"google.golang.org/grpc/codes"
 
 	"google.golang.org/grpc/status"
 )
 
-var conn *amqp.Connection // amqp.Connection用于连接RabbitMQ服务器
-var channel *amqp.Channel // amqp.Channel用于与RabbitMQ服务器通信
+var log = logging.LogService(config.AuthRpcServerName) // 使用logging库，添加字段日志AuthRpcServer
+var conn *amqp.Connection                              // amqp.Connection用于连接RabbitMQ服务器
+var channel *amqp.Channel                              // amqp.Channel用于与RabbitMQ服务器通信
 
 // exitOnError 如果err不为nil，则panic
 func exitOnError(err error) {
@@ -152,6 +155,8 @@ func (a AuthServiceImpl) Logout(context context.Context, request *auth.LogoutReq
 
 // Register 注册
 func (a AuthServiceImpl) Register(context context.Context, request *auth.RegisterRequest) (*auth.RegisterResponse, error) {
+	log.Infof("Received Register request: %v", request)
+
 	// 解析参数
 	user := models.User{
 		Username:  request.Username,

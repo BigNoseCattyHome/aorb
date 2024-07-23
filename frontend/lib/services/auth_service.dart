@@ -1,7 +1,6 @@
 // auth_service.dart
 import 'package:aorb/conf/config.dart';
 import 'package:grpc/grpc.dart';
-// import 'package:aorb/generated/auth.pb.dart';
 import 'package:aorb/generated/auth.pbgrpc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -12,6 +11,8 @@ class AuthService {
 
   // 初始化_channel和_client
   AuthService(String host, int port) {
+    logger.i('Attempting to connect to $backendHost:$backendPort');
+
     _channel = ClientChannel(
       host,
       port: port,
@@ -84,7 +85,7 @@ class AuthService {
     if (avatar != null) request.avatar = avatar;
     if (ipaddress != null) request.ipaddress = ipaddress;
 
-    return await _client.regesiter(request);
+    return await _client.register(request);
   }
 
   Future<void> dispose() async {

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/BigNoseCattyHome/aorb/backend/go-services/auth/models"
+	"github.com/BigNoseCattyHome/aorb/backend/utils/storage/database"
 
 	"github.com/golang-jwt/jwt"
 	"go.mongodb.org/mongo-driver/bson"
@@ -162,14 +163,14 @@ func GenerateRefreshToken(user models.User) (string, error) {
 	}
 
 	// 保存到数据库
-	client.Database("aorb").Collection("refresh_tokens").InsertOne(context.Background(), bson.M{"user_id": user.ID, "token": tokenString, "revoked": false, "expires_at": expirationTime.Unix()})
+	database.MongoDbClient.Database("aorb").Collection("refresh_tokens").InsertOne(context.Background(), bson.M{"user_id": user.ID, "token": tokenString, "revoked": false, "expires_at": expirationTime.Unix()})
 
 	return tokenString, nil
 }
 
 // CheckTokenRevoked 检查令牌是否被撤销
 func CheckTokenRevoked(userID, tokenString string) bool {
-	collection := client.Database("aorb").Collection("refresh_tokens")
+	collection := database.MongoDbClient.Database("aorb").Collection("refresh_tokens")
 	filter := bson.M{"user_id": userID, "token": tokenString}
 
 	// 查找文档
@@ -192,7 +193,7 @@ func CheckTokenRevoked(userID, tokenString string) bool {
 
 // RevokeToken 使令牌失效
 func RevokeRefreshToken(userID, tokenString string) error {
-	collection := client.Database("aorb").Collection("refresh_tokens")
+	collection := database.MongoDbClient.Database("aorb").Collection("refresh_tokens")
 
 	// filter表示要更新的文档，update表示要更新的字段
 	filter := bson.M{"user_id": userID, "token": tokenString}

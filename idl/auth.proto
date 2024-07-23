@@ -81,5 +81,5 @@ service AuthService {
   rpc Verify (VerifyRequest) returns (VerifyResponse);
   rpc Refresh (RefreshRequest) returns (RefreshResponse);
   rpc Logout (LogoutRequest) returns (LogoutResponse);
-  rpc Regesiter (RegisterRequest) returns (RegisterResponse);
+  rpc Register (RegisterRequest) returns (RegisterResponse);
 }

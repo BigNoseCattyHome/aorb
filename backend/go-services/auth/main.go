@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"syscall"
+	"time"
 
 	authController "github.com/BigNoseCattyHome/aorb/backend/go-services/auth/handlers"
 	authRpc "github.com/BigNoseCattyHome/aorb/backend/rpc/auth"
@@ -66,7 +67,14 @@ func main() {
 	// 创建 gRPC 服务器并配置拦截器
 	s := grpc.NewServer(
 		grpc.UnaryInterceptor(otelgrpc.UnaryServerInterceptor()),
-		grpc.ChainUnaryInterceptor(srvMetrics.UnaryServerInterceptor(grpcprom.WithExemplarFromContext(prom.ExtractContext))),
+		grpc.ChainUnaryInterceptor(
+			srvMetrics.UnaryServerInterceptor(grpcprom.WithExemplarFromContext(prom.ExtractContext)),
+			func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+				ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+				defer cancel()
+				return handler(ctx, req)
+			},
+		),
 		grpc.ChainStreamInterceptor(srvMetrics.StreamServerInterceptor(grpcprom.WithExemplarFromContext(prom.ExtractContext))),
 	)
 

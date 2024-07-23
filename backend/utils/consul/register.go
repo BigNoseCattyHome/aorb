@@ -42,10 +42,11 @@ func RegisterConsul(name string, port string) error {
 
 	// 创建服务注册信息
 	reg := &capi.AgentServiceRegistration{
-		ID:      fmt.Sprintf("%s-%s", fullServiceName, uuid.New().String()[:5]), // 服务ID，使用UUID避免冲突
-		Name:    fullServiceName,                                                // 服务名称
-		Address: config.Conf.Pod.PodIp,                                          // 服务的IP地址
-		Port:    parsedPort,                                                     // 服务的端口
+		ID:   fmt.Sprintf("%s-%s", fullServiceName, uuid.New().String()[:5]), // 服务ID，使用UUID避免冲突
+		Name: fullServiceName,                                                // 服务名称
+		// TODO 如果是分布式部署的话，这里需要使用不同的主机IP
+		Address: config.Conf.Pod.PodIp, // 服务的IP地址
+		Port:    parsedPort,            // 服务的端口
 		Check: &capi.AgentServiceCheck{
 			Interval:                       "5s",                                                    // 健康检查间隔
 			Timeout:                        "5s",                                                    // 健康检查超时时间
