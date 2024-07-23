@@ -43,27 +43,26 @@ func main() {
 	g.Use(middleware.Authenticate())
 
 	rootPath := g.Group("/aorb")
-	ping := rootPath.Group("/ping")
 	{
-		ping.GET("/", func(c *gin.Context) {
+		rootPath.GET("/ping", func(c *gin.Context) {
 			c.JSON(200, gin.H{
 				"message": "pong",
 			})
 		})
-	}
 
-	user := rootPath.Group("/user")
-	{
-		user.GET("/", user2.UserHandler)
-		user.POST("/login/", auth2.LoginHandler)
-		user.POST("/register/", auth2.RegisterHandle)
-	}
+		user := rootPath.Group("/user")
+		{
+			user.GET("/", user2.UserHandler)
+			user.POST("/login/", auth2.LoginHandler)
+			user.POST("/register/", auth2.RegisterHandle)
+		}
 
-	comment := rootPath.Group("/comment")
-	{
-		comment.GET("/action/", comment2.ActionCommentHandler)
-		comment.GET("/list/", comment2.ListCommentHandler)
-		comment.POST("/count/", comment2.CountCommentHandler)
+		comment := rootPath.Group("/comment")
+		{
+			comment.GET("/action/", comment2.ActionCommentHandler)
+			comment.GET("/list/", comment2.ListCommentHandler)
+			comment.POST("/count/", comment2.CountCommentHandler)
+		}
 	}
 
 	// run

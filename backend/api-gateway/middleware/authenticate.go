@@ -25,7 +25,7 @@ func Authenticate() gin.HandlerFunc {
 		logger := logging.LogService("GateWay.AuthMiddleWare").WithContext(ctx)
 		span.SetAttributes(attribute.String("url", c.Request.URL.Path))
 
-		if c.Request.URL.Path == "/aorb/ping/" ||
+		if c.Request.URL.Path == "/aorb/ping" ||
 			c.Request.URL.Path == "/aorb/user/login/" ||
 			c.Request.URL.Path == "/aorb/user/register/" ||
 			c.Request.URL.Path == "/aorb/comment/list/" {

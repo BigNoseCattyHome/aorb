@@ -4,14 +4,16 @@ package main
 
 import (
 	"context"
-	"github.com/BigNoseCattyHome/aorb/backend/go-services/user/models"
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/auth"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/storage/database"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/storage/redis"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	redis2 "github.com/redis/go-redis/v9"
 	"github.com/willf/bloom"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"net"
+	"net/http"
 	"os"
 	"syscall"
 
@@ -45,6 +47,9 @@ func main() {
 		}
 	}()
 
+	// Configure Pyroscope
+	//profiling.InitPyroscope("AorB.AuthService")
+
 	log := logging.LogService(config.AuthRpcServerName)
 	lis, err := net.Listen("tcp", config.Conf.Pod.PodIp+config.AuthRpcServerAddr)
 
@@ -65,26 +70,15 @@ func main() {
 	BloomFilter = bloom.NewWithEstimates(10000000, 0.001) // assuming we have 1 million users
 
 	// Initialize BloomFilter from database
-	var users []models.User
 	collection := database.MongoDbClient.Database("aorb").Collection("users")
-	cursor, err := collection.Find(context.Background(), bson.D{})
-	if err != nil {
-		logging.Logger.WithFields(logrus.Fields{
-			"err": err,
-		}).Errorf("Error when pulling all users' name")
+	findOptions := options.Find().SetProjection(bson.D{{"username", 1}})
+	cur, err := collection.Find(context.Background(), bson.D{}, findOptions)
+	var results []bson.M
+	if err = cur.All(context.Background(), &results); err != nil {
+		log.Fatal(err)
 	}
-	for cursor.Next(context.Background()) {
-		var user models.User
-		if err = cursor.Decode(&user); err != nil {
-			logging.Logger.WithFields(logrus.Fields{
-				"err": err,
-			}).Errorf("Error when decoding the cursor")
-		}
-		users = append(users, user)
-	}
-
-	for _, u := range users {
-		BloomFilter.AddString(u.Username)
+	for _, result := range results {
+		BloomFilter.AddString(result["username"].(string))
 	}
 
 	// Create a go routine to receive redis message and add it to BloomFilter
@@ -137,23 +131,23 @@ func main() {
 		log.Errorf("Rpc %s listen happens error for: %v", config.AuthRpcServerName, err)
 	})
 
-	//httpSrv := &http.Server{Addr: config.Conf.Pod.PodIp + config.Metrics}
-	//g.Add(func() error {
-	//	m := http.NewServeMux()
-	//	m.Handle("/metrics", promhttp.HandlerFor(
-	//		reg,
-	//		promhttp.HandlerOpts{
-	//			EnableOpenMetrics: true,
-	//		},
-	//	))
-	//	httpSrv.Handler = m
-	//	log.Infof("Promethus now running")
-	//	return httpSrv.ListenAndServe()
-	//}, func(error) {
-	//	if err := httpSrv.Close(); err != nil {
-	//		log.Errorf("Prometheus %s listen happens error for: %v", config.AuthRpcServerName, err)
-	//	}
-	//})
+	httpSrv := &http.Server{Addr: config.Conf.Pod.PodIp + config.AuthMetrics}
+	g.Add(func() error {
+		m := http.NewServeMux()
+		m.Handle("/metrics", promhttp.HandlerFor(
+			reg,
+			promhttp.HandlerOpts{
+				EnableOpenMetrics: true,
+			},
+		))
+		httpSrv.Handler = m
+		log.Infof("Promethus now running")
+		return httpSrv.ListenAndServe()
+	}, func(error) {
+		if err := httpSrv.Close(); err != nil {
+			log.Errorf("Prometheus %s listen happens error for: %v", config.AuthRpcServerName, err)
+		}
+	})
 
 	g.Add(run.SignalHandler(context.Background(), syscall.SIGINT, syscall.SIGTERM))
 

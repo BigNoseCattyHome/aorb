@@ -22,7 +22,10 @@ const PollRpcServerAddr = ":37005"
 const RecommendRpcServerName = "AorB-RecommendService"
 const RecommendRpcServerAddr = ":37006"
 
-const Metrics = ":37099"
+const AuthMetrics = ":37100"
+const CommentMetrics = ":37101"
+const PollMetrics = ":37102"
+const UserMetrics = ":37103"
 const PollProcessorRpcServiceName = "GuGoTik-PollProcessorService"
 
 const Event = "GuGoTik-Recommend"

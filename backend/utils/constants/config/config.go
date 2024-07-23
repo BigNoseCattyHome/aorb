@@ -21,11 +21,16 @@ type Config struct {
 	Gorse    *Gorse              `toml:"Gorse"`
 	Other    *Other              `toml:"Other"`
 	// Etcd     *Etcd               `toml:"Etcd"`
-	//PyroScope *PyroScope          `toml:"PyroScope"`
+	PyroScope *PyroScope `toml:"PyroScope"`
 }
 
 type Other struct {
 	AnonymityUser string `toml:"anonymityUser"`
+}
+
+type PyroScope struct {
+	State string `toml:"state"`
+	Addr  string `toml:"addr"`
 }
 
 type Gorse struct {

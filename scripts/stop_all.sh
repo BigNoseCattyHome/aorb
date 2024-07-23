@@ -31,4 +31,7 @@ for service in "$service_directory"/*; do
     done
 done
 
+rm -rf log
+mkdir log
+
 echo "All services and gateways have been stopped."
