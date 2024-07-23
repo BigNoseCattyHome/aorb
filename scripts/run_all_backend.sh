@@ -1,13 +1,14 @@
 echo "Please Run Me on the root dir, not in scripts dir."
+echo "If here is no build dir, please run build script first."
 
-gateway_directory="output/gateway"
-service_directory="output/services"
+gateway_directory="build/gateway"
+service_directory="build/services"
 
-log_directory="log"
+log_directory="logs"
 
 mkdir -p "$log_directory"
 
-if [ ! -d "output" ]; then
+if [ ! -d "build" ]; then
     echo "Output dir does not exist, please run build script first."
 fi
 

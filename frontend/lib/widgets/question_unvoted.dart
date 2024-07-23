@@ -10,7 +10,8 @@ class QuestionUnvoted extends StatefulWidget {
   final String time;
   final String avatar;
   final String nickname;
-  final String questionId;
+  final String postId;
+  final String userId;
   final String backgroundImage;
   final int selectedOption; // 用户选择的选项,-1代表没有投票
 
@@ -23,7 +24,8 @@ class QuestionUnvoted extends StatefulWidget {
     required this.time,
     required this.avatar,
     required this.nickname,
-    required this.questionId,
+    required this.userId,
+    required this.postId,
     required this.backgroundImage,
     required this.votePercentage,
     this.selectedOption = -1,
@@ -45,84 +47,87 @@ class QuestionUnvotedState extends State<QuestionUnvoted> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      // decoration是容器的装饰，这里设置了背景图片和圆角
-      decoration: createBackgroundDecoration(widget.backgroundImage),
+    return GestureDetector(
+        onTap: onTapContent, // 将onTapContent方法绑定到点击事件上
+        child: Container(
+          // decoration是容器的装饰，这里设置了背景图片和圆角
+          decoration: createBackgroundDecoration(widget.backgroundImage),
 
-      // padding是容器的内边距，这里设置了上下左右各16像素
-      padding: const EdgeInsets.all(16.0),
+          // padding是容器的内边距，这里设置了上下左右各16像素
+          padding: const EdgeInsets.all(16.0),
 
-      // child是容器的子部件，这里是一个Column，包含了问题的标题、内容、选项和投票按钮
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start, // 子部件左对齐
-        children: [
-          Row(
+          // child是容器的子部件，这里是一个Column，包含了问题的标题、内容、选项和投票按钮
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start, // 子部件左对齐
             children: [
-              // avatar
-              CircleAvatar(
-                backgroundImage: NetworkImage(widget.avatar),
+              Row(
+                children: [
+                  // avatar
+                  CircleAvatar(
+                    backgroundImage: NetworkImage(widget.avatar),
+                  ),
+                  const SizedBox(width: 8),
+                  // nickname
+                  Text(
+                    widget.nickname,
+                    style: const TextStyle(
+                        color: Colors.blue, fontWeight: FontWeight.bold),
+                  ),
+                  const Spacer(), // spacer占位部件
+                  // time
+                  Text(
+                    widget.time,
+                    style: const TextStyle(
+                        color: Color.fromARGB(255, 255, 255, 255)),
+                  ),
+                ],
               ),
-              const SizedBox(width: 8),
-              // nickname
-              Text(
-                widget.nickname,
-                style: const TextStyle(
-                    color: Colors.blue, fontWeight: FontWeight.bold),
+              const SizedBox(height: 16),
+              Stack(
+                children: [
+                  Positioned(
+                    top: 3,
+                    left: 0,
+                    child: SvgPicture.asset('images/comments.svg'),
+                  ),
+                  const SizedBox(width: 8),
+                  Padding(
+                    padding:
+                        const EdgeInsets.only(left: 60), // 根据你的SVG图标的大小调整这个值
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // title
+                        Text(
+                          widget.title,
+                          style: const TextStyle(
+                            color: Color.fromARGB(255, 255, 255, 255),
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        // content
+                        Text(
+                          widget.content,
+                          style: const TextStyle(
+                            color: Color.fromARGB(221, 255, 255, 255),
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              const Spacer(), // spacer占位部件
-              // time
-              Text(
-                widget.time,
-                style:
-                    const TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
-              ),
+
+              const SizedBox(height: 16),
+              // options
+              _buildOptionButtons(
+                  widget.options, widget.votePercentage, _selectedOption),
             ],
           ),
-          const SizedBox(height: 16),
-          Stack(
-            children: [
-              Positioned(
-                top: 3,
-                left: 0,
-                child: SvgPicture.asset('images/comments.svg'),
-              ),
-              const SizedBox(width: 8),
-              Padding(
-                padding: const EdgeInsets.only(left: 60), // 根据你的SVG图标的大小调整这个值
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // title
-                    Text(
-                      widget.title,
-                      style: const TextStyle(
-                        color: Color.fromARGB(255, 255, 255, 255),
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    // content
-                    Text(
-                      widget.content,
-                      style: const TextStyle(
-                        color: Color.fromARGB(221, 255, 255, 255),
-                        fontSize: 10,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-          // options
-          _buildOptionButtons(
-              widget.options, widget.votePercentage, _selectedOption),
-        ],
-      ),
-    );
+        ));
   }
 
   Widget _buildOptionButtons(
@@ -219,6 +224,7 @@ class QuestionUnvotedState extends State<QuestionUnvoted> {
     );
   }
 
+  // 方法：根据backgroundImage创建背景装饰
   BoxDecoration createBackgroundDecoration(String backgroundImage) {
     if (backgroundImage.startsWith('0x')) {
       // 纯色背景
@@ -260,5 +266,14 @@ class QuestionUnvotedState extends State<QuestionUnvoted> {
         borderRadius: BorderRadius.circular(10),
       );
     }
+  }
+
+  // 点击跳转到内容详情页面
+  void onTapContent() {
+    Navigator.pushNamed(
+      context,
+      '/poll_content',
+      arguments: {'postId': widget.postId, 'userId': widget.userId},
+    );
   }
 }

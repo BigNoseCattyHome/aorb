@@ -1,7 +1,7 @@
 echo "Stopping all running services and gateway"
 
-gateway_directory="output/gateway"
-service_directory="output/services"
+gateway_directory="build/gateway"
+service_directory="build/services"
 
 kill_process() {
     local process_name=$1

@@ -1,12 +1,13 @@
 [Consul]
     addr = "127.0.0.1:8500"
-    anonymityName = "paraparty."
+    # anonymityName = "paraparty."
 
 [Pod]
     podIp = "localhost"
 
 [Log]
     loggerLevel = "DEBUG"
+    LogPath = "logs"
 
 [Tracing]
     endPoint = "http://localhost:14268/api/traces"

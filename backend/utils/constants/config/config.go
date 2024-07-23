@@ -1,11 +1,15 @@
 package config
 
 import (
-	"github.com/spf13/viper"
 	"os"
+
+	"github.com/spf13/viper"
 )
 
 var Conf *Config
+
+// 使用方法：
+// config.Conf.MongoDB.Host
 
 type Config struct {
 	Consul   *Consul             `toml:"Consul"`
@@ -21,7 +25,27 @@ type Config struct {
 	Gorse    *Gorse              `toml:"Gorse"`
 	Other    *Other              `toml:"Other"`
 	// Etcd     *Etcd               `toml:"Etcd"`
+<<<<<<< HEAD
 	PyroScope *PyroScope `toml:"PyroScope"`
+=======
+	// PyroScope *PyroScope          `toml:"PyroScope"`
+}
+
+// 使用viper读取配置文件
+func init() {
+	work, _ := os.Getwd()
+	viper.SetConfigName("config")
+	viper.SetConfigType("toml")
+	viper.AddConfigPath(work + "/backend/utils/constants/config")
+	err := viper.ReadInConfig()
+	if err != nil {
+		panic(err)
+	}
+	err = viper.Unmarshal(&Conf) // 将配置文件解析到Conf结构体中
+	if err != nil {
+		panic(err)
+	}
+>>>>>>> 1384e06af9c940c04e7abb00af53caf4290f4101
 }
 
 type Other struct {
@@ -54,6 +78,7 @@ type RabbitMQ struct {
 
 type Log struct {
 	LoggerLevel string `toml:"loggerLevel"`
+	LogPath     string `toml:"logPath"`
 }
 
 type Consul struct {
@@ -101,19 +126,4 @@ type Service struct {
 	LoadBalance bool   `toml:"loadBalance"`
 	Host        string `toml:"host"`
 	Port        string `toml:"port"`
-}
-
-func init() {
-	work, _ := os.Getwd()
-	viper.SetConfigName("config")
-	viper.SetConfigType("toml")
-	viper.AddConfigPath(work + "/backend/utils/constants/config")
-	err := viper.ReadInConfig()
-	if err != nil {
-		panic(err)
-	}
-	err = viper.Unmarshal(&Conf)
-	if err != nil {
-		panic(err)
-	}
 }

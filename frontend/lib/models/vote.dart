@@ -1,5 +1,5 @@
-import './comment.dart';
-
+import 'package:aorb/models/comment.dart';
+// 单条投票记录，包含在question中
 class Vote {
   final String id;
   final String type; // 这里我们使用 String 替代原 Type 枚举
@@ -65,4 +65,3 @@ class Vote {
     };
   }
 }
-

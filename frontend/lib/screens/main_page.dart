@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'home_page.dart';
-import 'messages_page.dart';
-import 'me_page.dart';
-import '../widgets/top_bar_index.dart';
+
+import 'package:aorb/screens/home_page.dart';
+import 'package:aorb/screens/messages_page.dart';
+import 'package:aorb/screens/me_page.dart';
+import 'package:aorb/screens/login_page.dart';
+import 'package:aorb/widgets/top_bar_index.dart';
+import 'package:aorb/services/auth_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MainPage extends StatefulWidget {
   final int initialIndex;
   const MainPage({super.key, this.initialIndex = 0});
-
   @override
   MainPageState createState() => MainPageState();
 }
@@ -16,20 +19,54 @@ class MainPage extends StatefulWidget {
 class MainPageState extends State<MainPage>
     with SingleTickerProviderStateMixin {
   late int _currentIndex; // 用于控制底部到行栏的切换
-  late TabController tabController; // 顶部导航栏控制器
+  late TabController tabController; // tabController用于控制子页面的顶部导航栏的切换
+  late bool isLoggedIn; // 是否登录
+  late String userId; // 在initstate中从本地读取，用于传递给 _pages中的MePage
+  late String avatar; // 在initstate中从本地读取，用于底部状态栏的icon的展示
+  late List<Widget> _pages;
 
-  late final List<Widget> _pages = [
-    HomePage(tabController: tabController), // 传递 _tabController 给 HomePage
-    MessagesPage(tabController: tabController),
-    const MePage(),
-  ];
+  // 将异步初始化逻辑移到单独的方法中
+  Future<void> _initializeData() async {
+    try {
+      bool loginStatus = await AuthService('localhost', 9000).checkLoginStatus();
+      setState(() {
+        isLoggedIn = loginStatus;
+      });
+
+      if (isLoggedIn) {
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        setState(() {
+          userId = prefs.getString('userId') ?? '';
+          avatar = prefs.getString('avatar') ?? '';
+          _pages[2] = MePage(userId: userId);
+        });
+      }
+    } catch (e) {
+      print("Error on mainpage: $e");
+      // 可以在这里处理错误,例如显示一个错误提示
+    }
+  }
 
   @override
   void initState() {
     super.initState();
-    // vsync: this 表示使用当前的 SingleTickerProviderStateMixin
+    // vsync是一个同步的信号，用于保证动画的同步性
     tabController = TabController(length: 2, vsync: this);
     _currentIndex = widget.initialIndex;
+
+    // 提供初始值
+    setState(() {
+      userId = '';
+      avatar = '';
+      _pages = [
+        HomePage(tabController: tabController),
+        MessagesPage(tabController: tabController),
+        LoginPage(),
+      ];
+    });
+
+    // 异步获取登录状态
+    _initializeData();
   }
 
   // 底部导航栏切换
@@ -86,31 +123,68 @@ class MainPageState extends State<MainPage>
         items: <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: _currentIndex == 0
-                ? SvgPicture.asset('images/home_selected.svg')
-                : SvgPicture.asset('images/home_unselected.svg'),
+                ? SvgPicture.asset(
+                    'images/home_selected.svg',
+                    width: 35,
+                    height: 35,
+                    fit: BoxFit.contain,
+                  )
+                : SvgPicture.asset(
+                    'images/home_unselected.svg',
+                    width: 35,
+                    height: 35,
+                    fit: BoxFit.contain,
+                  ),
             label: '首页',
           ),
           BottomNavigationBarItem(
             icon: _currentIndex == 1
-                ? SvgPicture.asset('images/msg_selected.svg')
-                : SvgPicture.asset('images/msg_unselected.svg'),
+                ? SvgPicture.asset(
+                    'images/msg_selected.svg',
+                    width: 35,
+                    height: 35,
+                    fit: BoxFit.contain,
+                  )
+                : SvgPicture.asset(
+                    'images/msg_unselected.svg',
+                    width: 35,
+                    height: 35,
+                    fit: BoxFit.contain,
+                  ),
             label: '消息',
           ),
-          BottomNavigationBarItem(
-            icon: ClipOval(
-                child: CircleAvatar(
-              radius: 24,
-              backgroundColor:
-                  _currentIndex == 2 ? Colors.blue[700] : Colors.white,
-              child: const CircleAvatar(
-                radius: 22, // 确保边框宽度
-                backgroundImage: NetworkImage(
-                    'https://s2.loli.net/2024/05/28/MY6bk5FxVh8ufOa.png'),
-                backgroundColor: Colors.transparent,
-              ),
-            )),
-            label: '我',
-          ),
+          // 如果用户没有登录的话，就展示默认的icon，否则展示用户头像
+          avatar == ''
+              ? BottomNavigationBarItem(
+                  icon: _currentIndex == 2
+                      ? SvgPicture.asset(
+                          'images/me_selected.svg',
+                          width: 40,
+                          height: 40,
+                          fit: BoxFit.contain,
+                        )
+                      : SvgPicture.asset(
+                          'images/me_unselected.svg',
+                          width: 40,
+                          height: 40,
+                          fit: BoxFit.contain,
+                        ),
+                  label: '我',
+                )
+              : BottomNavigationBarItem(
+                  icon: ClipOval(
+                      child: CircleAvatar(
+                    radius: 24,
+                    backgroundColor:
+                        _currentIndex == 2 ? Colors.blue[700] : Colors.white,
+                    child: CircleAvatar(
+                      radius: 22, // 确保边框宽度
+                      backgroundImage: NetworkImage(avatar),
+                      backgroundColor: Colors.transparent,
+                    ),
+                  )),
+                  label: '我',
+                ),
         ],
         currentIndex: _currentIndex,
         selectedItemColor: Colors.blue[700],

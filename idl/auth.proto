@@ -2,46 +2,84 @@ syntax = "proto3";
 package rpc.auth;
 option go_package = "github.com/BigNoseCattyHome/aorb/backend/rpc/auth;auth";
 
+// 导入必要的protobuf类型
+import "google/protobuf/timestamp.proto";
+
 // 定义消息，用于请求和响应结构
 message LoginRequest {
   string username = 1; // 用户名/用户ID
   string password = 2; // 密码的md5摘要
+  string device_id = 3; // 设备ID
+  google.protobuf.Timestamp timestamp = 4; // 时间戳
+  string nonce = 5; // 随机数
 }
 
 message LoginResponse {
-  int32 status_code = 1;
-  string status_msg = 2;
-  uint32 user_id = 3;
-  string token = 4; // JWT令牌
+  bool status_code = 1; // 操作是否成功
+  string status_msg = 2; // 消息
+  string token = 3; // JWT令牌
+  string refresh_token = 4; // 刷新令牌
+  string token_type = 5; // 令牌类型
+  int64 expires_at = 6; // 访问令牌过期时间
+  SimpleUser simple_user = 7; // 简单用户信息
 }
 
-message AuthenticateRequest {
+message SimpleUser {
+  string username = 1; // 用户ID
+  string nickname = 2; // 昵称
+  string avatar = 3; // 头像
+  string ipaddress = 4; // IP归属地
+}
+
+message VerifyRequest {
   string token = 1; // JWTtoken
 }
 
-message AuthenticateResponse {
-  int32 status_code = 1;
-  string status_msg = 2;
-  uint32 user_id = 3; // 用户ID
+message VerifyResponse {
+  bool success = 1; // 是否有效
+  string user_id = 2; // 用户ID
+  string username = 3; // 用户名
+  int64 expires_at = 4; // 过期时间
+}
+
+message RefreshRequest {
+  string refresh_token = 1; // 访问令牌
+}
+
+message RefreshResponse {
+  bool success = 1; // 是否有效
+  string token = 2; // 新令牌
+  int64 expires_at = 3; // 新令牌过期时间
+}
+
+message LogoutRequest {
+  string access_token = 1; // 访问令牌
+  string refresh_token = 2; // 刷新令牌
+}
+
+message LogoutResponse {
+  bool success = 1; // 操作是否有效
+  string message = 2; // 消息
 }
 
 message RegisterRequest {
   string username = 1; // 用户名/用户ID
   string password = 2; // 密码的md5摘要
+  string nickname = 3; // 昵称
+  string avatar = 4; // 头像
+  string ipaddress = 5; // IP归属地
 }
 
 message RegisterResponse {
-  int32 status_code = 1;
-  string status_msg = 2;
-  uint32 user_id = 3;
-  string token = 4;
+  bool success = 1; // 操作是否成功
+  string message = 2; // 消息
 }
 
 // 定义服务
 service AuthService {
-  rpc Authenticate (AuthenticateRequest) returns (AuthenticateResponse);
-
-  rpc Register (RegisterRequest) returns (RegisterResponse);
-
   rpc Login (LoginRequest) returns (LoginResponse);
+  rpc Verify (VerifyRequest) returns (VerifyResponse);
+  rpc Refresh (RefreshRequest) returns (RefreshResponse);
+  rpc Logout (LogoutRequest) returns (LogoutResponse);
+  rpc Register (RegisterRequest) returns (RegisterResponse);
 }

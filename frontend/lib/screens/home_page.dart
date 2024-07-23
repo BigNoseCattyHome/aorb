@@ -1,11 +1,11 @@
 // home_page.dart
 import 'package:flutter/material.dart';
-import '../widgets/question_unvoted.dart'; // 引入未投票问题组件
+import 'package:aorb/widgets/question_unvoted.dart'; // 引入未投票问题组件
 import 'dart:async';
 
 class HomePage extends StatefulWidget {
   final TabController tabController;
-  
+
   const HomePage({super.key, required this.tabController});
 
   @override
@@ -112,7 +112,8 @@ class HomePageState extends State<HomePage>
         time: '发布于 5 小时前',
         avatar: 'https://s2.loli.net/2024/05/27/2MgJcvLtOVKmAdn.jpg',
         nickname: '爱吃饭的小袁同学',
-        questionId: '1',
+        userId: '1',
+        postId: '1',
         backgroundImage: 'gradient:0xFF8DB3EB,0xFFF895CA',
         selectedOption: -1,
       ),
@@ -125,7 +126,8 @@ class HomePageState extends State<HomePage>
         time: '发布于 36 分钟前',
         avatar: 'https://s2.loli.net/2024/05/25/icuYCOP9HB1JbIx.png',
         nickname: '花枝鼠gogo来帮忙',
-        questionId: '2',
+        userId: '2',
+        postId: '2',
         backgroundImage: '0xFF354967',
         selectedOption: -1,
       ),
@@ -138,7 +140,8 @@ class HomePageState extends State<HomePage>
         time: '发布于 7 小时前',
         avatar: 'https://s2.loli.net/2024/05/27/QzKM41C3Vs5FeHW.jpg',
         nickname: '风见澈Siri',
-        questionId: '3',
+        userId: '3',
+        postId: '3',
         backgroundImage: 'https://s2.loli.net/2024/05/25/HqJM8dTuSRbUNBO.jpg',
         selectedOption: -1,
       ),
@@ -155,7 +158,8 @@ class HomePageState extends State<HomePage>
         time: '发布于昨天',
         avatar: 'https://s2.loli.net/2024/05/27/alt3BKPYhzmV4E7.jpg',
         nickname: 'Anti Cris',
-        questionId: '4',
+        userId: '4',
+        postId: '4',
         backgroundImage: 'gradient:0x7FFCE300,0xFFFF5065,0xFF1F9AC1',
         selectedOption: -1,
       ),

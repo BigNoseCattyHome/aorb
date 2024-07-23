@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'routes/router.dart';
+import 'package:logger/logger.dart';
+
+import 'package:aorb/conf/config.dart';
 
 void main() {
-  runApp(const Aorb());
+  var logger = getLogger();
+  runApp(Aorb(logger: logger));
 }
 
 class Aorb extends StatelessWidget {
-  const Aorb({super.key});
+  final Logger logger;
+
+  const Aorb({super.key, required this.logger});
 
   @override
   Widget build(BuildContext context) {
