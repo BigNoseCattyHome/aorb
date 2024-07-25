@@ -19,43 +19,43 @@ import (
 var log = logging.LogService(config.AuthRpcServerName) // 使用logging库，添加日志字段为微服务的名字
 
 // 注册
-func RegisterUser(newuser models.User) error {
-	log.Infof("Attempting to register user: %s", newuser.Username)
+func RegisterUser(newUser models.User) error {
+	log.Infof("Attempting to register user: %s", newUser.Username)
 
 	// 注册用户的逻辑
-	isExistUser, err := getUserByUsername(newuser.Username)
+	isExistUser, err := getUserByUsername(newUser.Username)
 	if err != nil {
 		log.Errorf("while checking existing user: %v", err)
 		return fmt.Errorf("while checking existing user: %w", err)
 	}
 	if isExistUser {
-		log.Warnf("User already exists: %s", newuser.Username)
+		log.Warnf("User already exists: %s", newUser.Username)
 		return errors.New("用户名已存在")
 	}
 
 	// 生成新的ObjectID
-	newuser.ID = primitive.NewObjectID().Hex()
+	newUser.ID = primitive.NewObjectID().Hex()
 
 	// 初始化其他字段
-	newuser.Coins = 0
-	newuser.Blacklist = []string{}
-	newuser.CoinsRecord = []models.CoinRecord{}
-	newuser.Followed = []string{}
-	newuser.Follower = []string{}
-	newuser.QuestionsAsk = []string{}
-	newuser.QuestionsAsw = []string{}
-	newuser.QuestionsCollect = []string{}
-	newuser.CreateAt = time.Now()
-	newuser.UpdateAt = time.Now()
-	newuser.DeleteAt = time.Time{}
+	newUser.Coins = 0
+	newUser.Blacklist = []string{}
+	newUser.CoinsRecord = []models.CoinRecord{}
+	newUser.Followed = []string{}
+	newUser.Follower = []string{}
+	newUser.QuestionsAsk = []string{}
+	newUser.QuestionsAsw = []string{}
+	newUser.QuestionsCollect = []string{}
+	newUser.CreateAt = time.Now()
+	newUser.UpdateAt = time.Now()
+	newUser.DeleteAt = time.Time{}
 
 	// 保存用户到数据库
-	if err := storeUser(newuser); err != nil {
+	if err := storeUser(newUser); err != nil {
 		log.Errorf("Failed to store user: %v", err)
 		return errors.New("注册失败")
 	}
 
-	log.Infof("User registered successfully: %s", newuser.Username)
+	log.Infof("User registered successfully: %s", newUser.Username)
 
 	return nil
 }
@@ -77,7 +77,7 @@ func storeUser(user models.User) error {
 // 验证用户密码是否正确，返回 JWT令牌，过期时间，刷新令牌，用户基本信息，错误信息
 func AuthenticateUser(user models.LoginRequest) (string, int64, string, models.SimpleUser, error) {
 	// 检查用户是否存在
-	storedUser, err := getUserbyID(user.Username)
+	storedUser, err := getUserByID(user.Username)
 	if err != nil {
 		log.Error("Failed to get user from database: ", err)
 		return "", 0, "", models.SimpleUser{}, errors.New("failed to get user from database")
@@ -115,24 +115,24 @@ func AuthenticateUser(user models.LoginRequest) (string, int64, string, models.S
 }
 
 // 从数据库获取用户
-func getUserbyID(id string) (models.User, error) {
+func getUserByID(userName string) (models.User, error) {
 	user := models.User{}
 
 	// 将字符串转换为 ObjectID
-	objectID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		log.Println("Failed to convert string to ObjectID: ", err)
-		return models.User{}, err
-	}
+	//objectID, err := primitive.ObjectIDFromHex(id)
+	//if err != nil {
+	//	log.Println("Failed to convert string to ObjectID: ", err)
+	//	return models.User{}, err
+	//}
 
 	// 使用 ObjectID 进行查询
-	result := database.MongoDbClient.Database("aorb").Collection("users").FindOne(context.TODO(), bson.M{"_id": objectID})
+	result := database.MongoDbClient.Database("aorb").Collection("users").FindOne(context.TODO(), bson.M{"userName": userName})
 
 	// 解码结果到 user 结构体
-	err = result.Decode(&user)
+	err := result.Decode(&user)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			log.Println("No user found with ID: ", id)
+			log.Println("No user found with ID: ", userName)
 		} else {
 			log.Println("Failed to decode result: ", err)
 		}
