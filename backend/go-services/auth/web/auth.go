@@ -17,14 +17,14 @@ import (
 var Client auth.AuthServiceClient
 
 func LoginHandler(c *gin.Context) {
-	var req models.LoginReq
+	var req models.LoginRequest
 	_, span := tracing.Tracer.Start(c.Request.Context(), "LoginHandler")
 	defer span.End()
 	logging.SetSpanWithHostname(span)
 	logger := logging.LogService("GateWay.Login").WithContext(c.Request.Context())
 
 	if err := c.ShouldBindQuery(&req); err != nil {
-		c.JSON(http.StatusOK, models.LoginRes{
+		c.JSON(http.StatusOK, models.LoginResponse{
 			StatusCode: strings.GateWayParamsErrorCode,
 			StatusMsg:  strings.GateWayParamsError,
 			UserId:     0,
@@ -55,7 +55,7 @@ func LoginHandler(c *gin.Context) {
 }
 
 func RegisterHandle(c *gin.Context) {
-	var req models.RegisterReq
+	var req models.RegisterRequ
 	_, span := tracing.Tracer.Start(c.Request.Context(), "RegisterHandler")
 	defer span.End()
 	logger := logging.LogService("GateWay.Register").WithContext(c.Request.Context())

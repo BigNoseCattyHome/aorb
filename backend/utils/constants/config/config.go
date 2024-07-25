@@ -25,9 +25,6 @@ type Config struct {
 	Gorse    *Gorse              `toml:"Gorse"`
 	Other    *Other              `toml:"Other"`
 	// Etcd     *Etcd               `toml:"Etcd"`
-<<<<<<< HEAD
-	PyroScope *PyroScope `toml:"PyroScope"`
-=======
 	// PyroScope *PyroScope          `toml:"PyroScope"`
 }
 
@@ -45,7 +42,6 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
->>>>>>> 1384e06af9c940c04e7abb00af53caf4290f4101
 }
 
 type Other struct {
