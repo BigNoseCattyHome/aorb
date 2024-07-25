@@ -5,7 +5,7 @@ option go_package = "github.com/BigNoseCattyHome/aorb/backend/rpc/user;user";
 
 message CoinRecord {
   int64 consume = 1; // 消耗的金币数
-  string question_id = 2; // 为其投币的问题ID
+  string poll_id = 2; // 为其投币的问题ID
   string user_id = 3; // 使用者的ID
 }
 
@@ -17,18 +17,17 @@ message User {
   repeated CoinRecord coins_record = 4; // 用户金币流水记录
   repeated string followed = 5; // 关注者
   repeated string follower = 6; // 被关注者
-  uint32 id = 7; // 用户ID
+  string id = 7; // 用户ID
   optional string ipaddress = 8; // IP归属地
   string nickname = 9; // 用户昵称
-  repeated uint32 questions_ask = 10; // 发起过的问题
-  repeated uint32 questions_asw = 11; // 回答过的问题
-  repeated uint32 questions_collect = 12; // 收藏的问题
+  repeated string poll_ask = 10; // 发起过的问题id
+  repeated string poll_ans = 11; // 回答过的问题id
+  repeated string poll_collect = 12; // 收藏的问题id
   string username = 13; // 用户登录名
 }
 
 message UserRequest{
-  uint32 user_id = 1;   // 用户id
-  uint32 actor_id = 2;  // 发送请求的用户的id
+  string username = 1;
 }
 
 message UserResponse{
@@ -38,7 +37,7 @@ message UserResponse{
 }
 
 message UserExistRequest{
-  uint32 user_id = 1; // 用户id
+  string username = 1; // 用户名
 }
 
 message UserExistResponse{
