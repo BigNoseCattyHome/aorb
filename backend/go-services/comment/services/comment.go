@@ -129,11 +129,10 @@ func (c CommentServiceImpl) ActionComment(ctx context.Context, request *comment.
 	logging.SetSpanWithHostname(span)
 	logger := logging.LogService("CommentService.ActionComment").WithContext(ctx)
 	logger.WithFields(logrus.Fields{
-		"user_id":      request.ActorId,
+		"username":     request.Username,
 		"poll_id":      request.PollId,
 		"action_type":  request.ActionType,
-		"comment_text": request.GetCommentText(),
-		"comment_id":   request.GetCommentId(),
+		"comment_text": request.CommentText,
 	}).Debugf("Process start")
 
 	var pCommentId uint32
