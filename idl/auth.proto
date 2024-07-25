@@ -15,8 +15,8 @@ message LoginRequest {
 }
 
 message LoginResponse {
-  bool status_code = 1; // 操作是否成功
-  string status_msg = 2; // 消息
+  int32 status_code = 1;  // 状态码，0-成功，其他值-失败
+  string status_msg = 2;  // 返回状态描述
   string token = 3; // JWT令牌
   string refresh_token = 4; // 刷新令牌
   string token_type = 5; // 令牌类型
@@ -36,10 +36,11 @@ message VerifyRequest {
 }
 
 message VerifyResponse {
-  bool success = 1; // 是否有效
-  string user_id = 2; // 用户ID
-  string username = 3; // 用户名
-  int64 expires_at = 4; // 过期时间
+  int32 status_code = 1;  // 状态码，0-成功，其他值-失败
+  string status_msg = 2;  // 返回状态描述
+  string user_id = 3; // 用户ID
+  string username = 4; // 用户名
+  int64 expires_at = 5; // 过期时间
 }
 
 message RefreshRequest {
@@ -47,9 +48,10 @@ message RefreshRequest {
 }
 
 message RefreshResponse {
-  bool success = 1; // 是否有效
-  string token = 2; // 新令牌
-  int64 expires_at = 3; // 新令牌过期时间
+  int32 status_code = 1;  // 状态码，0-成功，其他值-失败
+  string status_msg = 2;  // 返回状态描述
+  string token = 3; // 新令牌
+  int64 expires_at = 4; // 新令牌过期时间
 }
 
 message LogoutRequest {
@@ -58,8 +60,8 @@ message LogoutRequest {
 }
 
 message LogoutResponse {
-  bool success = 1; // 操作是否有效
-  string message = 2; // 消息
+  int32 status_code = 1;  // 状态码，0-成功，其他值-失败
+  string status_msg = 2;  // 返回状态描述
 }
 
 message RegisterRequest {
@@ -71,8 +73,8 @@ message RegisterRequest {
 }
 
 message RegisterResponse {
-  bool success = 1; // 操作是否成功
-  string message = 2; // 消息
+  int32 status_code = 1;  // 状态码，0-成功，其他值-失败
+  string status_msg = 2;  // 返回状态描述
 }
 
 // 定义服务

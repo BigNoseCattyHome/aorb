@@ -21,8 +21,9 @@ enum ActionCommentType{
 
 message ActionCommentRequest{
   string username = 1;
-  ActionCommentType action_type = 2;
-  string comment_text = 3;
+  string poll_id = 2;
+  ActionCommentType action_type = 3;
+  string comment_text = 4;
 }
 
 message ActionCommentResponse{
