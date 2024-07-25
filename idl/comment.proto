@@ -54,6 +54,6 @@ message CountCommentResponse{
 
 service CommentService{
   rpc ActionComment(ActionCommentRequest) returns (ActionCommentResponse);
-  rpc ListComment(GetCommentRequest) returns (GetCommentResponse);
+  rpc GetComment(GetCommentRequest) returns (GetCommentResponse);
   rpc CountComment(CountCommentRequest) returns (CountCommentResponse);
 }
