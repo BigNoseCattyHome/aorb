@@ -58,11 +58,11 @@ func (a AuthServiceImpl) Login(ctx context.Context, request *auth.LoginRequest) 
 
 	// 解析请求
 	login_request := models.LoginRequest{
-		Username: request.Username,
-		Password: request.Password, // 目前是只用到了这两个字段，后续可以根据需要添加
-		// DeviceID:  request.DeviceID,
-		// Nonce:     request.Nonce,
-		// Timestamp: request.Timestamp,
+		Username:  request.Username,
+		Password:  request.Password, // 目前是只用到了这两个字段，后续可以根据需要添加
+		DeviceID:  request.DeviceId,
+		Nonce:     request.Nonce,
+		Timestamp: request.Timestamp.AsTime(),
 	}
 
 	// 调用服务
@@ -73,8 +73,8 @@ func (a AuthServiceImpl) Login(ctx context.Context, request *auth.LoginRequest) 
 
 	// 返回响应
 	loginResponse := &auth.LoginResponse{
-		StatusCode:   true,
-		StatusMsg:    "User logged in successfully",
+		StatusCode:   0,
+		StatusMsg:    "user login successfully",
 		Token:        token,
 		TokenType:    "Bearer",
 		ExpiresAt:    exp_token,
@@ -100,10 +100,11 @@ func (a AuthServiceImpl) Verify(context context.Context, request *auth.VerifyReq
 
 	// 返回响应
 	verifyResponse := &auth.VerifyResponse{
-		Success:   true,
-		UserId:    claims.UserId,
-		Username:  claims.Username,
-		ExpiresAt: claims.ExpiresAt,
+		StatusCode: 0,
+		StatusMsg:  "verify token successfully",
+		UserId:     claims.UserId,
+		Username:   claims.Username,
+		ExpiresAt:  claims.ExpiresAt,
 	}
 	return verifyResponse, nil
 }
@@ -119,9 +120,10 @@ func (a AuthServiceImpl) Refresh(context context.Context, request *auth.RefreshR
 
 	// 返回响应
 	refreshResponse := &auth.RefreshResponse{
-		Success:   true,
-		Token:     newToken,
-		ExpiresAt: exp_token,
+		StatusCode: 0,
+		StatusMsg:  "refresh token successfully",
+		Token:      newToken,
+		ExpiresAt:  exp_token,
 	}
 	return refreshResponse, nil
 }
@@ -146,8 +148,8 @@ func (a AuthServiceImpl) Logout(context context.Context, request *auth.LogoutReq
 
 	// 返回响应
 	logoutResponse := &auth.LogoutResponse{
-		Success: true,
-		Message: "tokens revoked",
+		StatusCode: 0,
+		StatusMsg:  "user logout successfully",
 	}
 	return logoutResponse, nil
 
@@ -174,8 +176,8 @@ func (a AuthServiceImpl) Register(context context.Context, request *auth.Registe
 
 	// 返回响应
 	registerResponse := &auth.RegisterResponse{
-		Success: true,
-		Message: "User registered successfully",
+		StatusCode: 0,
+		StatusMsg:  "user register successfully",
 	}
 	return registerResponse, nil
 }

@@ -30,7 +30,7 @@ class AuthService {
       ..deviceId = deviceId;
     final LoginResponse response = await _client.login(request);
     try {
-      if (response.statusCode) {
+      if (response.statusCode == 0) {
         logger.i('Login successful');
 
         // 存储用户信息到本地

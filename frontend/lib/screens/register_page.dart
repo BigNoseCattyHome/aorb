@@ -118,16 +118,16 @@ class RegisterPageState extends State<RegisterPage> {
 
       // ~ 控制台输出注册结果
       logger.i('registerResponse: $registerResponse');
-      final endTime = DateTime.now();      // 记录结束调用的时间和耗时
+      final endTime = DateTime.now(); // 记录结束调用的时间和耗时
       final duration = endTime.difference(startTime);
       logger.i(
           'Register call completed at $endTime (Duration: ${duration.inMilliseconds}ms)');
       // 输出注册响应
       logger.i('Register response:');
-      logger.i('Success: ${registerResponse.success}');
-      logger.i('Message: ${registerResponse.message}');
+      logger.i('statusCode: ${registerResponse.statusCode}');
+      logger.i('statusMsg: ${registerResponse.statusMsg}');
 
-      if (registerResponse.success) {
+      if (registerResponse.statusCode == 0) {
         // 注册成功后的处理逻辑
         Navigator.pop(context);
       } else {

@@ -35,7 +35,7 @@ type LoginRequest struct {
 	// 密码的md5摘要
 	Password string `json:"password"`
 	// 时间戳
-	Timestamp string `json:"timestamp"`
+	Timestamp time.Time `json:"timestamp"`
 }
 
 func UnmarshalResponseLogin(data []byte) (LoginResponse, error) {

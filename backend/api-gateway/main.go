@@ -190,24 +190,31 @@ func getResponseType(method string) reflect.Type {
 		return reflect.TypeOf((*auth.RefreshResponse)(nil))
 	case "/rpc.auth.AuthService/Logout":
 		return reflect.TypeOf((*auth.LogoutResponse)(nil))
+
 	case "/rpc.user.UserService/GetUserInfo":
 		return reflect.TypeOf((*user.UserResponse)(nil))
 	case "/rpc.user.UserService/GetUserExistInformation":
 		return reflect.TypeOf((*user.UserExistResponse)(nil))
+
 	case "/rpc.comment.CommentService/ActionComment":
 		return reflect.TypeOf((*comment.ActionCommentResponse)(nil))
 	case "/rpc.comment.CommentService/ListComment":
-		return reflect.TypeOf((*comment.ListCommentResponse)(nil))
+		return reflect.TypeOf((*comment.GetCommentResponse)(nil))
 	case "/rpc.comment.CommentService/CountComment":
 		return reflect.TypeOf((*comment.CountCommentResponse)(nil))
-	case "/rpc.poll.PollService/ListPolls":
+
+	case "/rpc.poll.PollService/CreatePoll":
+		return reflect.TypeOf((*poll.CreatePollResponse)(nil))
+	case "/rpc.poll.PollService/GetPoll":
+		return reflect.TypeOf((*poll.GetPollResponse)(nil))
+	case "/rpc.poll.PollService/ListPoll":
 		return reflect.TypeOf((*poll.ListPollResponse)(nil))
-	case "/rpc.poll.PollService/QueryPolls":
-		return reflect.TypeOf((*poll.QueryPollResponse)(nil))
-	case "/rpc.poll.PollService/QueryPollExisted":
-		return reflect.TypeOf((*poll.PollExistResponse)(nil))
-	case "/rpc.vote.VoteService/VoteForAQuestion":
-		return reflect.TypeOf((*vote.VoteResponse)(nil))
+
+	case "/rpc.vote.VoteService/CreateVote":
+		return reflect.TypeOf((*vote.CreateVoteResponse)(nil))
+	case "/rpc.vote.VoteService/GetVote":
+		return reflect.TypeOf((*vote.GetVoteCountResponse)(nil))
+
 	case "/rpc.recommend.RecommendService/GetRecommendInformation":
 		return reflect.TypeOf((*recommend.RecommendResponse)(nil))
 	case "/rpc.recommend.RecommendService/RegisterRecommendUser":
