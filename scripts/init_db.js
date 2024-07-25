@@ -4,55 +4,6 @@ conn = new Mongo();
 // 切换到数据库 aorb
 db = conn.getDB("aorb");
 
-function getNextUserSequence(name) {
-  // 主键自增函数
-  var ret = db.userCounter.findAndModify(
-      {
-        query: { _id: name },
-        update: { $inc: { seq: 1 } },
-        new: true
-      }
-  );
-  return ret.seq;
-}
-
-function getNextPollSequence(name) {
-  // 主键自增函数
-  var ret = db.pollCounter.findAndModify(
-      {
-        query: { _id: name },
-        update: { $inc: { seq: 1 } },
-        new: true
-      }
-  );
-  return ret.seq;
-}
-
-function getNextCommentSequence(name) {
-  // 主键自增函数
-  var ret = db.commentCounter.findAndModify(
-      {
-        query: { _id: name },
-        update: { $inc: { seq: 1 } },
-        new: true
-      }
-  );
-  return ret.seq;
-}
-
-function getNextVoteSequence(name) {
-  // 主键自增函数
-  var ret = db.voteCounter.findAndModify(
-      {
-        query: { _id: name },
-        update: { $inc: { seq: 1 } },
-        new: true
-      }
-  );
-  return ret.seq;
-}
-
-
 // 检查是否存在数据库 aorb，如果存在则清空所有集合
 if (db.getCollectionInfos().length > 0) {
   db.getCollectionNames().forEach(function (collectionName) {
