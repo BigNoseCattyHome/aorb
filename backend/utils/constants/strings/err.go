@@ -48,8 +48,8 @@ const (
 	FavoriteServiceError             = "点赞服务内部出错"
 	UserServiceInnerErrorCode        = 50019
 	UserServiceInnerError            = "登录服务出现内部错误，请稍后重试！"
-	UnableToQueryVideoErrorCode      = 50020
-	UnableToQueryVideoError          = "无法查询到该视频"
+	UnableToQueryPollErrorCode       = 50020
+	UnableToQueryPollError           = "无法查询到该提问"
 	AlreadyFollowingErrorCode        = 50021
 	AlreadyFollowingError            = "无法关注已关注的人"
 	UnableToGetFriendListErrorCode   = 50022
@@ -57,7 +57,7 @@ const (
 	RecommendServiceInnerErrorCode   = 50023
 	RecommendServiceInnerError       = "推荐系统内部错误"
 	FeedServiceInnerErrorCode        = 50024
-	FeedServiceInnerError            = "视频服务出现内部错误，请稍后重试！"
+	FeedServiceInnerError            = "推送服务出现内部错误，请稍后重试！"
 )
 
 // Expected Error

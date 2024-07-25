@@ -111,7 +111,7 @@ func main() {
 
 	// 启动 HTTP 服务器以提供 Prometheus 指标
 	httpSrv := &http.Server{
-		Addr: config.Conf.Pod.PodIp + config.Metrics,
+		Addr: config.Conf.Pod.PodIp + config.AuthMetrics,
 	}
 	g.Add(func() error {
 		// 设置 HTTP 处理函数

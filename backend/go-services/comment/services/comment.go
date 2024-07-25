@@ -209,8 +209,8 @@ func (c CommentServiceImpl) ActionComment(ctx context.Context, request *comment.
 		}).Errorf("Video ID does not exist")
 		logging.SetSpanError(span, err)
 		resp = &comment.ActionCommentResponse{
-			StatusCode: strings.UnableToQueryVideoErrorCode,
-			StatusMsg:  strings.UnableToQueryVideoError,
+			StatusCode: strings.UnableToQueryPollErrorCode,
+			StatusMsg:  strings.UnableToQueryPollError,
 		}
 		return
 	}
@@ -254,7 +254,7 @@ func (c CommentServiceImpl) ActionComment(ctx context.Context, request *comment.
 		return
 	}
 
-	countCommentKey := fmt.Sprintf("Comment-Count-%s", request.PollId)
+	countCommentKey := fmt.Sprintf("Comment-Count-%d", request.PollId)
 	cached.TagDelete(ctx, countCommentKey)
 
 	logger.WithFields(logrus.Fields{
@@ -296,8 +296,8 @@ func (c CommentServiceImpl) ListComment(ctx context.Context, request *comment.Li
 		}).Errorf("Poll ID does not exist")
 		logging.SetSpanError(span, err)
 		resp = &comment.ListCommentResponse{
-			StatusCode: strings.UnableToQueryVideoErrorCode,
-			StatusMsg:  strings.UnableToQueryVideoError,
+			StatusCode: strings.UnableToQueryPollErrorCode,
+			StatusMsg:  strings.UnableToQueryPollError,
 		}
 		return
 	}

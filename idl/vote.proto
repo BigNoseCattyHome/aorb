@@ -1,25 +1,38 @@
 syntax = "proto3";
 option go_package = "github.com/BigNoseCattyHome/aorb/backend/rpc/vote;vote";
 package rpc.vote;
-import "user.proto";
+
+import "google/protobuf/timestamp.proto";
 
 message Vote{
-  uint32 id = 1;
-  user.User user = 2;
-  int32 choice = 3; // 0-第一个选项，1-第二个选项
+  string vote_username = 1;
+  string choice = 2;
+  google.protobuf.Timestamp create_at = 3;
+  google.protobuf.Timestamp delete_at = 4;
 }
 
-message VoteRequest{
-  uint32 question_id = 1;
-  int32 choice = 2; // 0-第一个选项，1-第二个选项
+message CreateVoteRequest{
+  string poll_id = 1;
+  string choice = 2;
 }
 
-message VoteResponse{
-  int32 status_code = 1;
-  string status_msg = 2;
-  repeated Vote vote = 3;
+message CreateVoteResponse{
+  int32 status_code = 1;  // 状态码，0-成功，其他值-失败
+  string status_msg = 2;  // 返回状态描述
+}
+
+message GetVoteCountRequest {
+  string poll_id = 1;
+}
+
+message GetVoteCountResponse {
+  int32 status_code = 1;  // 状态码，0-成功，其他值-失败
+  string status_msg = 2;  // 返回状态描述
+  int32 count_1 = 3;
+  int32 count_2 = 4;
 }
 
 service VoteService{
-  rpc VoteForAQuestion(VoteRequest) returns (VoteResponse);
+  rpc CreateVote (CreateVoteRequest) returns (CreateVoteResponse);
+  rpc GetVote (GetVoteCountRequest) returns (GetVoteCountResponse);
 }

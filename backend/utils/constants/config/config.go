@@ -48,6 +48,11 @@ type Other struct {
 	AnonymityUser string `toml:"anonymityUser"`
 }
 
+type PyroScope struct {
+	State string `toml:"state"`
+	Addr  string `toml:"addr"`
+}
+
 type Gorse struct {
 	GorseAddr   string `toml:"gorseAddr"`
 	GorseApikey string `toml:"gorseApikey"`

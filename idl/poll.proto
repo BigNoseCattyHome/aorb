@@ -1,66 +1,59 @@
 syntax = "proto3";
 package rpc.poll;
-import "user.proto";
+
 option go_package = "github.com/BigNoseCattyHome/aorb/backend/rpc/poll;poll";
 
+import "comment.proto";
+import "vote.proto";
+import "google/protobuf/timestamp.proto";
+
 message Poll{
-  uint32 id = 1;  // 问题id
-  user.User user = 2; // 用户信息
-  string title = 3; // 问题标题
-  string choice_a = 4;  // 选项a
-  string choice_b = 5;  // 选项b
-  uint32 comment_count = 6;
+  string id = 1;  // 投票id
+  string title = 2; // 投票标题
+  repeated string option = 3; // 选项
+  repeated int32 options_count = 4; // 投票计数
+  string poll_type = 5; // 投票类型
+  string username = 6;  // 投票发起人
+  google.protobuf.Timestamp create_at = 7;  // 创建时间
+  google.protobuf.Timestamp update_at = 8;  // 删除时间
+  google.protobuf.Timestamp delete_at = 9;  // 删除时间
+  repeated comment.Comment comment_list = 10; // 评论列表
+  repeated vote.Vote vote_list = 11; // 投票列表
 }
 
-message ListPollRequest{
-  optional uint32 actor_id = 1;
-  optional string latest_time = 2;
+message CreatePollRequest {
+  Poll poll = 1;
 }
 
-message ListPollResponse{
-  int32 status_code = 1;
-  string status_msg = 2;
-  optional uint64 next_time = 3;
-  repeated Poll poll_list = 4;
+message CreatePollResponse {
+  int32 status_code = 1;  // 状态码，0-成功，其他值-失败
+  string status_msg = 2;  // 返回状态描述
+  string poll_id = 3;     // 返回创建的投票id
 }
 
-message QueryPollRequest{
-  uint32 actor_id = 1;
-  repeated uint32 poll_ids = 2;
+message GetPollRequest {
+  string poll_id = 1;
 }
 
-message QueryPollResponse{
-  int32 status_code = 1;
-  string status_msg = 2;
-  repeated Poll poll_list = 3;
+message GetPollResponse {
+  int32 status_code = 1;  // 状态码，0-成功，其他值-失败
+  string status_msg = 2;  // 返回状态描述
+  Poll poll = 3;
 }
 
-message PollExistRequest{
-  uint32 poll_id = 1;
+message ListPollRequest {
+  int32 offset = 1; // 第几页
+  int32 limit = 2;  // 一页多少
 }
 
-message PollExistResponse{
-  int32 status_code = 1;
-  string status_msg = 2;
-  bool existed = 3;
-}
-
-message QueryPollSummaryAndKeywordsRequest{
-  uint32 actor_id = 1;
-  uint32 poll_id = 2;
-}
-
-message QueryPollSummaryAndKeywordsResponse{
-  int32 status_code = 1;
-  string status_msg = 2;
-  string summary = 3;
-  string keywords = 4;
+message ListPollResponse {
+  int32 status_code = 1;  // 状态码，0-成功，其他值-失败
+  string status_msg = 2;  // 返回状态描述
+  repeated Poll poll_list = 3;  // 投票列表
 }
 
 service PollService{
-//  rpc ListPollsByRecommend(ListPollRequest) returns (ListPollResponse);
-  rpc ListPolls(ListPollRequest) returns (ListPollResponse);
-  rpc QueryPolls(QueryPollRequest) returns (QueryPollResponse);
-  rpc QueryPollExisted(PollExistRequest) returns (PollExistResponse);
-//  rpc QueryPollSummaryAndKeywords(QueryPollSummaryAndKeywordsRequest) returns (QueryPollSummaryAndKeywordsResponse);
+  rpc CreatePoll (CreatePollRequest) returns (CreatePollResponse);
+  rpc GetPoll (GetPollRequest) returns (GetPollResponse);
+  rpc ListPoll (ListPollRequest) returns (ListPollResponse);
 }

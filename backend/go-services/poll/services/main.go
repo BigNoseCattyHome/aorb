@@ -38,6 +38,8 @@ func main() {
 		}
 	}()
 
+	//profiling.InitPyroscope("AorB.PollService")
+
 	log := logging.LogService(config.PollProcessorRpcServiceName)
 	lis, err := net.Listen("tcp", config.Conf.Pod.PodIp+config.PollRpcServerAddr)
 
@@ -83,7 +85,7 @@ func main() {
 		log.Errorf("Rpc %s listen happens error for: %v", config.PollRpcServerName, err)
 	})
 
-	httpSrv := &http.Server{Addr: config.Conf.Pod.PodIp + config.Metrics}
+	httpSrv := &http.Server{Addr: config.Conf.Pod.PodIp + config.PollMetrics}
 	g.Add(func() error {
 		m := http.NewServeMux()
 		m.Handle("/metrics", promhttp.HandlerFor(
