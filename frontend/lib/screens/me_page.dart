@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:aorb/conf/config.dart';
 import 'package:aorb/screens/follow_page.dart';
-import 'package:aorb/models/user.dart';
 import 'package:aorb/services/user_service.dart';
+import 'package:aorb/generated/user.pbgrpc.dart';
 
 // 只有在登录的情况下才会展示这个页面，当没有登录的时候展示LoginPage，通过MainPage来检查登录状态并进行控制
 class MePage extends StatefulWidget {
-  final String userId;
-  const MePage({super.key, required this.userId});
+  final String username;
+  const MePage({super.key, required this.username});
 
   @override
   MePageState createState() => MePageState();
@@ -20,10 +21,11 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    // 根据userId查询用户信息，并触发UI更新
-    UserService().fetchUserInfo(widget.userId).then((user) {
+    // 根据 username 查询用户信息，并触发UI更新
+    UserRequest request = UserRequest()..username = widget.username;
+    UserService(backendHost, backendPort).getUserInfo(request).then((response) {
       setState(() {
-        this.user = user;
+        user = response.user;
       });
     });
   }
@@ -110,11 +112,11 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
                                         context,
                                         MaterialPageRoute(
                                             builder: (context) =>
-                                                FollowPage(userId: user.id)),
+                                                FollowPage(username: user.id)),
                                       );
                                     },
                                     child: Text(
-                                        '关注：${user.followed.length}', // ~ 用户关注的人数
+                                        '关注：${user.followed.userIds.length}', // ~ 用户关注的人数
                                         style: const TextStyle(
                                             color: Colors.white,
                                             fontSize: 12,
@@ -127,11 +129,11 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
                                         context,
                                         MaterialPageRoute(
                                             builder: (context) =>
-                                                FollowPage(userId: user.id)),
+                                                FollowPage(username: user.id)),
                                       );
                                     },
                                     child: Text(
-                                        '被关注：${user.follower.length}', // ~ 用户的粉丝数量
+                                        '被关注：${user.follower.userIds.length}', // ~ 用户的粉丝数量
                                         style: const TextStyle(
                                             color: Colors.white,
                                             fontSize: 12,

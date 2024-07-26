@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class AuthService {
   late final AuthServiceClient _client;
   late final ClientChannel _channel;
+  var logger = getLogger();
 
   // 初始化_channel和_client
   AuthService(String host, int port) {
@@ -22,39 +23,41 @@ class AuthService {
     _client = AuthServiceClient(_channel);
   }
 
-  Future<LoginResponse> login(
-      String username, String password, String deviceId) async {
-    final request = LoginRequest()
-      ..username = username // 相当于 request.username = username
-      ..password = password
-      ..deviceId = deviceId;
+Future<LoginResponse> login(String username, String password, String deviceId) async {
+  final request = LoginRequest()
+    ..username = username
+    ..password = password
+    ..deviceId = deviceId;
+
+  try {
     final LoginResponse response = await _client.login(request);
-    try {
-      if (response.statusCode == 0) {
-        logger.i('Login successful');
+    
+    if (response.statusCode == 0) {  
+      logger.i('Login successful for user: ${username.substring(0, 2)}...');  // 部分隐藏用户名
 
-        // 存储用户信息到本地
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('authToken', response.token);
-        await prefs.setString('refreshToken', response.refreshToken);
-        await prefs.setString('userId', response.simpleUser.username);
-        await prefs.setString('avatar', response.simpleUser.avatar);
-        await prefs.setString('nickname', response.simpleUser.nickname);
-      } else {
-        logger.w('Login failed: ${response.statusMsg}');
-      }
-    } on GrpcError catch (e) {
-      // 处理gRPC错误
-      logger.e('gRPC error during login: ${e.message}');
-      throw Exception('Failed to login: ${e.message}');
-    } catch (e) {
-      // 处理其他错误
-      logger.e('Unexpected error during login: $e');
-      throw Exception('Failed to login: $e');
+      // 存储用户信息到本地
+      final prefs = await SharedPreferences.getInstance();
+      await Future.wait([
+        prefs.setString('authToken', response.token),
+        prefs.setString('refreshToken', response.refreshToken),
+        prefs.setString('userId', response.simpleUser.username),
+        prefs.setString('avatar', response.simpleUser.avatar),
+        prefs.setString('nickname', response.simpleUser.nickname),
+      ]);
+
+      return response;
+    } else {
+      logger.w('Login failed: ${response.statusMsg}');
+      throw Exception('Login failed: ${response.statusMsg}');
     }
-    return response;
+  } on GrpcError catch (e) {
+    logger.e('gRPC error during login: ${e.message}');
+    throw Exception('gRPC error during login: ${e.message}');
+  } catch (e) {
+    logger.e('Unexpected error during login: $e');
+    throw Exception('Unexpected error during login: $e');
   }
-
+}
   Future<VerifyResponse> verify(String token) async {
     final request = VerifyRequest()..token = token;
     return await _client.verify(request);
@@ -91,8 +94,6 @@ class AuthService {
   Future<void> dispose() async {
     await _channel.shutdown();
   }
-
-  var logger = getLogger();
 
   // 检查登录状态
   Future<bool> checkLoginStatus() async {

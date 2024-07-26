@@ -38,7 +38,7 @@ class MainPageState extends State<MainPage>
         setState(() {
           userId = prefs.getString('userId') ?? '';
           avatar = prefs.getString('avatar') ?? '';
-          _pages[2] = MePage(userId: userId);
+          _pages[2] = MePage(username: userId);
         });
       }
     } catch (e) {

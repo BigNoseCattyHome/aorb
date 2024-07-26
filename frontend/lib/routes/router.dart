@@ -25,7 +25,7 @@ class AppRouter {
         final userId = settings.arguments as String;
         return MaterialPageRoute(
             builder: (_) =>
-                PollDetailPage(postUserId: postUserId, userId: userId));
+                PollDetailPage(postUserId: postUserId, username: userId));
       default:
         return MaterialPageRoute(
             builder: (_) => Scaffold(
