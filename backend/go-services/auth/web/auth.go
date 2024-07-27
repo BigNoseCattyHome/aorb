@@ -14,6 +14,8 @@ import (
 	"net/http"
 )
 
+// TODO: web还需要修改，优先级在各个服务的service之后
+
 var Client auth.AuthServiceClient
 
 func LoginHandler(c *gin.Context) {

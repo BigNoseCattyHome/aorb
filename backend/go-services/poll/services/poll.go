@@ -91,7 +91,7 @@ func producePoll(ctx context.Context, event eventModels.RecommendEvent) {
 	if err != nil {
 		logger.WithFields(logrus.Fields{
 			"err": err,
-		}).Errorf("Error when marshal the event model")
+		}).Errorf("Error when marshal the event models")
 		logging.SetSpanError(span, err)
 		return
 	}
@@ -112,7 +112,7 @@ func producePoll(ctx context.Context, event eventModels.RecommendEvent) {
 	if err != nil {
 		logger.WithFields(logrus.Fields{
 			"err": err,
-		}).Errorf("Error when publishing the event model")
+		}).Errorf("Error when publishing the event models")
 		logging.SetSpanError(span, err)
 		return
 	}

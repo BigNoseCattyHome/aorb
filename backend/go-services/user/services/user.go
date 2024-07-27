@@ -26,7 +26,7 @@ func (a UserServiceImpl) GetUserInfo(ctx context.Context, request *user.UserRequ
 	logger := logging.LogService("UserService.GetUserInfo").WithContext(ctx)
 
 	var userModel userModels.User
-	userModel.ID = request.UserId
+	userModel.Username = request.Username
 	ok, err := cached.ScanGet(ctx, "UserInfo", &userModel, "users")
 	if err != nil {
 		resp = &user.UserResponse{
