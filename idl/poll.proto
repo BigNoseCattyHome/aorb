@@ -8,7 +8,7 @@ import "vote.proto";
 import "google/protobuf/timestamp.proto";
 
 message Poll{
-  string id = 1;  // 投票id
+  string poll_uuid = 1;  // 投票uuid
   string title = 2; // 投票标题
   repeated string option = 3; // 选项
   repeated int32 options_count = 4; // 投票计数
@@ -28,11 +28,11 @@ message CreatePollRequest {
 message CreatePollResponse {
   int32 status_code = 1;  // 状态码，0-成功，其他值-失败
   string status_msg = 2;  // 返回状态描述
-  string poll_id = 3;     // 返回创建的投票id
+  string poll_uuid = 3;     // 返回创建的投票uuid
 }
 
 message GetPollRequest {
-  string poll_id = 1;
+  string poll_uuid = 1;
 }
 
 message GetPollResponse {
@@ -52,8 +52,19 @@ message ListPollResponse {
   repeated Poll poll_list = 3;  // 投票列表
 }
 
+message PollExistRequest {
+  string poll_uuid = 1;
+}
+
+message PollExistResponse {
+  int32 status_code = 1;  // 状态码，0-成功，其他值-失败
+  string status_msg = 2;  // 返回状态描述
+  bool exist = 3;
+}
+
 service PollService{
   rpc CreatePoll (CreatePollRequest) returns (CreatePollResponse);
   rpc GetPoll (GetPollRequest) returns (GetPollResponse);
   rpc ListPoll (ListPollRequest) returns (ListPollResponse);
+  rpc PollExist (PollExistRequest) returns (PollExistResponse);
 }

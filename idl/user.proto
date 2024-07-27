@@ -2,6 +2,26 @@ syntax = "proto3";
 package user;
 option go_package = "github.com/BigNoseCattyHome/aorb/backend/rpc/user;user";
 
+message User {
+  string id = 1; // 用户ID
+  string username = 2; // 用户登录名
+  string avatar = 3; // 用户头像
+  string nickname = 4; // 用户昵称
+
+  optional double coins = 5; // 用户的金币数
+  optional CoinRecordList coins_record = 6; // 用户金币流水记录
+  optional FollowedList followed = 7; // 关注者列表
+  optional FollowerList follower = 8; // 被关注者列表
+  optional BlackList blacklist = 9; // 屏蔽好友列表
+  optional string ipaddress = 10; // IP归属地
+  optional PollAskList poll_ask = 11; // 发起过的问题id列表
+  optional PollAnsList poll_ans = 12; // 回答过的问题id列表
+  optional PollCollectList poll_collect = 13; // 收藏的问题id列表
+}
+
+message BlackList {
+  repeated string user_ids = 1; // 屏蔽好友的用户ID列表
+}
 
 message CoinRecord {
   int64 consume = 1; // 消耗的金币数
@@ -9,25 +29,34 @@ message CoinRecord {
   string user_id = 3; // 使用者的ID
 }
 
-// TODO optional 字段在后续开发过程中应该逐步取消
-message User {
-  string avatar = 1; // 用户头像
-  repeated string blacklist = 2; // 屏蔽好友
-  optional double coins = 3; // 用户的金币数
-  repeated CoinRecord coins_record = 4; // 用户金币流水记录
-  repeated string followed = 5; // 关注者
-  repeated string follower = 6; // 被关注者
-  string id = 7; // 用户ID
-  optional string ipaddress = 8; // IP归属地
-  string nickname = 9; // 用户昵称
-  repeated string poll_ask = 10; // 发起过的问题id
-  repeated string poll_ans = 11; // 回答过的问题id
-  repeated string poll_collect = 12; // 收藏的问题id
-  string username = 13; // 用户登录名
+message CoinRecordList {
+  repeated CoinRecord records = 1; // 金币流水记录列表
 }
 
+
+message FollowedList {
+  repeated string user_ids = 1; // 关注者的用户ID列表
+}
+
+message FollowerList {
+  repeated string user_ids = 1; // 被关注者的用户ID列表
+}
+
+message PollAskList {
+  repeated string poll_ids = 1; // 发起过的问题ID列表
+}
+
+message PollAnsList {
+  repeated string poll_ids = 1; // 回答过的问题ID列表
+}
+
+message PollCollectList {
+  repeated string poll_ids = 1; // 收藏的问题ID列表
+}
 message UserRequest{
   string username = 1;
+  repeated string fields = 2;  // 新增: 可选字段列表
+
 }
 
 message UserResponse{
@@ -46,7 +75,18 @@ message UserExistResponse{
   bool existed = 3;  // 是否存在用户
 }
 
+message IsUserFollowingRequest {
+  string username = 1;       // 当前用户的用户名
+  string target_username = 2; // 目标用户的用户名
+}
+
+message IsUserFollowingResponse {
+  int32 status_code = 1;  // 状态码，0-成功，其他值-失败
+  string status_msg = 2;  // 返回状态描述
+  bool is_following = 3;    // 是否正在关注
+}
 service UserService{
   rpc GetUserInfo(UserRequest) returns (UserResponse);
-  rpc GetUserExistInformation(UserExistRequest) returns (UserExistResponse);
+  rpc CheckUserExists(UserExistRequest) returns (UserExistResponse);
+  rpc IsUserFollowing(IsUserFollowingRequest) returns (IsUserFollowingResponse);
 }
