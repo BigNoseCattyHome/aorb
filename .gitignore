@@ -107,3 +107,7 @@ android/app/build/
 # 排除proto的生成文件
 frontend/lib/generated/
 backend/rpc
+
+# ouput文件夹
+output/
+backend/rpc/

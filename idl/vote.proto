@@ -3,10 +3,9 @@ option go_package = "github.com/BigNoseCattyHome/aorb/backend/rpc/vote;vote";
 package rpc.vote;
 
 import "google/protobuf/timestamp.proto";
-import "user.proto";
 
 message Vote{
-  user.User vote_user = 1;
+  string vote_username = 1;
   string choice = 2;
   string vote_uuid = 3;
   google.protobuf.Timestamp create_at = 4;
