@@ -10,7 +10,7 @@ import "google/protobuf/timestamp.proto";
 message Poll{
   string poll_uuid = 1;  // 投票uuid
   string title = 2; // 投票标题
-  repeated string option = 3; // 选项
+  repeated string options = 3; // 选项
   repeated int32 options_count = 4; // 投票计数
   string poll_type = 5; // 投票类型
   string username = 6;  // 投票发起人

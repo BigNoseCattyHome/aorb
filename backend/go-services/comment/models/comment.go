@@ -2,16 +2,16 @@ package models
 
 import (
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/comment"
-	"google.golang.org/protobuf/types/known/timestamppb"
+	"time"
 )
 
 type Comment struct {
 	// 与mongodb交互的Comment实体
-	CommentUuid      string                 `json:"commentUuid" bson:"commentUuid,omitempty"`
-	ReviewerUserName string                 `json:"reviewerUserName" bson:"reviewerUserName,omitempty"`
-	Content          string                 `json:"content" bson:"content,omitempty"`
-	CreateAt         *timestamppb.Timestamp `json:"create_at" bson:"create_at,omitempty"`
-	DeleteAt         *timestamppb.Timestamp `json:"delete_at" bson:"delete_at"`
+	CommentUuid      string    `json:"commentUuid" bson:"commentUuid,omitempty"`
+	ReviewerUserName string    `json:"reviewer_userName" bson:"reviewerUserName,omitempty"`
+	Content          string    `json:"content" bson:"content,omitempty"`
+	CreateAt         time.Time `json:"create_at" bson:"createAt,omitempty"`
+	DeleteAt         time.Time `json:"delete_at" bson:"deleteAt"`
 }
 
 type ActionCommentReq struct {

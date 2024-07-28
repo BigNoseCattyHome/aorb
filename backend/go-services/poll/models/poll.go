@@ -2,9 +2,9 @@ package models
 
 import (
 	commentModels "github.com/BigNoseCattyHome/aorb/backend/go-services/comment/models"
-	"github.com/BigNoseCattyHome/aorb/backend/go-services/vote/models"
+	voteModels "github.com/BigNoseCattyHome/aorb/backend/go-services/vote/models"
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/poll"
-	"google.golang.org/protobuf/types/known/timestamppb"
+	"time"
 )
 
 type Poll struct {
@@ -13,12 +13,12 @@ type Poll struct {
 	PollType     string                  `json:"poll_type" bson:"pollType, omitempty"`
 	Title        string                  `json:"title" bson:"title, omitempty"`
 	Options      []string                `json:"options" bson:"options, omitempty"`
-	OptionsCount []int64                 `json:"options_count" bson:"optionsCount, omitempty"`
+	OptionsCount []int32                 `json:"options_count" bson:"optionsCount, omitempty"`
 	CommentList  []commentModels.Comment `json:"comment_list" bson:"commentList, omitempty"`
-	VoteList     []models.Vote           `json:"vote_list" bson:"voteList, omitempty"`
-	CreateAt     *timestamppb.Timestamp  `json:"create_at" bson:"create_at,omitempty"`
-	UpdateAt     *timestamppb.Timestamp  `json:"update_at" bson:"update_at,omitempty"`
-	DeleteAt     *timestamppb.Timestamp  `json:"delete_at" bson:"delete_at,omitempty"`
+	VoteList     []voteModels.Vote       `json:"vote_list" bson:"voteList, omitempty"`
+	CreateAt     time.Time               `json:"create_at" bson:"createAt,omitempty"`
+	UpdateAt     time.Time               `json:"update_at" bson:"updateAt,omitempty"`
+	DeleteAt     time.Time               `json:"delete_at" bson:"deleteAt,omitempty"`
 }
 
 type ListPollReq struct {

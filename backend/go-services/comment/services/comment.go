@@ -31,6 +31,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"strconv"
 	"sync"
+	"time"
 )
 
 var userClient user.UserServiceClient
@@ -200,8 +201,8 @@ func (c CommentServiceImpl) ActionComment(ctx context.Context, request *comment.
 		}).Errorf("Query video existence happens error")
 		logging.SetSpanError(span, err)
 		resp = &comment.ActionCommentResponse{
-			StatusCode: strings.FeedServiceInnerErrorCode,
-			StatusMsg:  strings.FeedServiceInnerError,
+			StatusCode: strings.PollServiceInnerErrorCode,
+			StatusMsg:  strings.PollServiceInnerError,
 		}
 		return
 	}
@@ -285,8 +286,8 @@ func (c CommentServiceImpl) ListComment(ctx context.Context, request *comment.Li
 		}).Errorf("Query poll existence happens error")
 		logging.SetSpanError(span, err)
 		resp = &comment.ListCommentResponse{
-			StatusCode: strings.FeedServiceInnerErrorCode,
-			StatusMsg:  strings.FeedServiceInnerError,
+			StatusCode: strings.PollServiceInnerErrorCode,
+			StatusMsg:  strings.PollServiceInnerError,
 		}
 		return
 	}
@@ -379,10 +380,10 @@ func (c CommentServiceImpl) ListComment(ctx context.Context, request *comment.Li
 		curUser := userMap[pComment.ReviewerUserName]
 
 		rCommentList = append(rCommentList, &comment.Comment{
-			CommentUuid: pComment.CommentUuid,
-			CommentUser: curUser,
-			Content:     pComment.Content,
-			CreateAt:    pComment.CreateAt,
+			CommentUuid:     pComment.CommentUuid,
+			CommentUsername: curUser.Username,
+			Content:         pComment.Content,
+			CreateAt:        timestamppb.New(pComment.CreateAt),
 		})
 	}
 
@@ -553,7 +554,7 @@ func addComment(ctx context.Context, logger *logrus.Entry, span trace.Span, pUse
 		CommentUuid:      uuid.GenerateUuid(),
 		ReviewerUserName: pUser.Username,
 		Content:          pCommentText,
-		CreateAt:         timestamppb.Now(),
+		CreateAt:         time.Now(),
 	}
 
 	newComment := bson.D{
@@ -605,10 +606,10 @@ func addComment(ctx context.Context, logger *logrus.Entry, span trace.Span, pUse
 		StatusCode: strings.ServiceOKCode,
 		StatusMsg:  strings.ServiceOK,
 		Comment: &comment.Comment{
-			CommentUuid: rComment.CommentUuid,
-			CommentUser: pUser,
-			Content:     rComment.Content,
-			CreateAt:    rComment.CreateAt,
+			CommentUuid:     rComment.CommentUuid,
+			CommentUsername: pUser.Username,
+			Content:         rComment.Content,
+			CreateAt:        timestamppb.New(rComment.CreateAt),
 		},
 	}
 	return
