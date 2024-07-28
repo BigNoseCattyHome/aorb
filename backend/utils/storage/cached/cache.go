@@ -152,7 +152,7 @@ func Get(ctx context.Context, key string) (string, bool, error) {
 		return x.(string), true, nil
 	}
 
-	// 缓存没有命中，回调数据库
+	// 缓存没有命中，回调Redis
 	logger.WithFields(logrus.Fields{
 		"key": key,
 	}).Infof("Missed local memory cached")

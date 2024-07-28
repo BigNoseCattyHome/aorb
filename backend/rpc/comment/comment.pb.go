@@ -7,7 +7,6 @@
 package comment
 
 import (
-	user "github.com/BigNoseCattyHome/aorb/backend/rpc/user"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -76,11 +75,11 @@ type Comment struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	CommentUser *user.User             `protobuf:"bytes,1,opt,name=comment_user,json=commentUser,proto3" json:"comment_user,omitempty"`
-	Content     string                 `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"` // 评论内容
-	CommentUuid string                 `protobuf:"bytes,3,opt,name=comment_uuid,json=commentUuid,proto3" json:"comment_uuid,omitempty"`
-	CreateAt    *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=create_at,json=createAt,proto3" json:"create_at,omitempty"` // 创建时间
-	DeleteAt    *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=delete_at,json=deleteAt,proto3" json:"delete_at,omitempty"` // 删除时间
+	CommentUsername string                 `protobuf:"bytes,1,opt,name=comment_username,json=commentUsername,proto3" json:"comment_username,omitempty"`
+	Content         string                 `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"` // 评论内容
+	CommentUuid     string                 `protobuf:"bytes,3,opt,name=comment_uuid,json=commentUuid,proto3" json:"comment_uuid,omitempty"`
+	CreateAt        *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=create_at,json=createAt,proto3" json:"create_at,omitempty"` // 创建时间
+	DeleteAt        *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=delete_at,json=deleteAt,proto3" json:"delete_at,omitempty"` // 删除时间
 }
 
 func (x *Comment) Reset() {
@@ -115,11 +114,11 @@ func (*Comment) Descriptor() ([]byte, []int) {
 	return file_comment_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *Comment) GetCommentUser() *user.User {
+func (x *Comment) GetCommentUsername() string {
 	if x != nil {
-		return x.CommentUser
+		return x.CommentUsername
 	}
-	return nil
+	return ""
 }
 
 func (x *Comment) GetContent() string {
@@ -544,12 +543,11 @@ var file_comment_proto_rawDesc = []byte{
 	0x0a, 0x0d, 0x63, 0x6f, 0x6d, 0x6d, 0x65, 0x6e, 0x74, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12,
 	0x0b, 0x72, 0x70, 0x63, 0x2e, 0x63, 0x6f, 0x6d, 0x6d, 0x65, 0x6e, 0x74, 0x1a, 0x1f, 0x67, 0x6f,
 	0x6f, 0x67, 0x6c, 0x65, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2f, 0x74, 0x69,
-	0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x0a, 0x75,
-	0x73, 0x65, 0x72, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0xe7, 0x01, 0x0a, 0x07, 0x43, 0x6f,
-	0x6d, 0x6d, 0x65, 0x6e, 0x74, 0x12, 0x2d, 0x0a, 0x0c, 0x63, 0x6f, 0x6d, 0x6d, 0x65, 0x6e, 0x74,
-	0x5f, 0x75, 0x73, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0a, 0x2e, 0x75, 0x73,
-	0x65, 0x72, 0x2e, 0x55, 0x73, 0x65, 0x72, 0x52, 0x0b, 0x63, 0x6f, 0x6d, 0x6d, 0x65, 0x6e, 0x74,
-	0x55, 0x73, 0x65, 0x72, 0x12, 0x18, 0x0a, 0x07, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x18,
+	0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0xe3, 0x01,
+	0x0a, 0x07, 0x43, 0x6f, 0x6d, 0x6d, 0x65, 0x6e, 0x74, 0x12, 0x29, 0x0a, 0x10, 0x63, 0x6f, 0x6d,
+	0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x75, 0x73, 0x65, 0x72, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x0f, 0x63, 0x6f, 0x6d, 0x6d, 0x65, 0x6e, 0x74, 0x55, 0x73, 0x65, 0x72,
+	0x6e, 0x61, 0x6d, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x18,
 	0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x12, 0x21,
 	0x0a, 0x0c, 0x63, 0x6f, 0x6d, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x75, 0x75, 0x69, 0x64, 0x18, 0x03,
 	0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x63, 0x6f, 0x6d, 0x6d, 0x65, 0x6e, 0x74, 0x55, 0x75, 0x69,
@@ -662,27 +660,25 @@ var file_comment_proto_goTypes = []any{
 	(*ListCommentResponse)(nil),   // 5: rpc.comment.ListCommentResponse
 	(*CountCommentRequest)(nil),   // 6: rpc.comment.CountCommentRequest
 	(*CountCommentResponse)(nil),  // 7: rpc.comment.CountCommentResponse
-	(*user.User)(nil),             // 8: user.User
-	(*timestamppb.Timestamp)(nil), // 9: google.protobuf.Timestamp
+	(*timestamppb.Timestamp)(nil), // 8: google.protobuf.Timestamp
 }
 var file_comment_proto_depIdxs = []int32{
-	8, // 0: rpc.comment.Comment.comment_user:type_name -> user.User
-	9, // 1: rpc.comment.Comment.create_at:type_name -> google.protobuf.Timestamp
-	9, // 2: rpc.comment.Comment.delete_at:type_name -> google.protobuf.Timestamp
-	0, // 3: rpc.comment.ActionCommentRequest.action_type:type_name -> rpc.comment.ActionCommentType
-	1, // 4: rpc.comment.ActionCommentResponse.comment:type_name -> rpc.comment.Comment
-	1, // 5: rpc.comment.ListCommentResponse.comment_list:type_name -> rpc.comment.Comment
-	2, // 6: rpc.comment.CommentService.ActionComment:input_type -> rpc.comment.ActionCommentRequest
-	4, // 7: rpc.comment.CommentService.ListComment:input_type -> rpc.comment.ListCommentRequest
-	6, // 8: rpc.comment.CommentService.CountComment:input_type -> rpc.comment.CountCommentRequest
-	3, // 9: rpc.comment.CommentService.ActionComment:output_type -> rpc.comment.ActionCommentResponse
-	5, // 10: rpc.comment.CommentService.ListComment:output_type -> rpc.comment.ListCommentResponse
-	7, // 11: rpc.comment.CommentService.CountComment:output_type -> rpc.comment.CountCommentResponse
-	9, // [9:12] is the sub-list for method output_type
-	6, // [6:9] is the sub-list for method input_type
-	6, // [6:6] is the sub-list for extension type_name
-	6, // [6:6] is the sub-list for extension extendee
-	0, // [0:6] is the sub-list for field type_name
+	8, // 0: rpc.comment.Comment.create_at:type_name -> google.protobuf.Timestamp
+	8, // 1: rpc.comment.Comment.delete_at:type_name -> google.protobuf.Timestamp
+	0, // 2: rpc.comment.ActionCommentRequest.action_type:type_name -> rpc.comment.ActionCommentType
+	1, // 3: rpc.comment.ActionCommentResponse.comment:type_name -> rpc.comment.Comment
+	1, // 4: rpc.comment.ListCommentResponse.comment_list:type_name -> rpc.comment.Comment
+	2, // 5: rpc.comment.CommentService.ActionComment:input_type -> rpc.comment.ActionCommentRequest
+	4, // 6: rpc.comment.CommentService.ListComment:input_type -> rpc.comment.ListCommentRequest
+	6, // 7: rpc.comment.CommentService.CountComment:input_type -> rpc.comment.CountCommentRequest
+	3, // 8: rpc.comment.CommentService.ActionComment:output_type -> rpc.comment.ActionCommentResponse
+	5, // 9: rpc.comment.CommentService.ListComment:output_type -> rpc.comment.ListCommentResponse
+	7, // 10: rpc.comment.CommentService.CountComment:output_type -> rpc.comment.CountCommentResponse
+	8, // [8:11] is the sub-list for method output_type
+	5, // [5:8] is the sub-list for method input_type
+	5, // [5:5] is the sub-list for extension type_name
+	5, // [5:5] is the sub-list for extension extendee
+	0, // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_comment_proto_init() }
