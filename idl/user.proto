@@ -55,7 +55,11 @@ message PollCollectList {
 }
 message UserRequest{
   string username = 1;
+<<<<<<< HEAD
   repeated string fields = 2;  // 可选字段列表，选择User中的字段进行查询
+=======
+  repeated string fields = 2;  // 新增: 可选字段列表
+>>>>>>> pr/jinziguan123/15-1
 
 }
 

@@ -7,13 +7,15 @@ import "google/protobuf/timestamp.proto";
 message Vote{
   string vote_username = 1;
   string choice = 2;
-  google.protobuf.Timestamp create_at = 3;
-  google.protobuf.Timestamp delete_at = 4;
+  string vote_uuid = 3;
+  google.protobuf.Timestamp create_at = 4;
+  google.protobuf.Timestamp delete_at = 5;
 }
 
 message CreateVoteRequest{
-  string poll_id = 1;
-  string choice = 2;
+  string poll_uuid = 1;
+  string username = 2;
+  string choice = 3;
 }
 
 message CreateVoteResponse{
@@ -22,7 +24,7 @@ message CreateVoteResponse{
 }
 
 message GetVoteCountRequest {
-  string poll_id = 1;
+  string poll_uuid = 1;
 }
 
 message GetVoteCountResponse {

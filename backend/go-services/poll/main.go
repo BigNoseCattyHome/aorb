@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/BigNoseCattyHome/aorb/backend/go-services/poll/services"
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/poll"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/consul"
@@ -66,10 +67,10 @@ func main() {
 	}
 	log.Infof("Rpc %s is running at %s now", config.PollProcessorRpcServiceName, config.PollRpcServerAddr)
 
-	var srv PollServiceImpl
+	var srv services.PollServiceImpl
 	poll.RegisterPollServiceServer(s, srv)
 	grpc_health_v1.RegisterHealthServer(s, health.NewServer())
-	defer CloseMQConn()
+	defer services.CloseMQConn()
 	if err := consul.RegisterConsul(config.PollRpcServerName, config.PollRpcServerAddr); err != nil {
 		log.Panicf("Rpc %s register consul happens error for: %v", config.PollRpcServerName, err)
 	}

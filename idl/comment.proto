@@ -4,13 +4,13 @@ package rpc.comment;
 option go_package = "github.com/BigNoseCattyHome/aorb/backend/rpc/comment;comment";
 
 import "google/protobuf/timestamp.proto";
-import "user.proto";
 
 message Comment{
-  user.User user = 1;
+  string comment_username = 1;
   string content = 2; // 评论内容
-  google.protobuf.Timestamp create_at = 3;  // 创建时间
-  google.protobuf.Timestamp delete_at = 4;  // 删除时间
+  string comment_uuid = 3;
+  google.protobuf.Timestamp create_at = 4;  // 创建时间
+  google.protobuf.Timestamp delete_at = 5;  // 删除时间
 }
 
 enum ActionCommentType{
@@ -21,9 +21,12 @@ enum ActionCommentType{
 
 message ActionCommentRequest{
   string username = 1;
-  string poll_id = 2;
+  string poll_uuid = 2;
   ActionCommentType action_type = 3;
-  string comment_text = 4;
+  oneof action {
+    string comment_text = 4;
+    string comment_uuid = 5;
+  }
 }
 
 message ActionCommentResponse{
@@ -32,18 +35,18 @@ message ActionCommentResponse{
   optional Comment comment = 3;
 }
 
-message GetCommentRequest{
-  string poll_id = 1; // 这里可能还是需要用mongodb的id来查询，不行则再做修改
+message ListCommentRequest{
+  string poll_uuid = 1;
 }
 
-message GetCommentResponse{
+message ListCommentResponse{
   int32 status_code = 1;  // 状态码，0-成功，其他值-失败
   string status_msg = 2;  // 返回状态描述
   repeated Comment comment_list = 3;
 }
 
 message CountCommentRequest{
-  string poll_id = 1;
+  string poll_uuid = 1;
 }
 
 message CountCommentResponse{
@@ -54,6 +57,6 @@ message CountCommentResponse{
 
 service CommentService{
   rpc ActionComment(ActionCommentRequest) returns (ActionCommentResponse);
-  rpc GetComment(GetCommentRequest) returns (GetCommentResponse);
+  rpc ListComment(ListCommentRequest) returns (ListCommentResponse);
   rpc CountComment(CountCommentRequest) returns (CountCommentResponse);
 }

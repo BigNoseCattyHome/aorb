@@ -4,11 +4,13 @@ package main
 
 import (
 	"context"
+	"github.com/BigNoseCattyHome/aorb/backend/go-services/comment/services"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net"
 	"net/http"
 	"os"
 	"syscall"
+	"time"
 
 	commentRpc "github.com/BigNoseCattyHome/aorb/backend/rpc/comment"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
@@ -27,7 +29,6 @@ import (
 
 func main() {
 	tp, err := tracing.SetTraceProvider(config.CommentRpcServerName)
-
 	if err != nil {
 		logging.Logger.WithFields(logrus.Fields{
 			"err": err,
@@ -41,12 +42,8 @@ func main() {
 		}
 	}()
 
-	// Configure Pyroscope
-	//profiling.InitPyroscope("AorB.CommentService")
-
 	log := logging.LogService(config.CommentRpcServerName)
 	lis, err := net.Listen("tcp", config.Conf.Pod.PodIp+config.CommentRpcServerAddr)
-
 	if err != nil {
 		log.Panicf("Rpc %s listen happens error: %v", config.CommentRpcServerName, err)
 	}
@@ -60,19 +57,24 @@ func main() {
 	reg.MustRegister(srvMetrics)
 	s := grpc.NewServer(
 		grpc.UnaryInterceptor(otelgrpc.UnaryServerInterceptor()),
-		grpc.ChainUnaryInterceptor(srvMetrics.UnaryServerInterceptor(grpcprom.WithExemplarFromContext(prom.ExtractContext))),
+		grpc.ChainUnaryInterceptor(srvMetrics.UnaryServerInterceptor(grpcprom.WithExemplarFromContext(prom.ExtractContext)),
+			func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+				ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+				defer cancel()
+				return handler(ctx, req)
+			}),
 		grpc.ChainStreamInterceptor(srvMetrics.StreamServerInterceptor(grpcprom.WithExemplarFromContext(prom.ExtractContext))),
 	)
 
-	//if err := consul.RegisterConsul(config.CommentRpcServerName, config.CommentRpcServerAddr); err != nil {
-	//	log.Panicf("Rpc %s register consul happens error for: %v", config.CommentRpcServerName, err)
-	//}
-	//log.Infof("Rpc %s is running at %s now", config.CommentRpcServerName, config.CommentRpcServerAddr)
+	if err := consul.RegisterConsul(config.CommentRpcServerName, config.CommentRpcServerAddr); err != nil {
+		log.Panicf("Rpc %s register consul happens error for: %v", config.CommentRpcServerName, err)
+	}
+	log.Infof("Rpc %s is running at %s now", config.CommentRpcServerName, config.CommentRpcServerAddr)
 
-	var srv CommentServiceImpl
+	var srv services.CommentServiceImpl
 	commentRpc.RegisterCommentServiceServer(s, srv)
 	grpc_health_v1.RegisterHealthServer(s, health.NewServer())
-	defer CloseMQConn()
+	defer services.CloseMQConn()
 	if err := consul.RegisterConsul(config.CommentRpcServerName, config.CommentRpcServerAddr); err != nil {
 		log.Panicf("Rpc %s register consul happens error for: %v", config.CommentRpcServerName, err)
 	}

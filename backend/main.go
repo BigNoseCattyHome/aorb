@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	pollModels "github.com/BigNoseCattyHome/aorb/backend/go-services/poll/models"
-	"github.com/BigNoseCattyHome/aorb/backend/rpc/poll"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/storage/cached"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/storage/database"
 	"go.mongodb.org/mongo-driver/bson"
@@ -14,20 +13,20 @@ import (
 
 func main() {
 
-	var req *poll.PollExistRequest = &poll.PollExistRequest{}
-	req.PollId = 1
 	var tempPoll pollModels.Poll
-	_, err := cached.GetWithFunc(context.Background(), fmt.Sprintf("PollExistedCached-%d", req.PollId), func(ctx context.Context, key string) (string, error) {
+	_, err := cached.GetWithFunc(context.TODO(), fmt.Sprintf("PollExistedCached-%s", "8d01d19c-9d6e-41e9-ae1c-5060076de686"), func(ctx context.Context, key string) (string, error) {
 		collection := database.MongoDbClient.Database("aorb").Collection("polls")
-		cursor := collection.FindOne(ctx, bson.M{"_id": req.PollId})
+		cursor := collection.FindOne(ctx, bson.M{"pollUuid": "8d01d19c-9d6e-41e9-ae1c-5060076de686"})
 		if cursor.Err() != nil {
 			return "false", cursor.Err()
 		}
 		if err := cursor.Decode(&tempPoll); err != nil {
 			return "false", err
 		}
-		fmt.Println(tempPoll)
 		return "true", nil
 	})
+
+	fmt.Println(tempPoll)
 	fmt.Println(err)
+
 }
