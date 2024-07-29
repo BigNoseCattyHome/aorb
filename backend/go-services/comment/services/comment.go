@@ -7,6 +7,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
+	"sync"
+	"time"
+
 	commentModels "github.com/BigNoseCattyHome/aorb/backend/go-services/comment/models"
 	"github.com/BigNoseCattyHome/aorb/backend/go-services/event/models"
 	pollModels "github.com/BigNoseCattyHome/aorb/backend/go-services/poll/models"
@@ -23,15 +27,13 @@ import (
 	"github.com/BigNoseCattyHome/aorb/backend/utils/storage/database"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/storage/redis"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/uuid"
+
 	"github.com/go-redis/redis_rate/v10"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"strconv"
-	"sync"
-	"time"
 )
 
 var userClient user.UserServiceClient

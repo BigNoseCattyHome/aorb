@@ -1,17 +1,14 @@
 package main
 
-// grpc comment服务器主入口
-
 import (
 	"context"
 	"net"
 	"net/http"
 	"os"
 	"syscall"
-	"time"
 
-	"github.com/BigNoseCattyHome/aorb/backend/go-services/comment/services"
-	commentRpc "github.com/BigNoseCattyHome/aorb/backend/rpc/comment"
+	"github.com/BigNoseCattyHome/aorb/backend/go-services/user/services"
+	"github.com/BigNoseCattyHome/aorb/backend/rpc/user"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/consul"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/extra/tracing"
@@ -29,7 +26,8 @@ import (
 )
 
 func main() {
-	tp, err := tracing.SetTraceProvider(config.CommentRpcServerName)
+	tp, err := tracing.SetTraceProvider(config.UserRpcServerName)
+
 	if err != nil {
 		logging.Logger.WithFields(logrus.Fields{
 			"err": err,
@@ -43,10 +41,13 @@ func main() {
 		}
 	}()
 
-	log := logging.LogService(config.CommentRpcServerName)
-	lis, err := net.Listen("tcp", config.Conf.Pod.PodIp+config.CommentRpcServerAddr)
+	//profiling.InitPyroscope("AorB.UserService")
+
+	log := logging.LogService(config.UserRpcServerName)
+	lis, err := net.Listen("tcp", config.Conf.Pod.PodIp+config.UserRpcServerAddr)
+
 	if err != nil {
-		log.Panicf("Rpc %s listen happens error: %v", config.CommentRpcServerName, err)
+		log.Panicf("Rpc %s listen happens error: %v", config.UserRpcServerName, err)
 	}
 
 	srvMetrics := grpcprom.NewServerMetrics(
@@ -54,32 +55,25 @@ func main() {
 			grpcprom.WithHistogramBuckets([]float64{0.001, 0.01, 0.1, 0.3, 0.6, 1, 3, 6, 9, 20, 30, 60, 90, 120}),
 		),
 	)
+
 	reg := prom.Client
 	reg.MustRegister(srvMetrics)
+
 	s := grpc.NewServer(
 		grpc.UnaryInterceptor(otelgrpc.UnaryServerInterceptor()),
-		grpc.ChainUnaryInterceptor(srvMetrics.UnaryServerInterceptor(grpcprom.WithExemplarFromContext(prom.ExtractContext)),
-			func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-				ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-				defer cancel()
-				return handler(ctx, req)
-			}),
+		grpc.ChainUnaryInterceptor(srvMetrics.UnaryServerInterceptor(grpcprom.WithExemplarFromContext(prom.ExtractContext))),
 		grpc.ChainStreamInterceptor(srvMetrics.StreamServerInterceptor(grpcprom.WithExemplarFromContext(prom.ExtractContext))),
 	)
 
-	if err := consul.RegisterConsul(config.CommentRpcServerName, config.CommentRpcServerAddr); err != nil {
-		log.Panicf("Rpc %s register consul happens error for: %v", config.CommentRpcServerName, err)
+	if err := consul.RegisterConsul(config.UserRpcServerName, config.UserRpcServerAddr); err != nil {
+		log.Panicf("Rpc %s register consul happens error for: %v", config.UserRpcServerName, err)
 	}
-	log.Infof("Rpc %s is running at %s now", config.CommentRpcServerName, config.CommentRpcServerAddr)
+	log.Infof("Rpc %s is running at %s now", config.UserRpcServerName, config.UserRpcServerAddr)
 
-	var srv services.CommentServiceImpl
-	commentRpc.RegisterCommentServiceServer(s, srv)
-	grpc_health_v1.RegisterHealthServer(s, health.NewServer())
-	defer services.CloseMQConn()
-	if err := consul.RegisterConsul(config.CommentRpcServerName, config.CommentRpcServerAddr); err != nil {
-		log.Panicf("Rpc %s register consul happens error for: %v", config.CommentRpcServerName, err)
-	}
+	var srv services.UserServiceImpl
+	user.RegisterUserServiceServer(s, srv)
 	srv.New()
+	grpc_health_v1.RegisterHealthServer(s, health.NewServer())
 	srvMetrics.InitializeMetrics(s)
 
 	g := &run.Group{}
@@ -88,10 +82,12 @@ func main() {
 	}, func(err error) {
 		s.GracefulStop()
 		s.Stop()
-		log.Errorf("Rpc %s listen happens error for: %v", config.CommentRpcServerName, err)
+		log.Errorf("Rpc %s listen happens error for: %v", config.UserRpcServerName, err)
 	})
 
-	httpSrv := &http.Server{Addr: config.Conf.Pod.PodIp + config.CommentMetrics}
+	httpSrv := &http.Server{
+		Addr: config.Conf.Pod.PodIp + config.UserMetrics,
+	}
 	g.Add(func() error {
 		m := http.NewServeMux()
 		m.Handle("/metrics", promhttp.HandlerFor(
@@ -103,9 +99,9 @@ func main() {
 		httpSrv.Handler = m
 		log.Infof("Promethus now running")
 		return httpSrv.ListenAndServe()
-	}, func(error) {
+	}, func(err error) {
 		if err := httpSrv.Close(); err != nil {
-			log.Errorf("Prometheus %s listen happens error for: %v", config.CommentRpcServerName, err)
+			log.Errorf("Prometheus %s listen happens error for: %v", config.UserRpcServerName, err)
 		}
 	})
 

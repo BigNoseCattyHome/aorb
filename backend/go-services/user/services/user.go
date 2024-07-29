@@ -1,13 +1,14 @@
-package main
+package services
 
 import (
 	"context"
-	userModels "github.com/BigNoseCattyHome/aorb/backend/go-services/user/models"
+
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/user"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/strings"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/extra/tracing"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/logging"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/storage/cached"
+
 	"github.com/sirupsen/logrus"
 )
 
@@ -25,7 +26,7 @@ func (a UserServiceImpl) GetUserInfo(ctx context.Context, request *user.UserRequ
 	logging.SetSpanWithHostname(span)
 	logger := logging.LogService("UserService.GetUserInfo").WithContext(ctx)
 
-	var userModel userModels.User
+	var userModel user.User
 	userModel.Username = request.Username
 	ok, err := cached.ScanGet(ctx, "UserInfo", &userModel, "users")
 	if err != nil {
@@ -43,7 +44,7 @@ func (a UserServiceImpl) GetUserInfo(ctx context.Context, request *user.UserRequ
 			User:       nil,
 		}
 		logger.WithFields(logrus.Fields{
-			"user": request.UserId,
+			"user": request.Username,
 		}).Infof("Do not exist")
 		return
 	}
@@ -52,19 +53,19 @@ func (a UserServiceImpl) GetUserInfo(ctx context.Context, request *user.UserRequ
 		StatusCode: strings.ServiceOKCode,
 		StatusMsg:  strings.ServiceOK,
 		User: &user.User{
-			Avatar:           userModel.Avatar,
-			Blacklist:        nil,
-			Coins:            nil,
-			CoinsRecord:      nil,
-			Followed:         nil,
-			Follower:         nil,
-			Id:               request.UserId,
-			Ipaddress:        nil,
-			Nickname:         userModel.Nickname,
-			QuestionsAsk:     nil,
-			QuestionsAsw:     nil,
-			QuestionsCollect: nil,
-			Username:         userModel.Username,
+			Avatar:      userModel.Avatar,
+			Blacklist:   nil,
+			Coins:       nil,
+			CoinsRecord: nil,
+			Followed:    nil,
+			Follower:    nil,
+			Id:          request.Username,
+			Ipaddress:   nil,
+			Nickname:    userModel.Nickname,
+			PollAsk:     nil,
+			PollAns:     nil,
+			PollCollect: nil,
+			Username:    userModel.Username,
 		},
 	}
 
@@ -79,8 +80,8 @@ func (a UserServiceImpl) GetUserExistInformation(ctx context.Context, request *u
 	logging.SetSpanWithHostname(span)
 	logger := logging.LogService("UserService.GetUserExisted").WithContext(ctx)
 
-	var userModel userModels.User
-	userModel.ID = request.UserId
+	var userModel user.User
+	userModel.Username = request.Username
 	ok, err := cached.ScanGet(ctx, "UserExisted", &userModel, "users")
 
 	if err != nil {
@@ -103,7 +104,7 @@ func (a UserServiceImpl) GetUserExistInformation(ctx context.Context, request *u
 			Existed:    false,
 		}
 		logger.WithFields(logrus.Fields{
-			"user": request.UserId,
+			"user": request.Username,
 		}).Infof("User do not exist")
 		return
 	}
