@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/BigNoseCattyHome/aorb/backend/go-services/auth/models"
+	"github.com/BigNoseCattyHome/aorb/backend/rpc/user"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/storage/database"
 
 	"github.com/golang-jwt/jwt"
@@ -25,11 +25,11 @@ type Claims struct {
 }
 
 // GenerateAccessToken 生成JWT令牌
-func GenerateAccessToken(user models.User) (string, int64, error) {
+func GenerateAccessToken(user *user.User) (string, int64, error) {
 	// 创建声明对象
 	expirationTime := time.Now().Add(1 * time.Hour) // 设置令牌过期时间为1小时后
 	claims := &Claims{
-		UserId:   user.ID,
+		UserId:   user.Id,
 		Username: user.Username,
 		StandardClaims: jwt.StandardClaims{
 			// 在声明中设置过期时间
@@ -92,7 +92,7 @@ func RefreshAccessToken(refreshTokenString string) (string, int64, error) {
 	}
 
 	// 生成新的访问令牌
-	newAccessTokenString, exp_token, err := GenerateAccessToken(models.User{ID: claims.UserId, Username: claims.Username})
+	newAccessTokenString, exp_token, err := GenerateAccessToken(&user.User{Id: claims.UserId, Username: claims.Username})
 	if err != nil {
 		log.Error("Failed to generate new access token: ", err)
 		return "", 0, err
@@ -140,11 +140,11 @@ func VerifyRefreshToken(refreshTokenString string) (*Claims, error) {
 }
 
 // GenerateRefreshToken 生成新的刷新令牌
-func GenerateRefreshToken(user models.User) (string, error) {
+func GenerateRefreshToken(user *user.User) (string, error) {
 	// 创建声明对象
 	expirationTime := time.Now().Add(24 * time.Hour) // 设置刷新令牌过期时间为24小时后
 	claims := &Claims{
-		UserId:   user.ID,
+		UserId:   user.Id,
 		Username: user.Username,
 		StandardClaims: jwt.StandardClaims{
 			// 过期时间设置为24小时后
@@ -163,7 +163,7 @@ func GenerateRefreshToken(user models.User) (string, error) {
 	}
 
 	// 保存到数据库
-	database.MongoDbClient.Database("aorb").Collection("refresh_tokens").InsertOne(context.Background(), bson.M{"user_id": user.ID, "token": tokenString, "revoked": false, "expires_at": expirationTime.Unix()})
+	database.MongoDbClient.Database("aorb").Collection("refresh_tokens").InsertOne(context.Background(), bson.M{"user_id": user.Id, "token": tokenString, "revoked": false, "expires_at": expirationTime.Unix()})
 
 	return tokenString, nil
 }

@@ -8,6 +8,7 @@ import 'package:aorb/screens/login_page.dart';
 import 'package:aorb/widgets/top_bar_index.dart';
 import 'package:aorb/services/auth_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:aorb/conf/config.dart';
 
 class MainPage extends StatefulWidget {
   final int initialIndex;
@@ -21,14 +22,16 @@ class MainPageState extends State<MainPage>
   late int _currentIndex; // 用于控制底部到行栏的切换
   late TabController tabController; // tabController用于控制子页面的顶部导航栏的切换
   late bool isLoggedIn; // 是否登录
-  late String userId; // 在initstate中从本地读取，用于传递给 _pages中的MePage
+  late String username; // 在initstate中从本地读取，用于传递给 _pages中的MePage
   late String avatar; // 在initstate中从本地读取，用于底部状态栏的icon的展示
   late List<Widget> _pages;
+  final logger = getLogger();
 
-  // 将异步初始化逻辑移到单独的方法中
+  // 异步初始化
   Future<void> _initializeData() async {
     try {
-      bool loginStatus = await AuthService('localhost', 9000).checkLoginStatus();
+      bool loginStatus = await AuthService().checkLoginStatus();
+      logger.i('Login status: $loginStatus');
       setState(() {
         isLoggedIn = loginStatus;
       });
@@ -36,14 +39,15 @@ class MainPageState extends State<MainPage>
       if (isLoggedIn) {
         SharedPreferences prefs = await SharedPreferences.getInstance();
         setState(() {
-          userId = prefs.getString('userId') ?? '';
+          username = prefs.getString('username') ?? '';
           avatar = prefs.getString('avatar') ?? '';
-          _pages[2] = MePage(username: userId);
+          logger.d('username: $username');
+          logger.d('avatar: $avatar');
+          _pages[2] = MePage(username: username);
         });
       }
     } catch (e) {
-      print("Error on mainpage: $e");
-      // 可以在这里处理错误,例如显示一个错误提示
+      logger.e('Error during initialization: $e');
     }
   }
 
@@ -56,12 +60,12 @@ class MainPageState extends State<MainPage>
 
     // 提供初始值
     setState(() {
-      userId = '';
+      username = '';
       avatar = '';
       _pages = [
         HomePage(tabController: tabController),
         MessagesPage(tabController: tabController),
-        LoginPage(),
+        const LoginPage(),
       ];
     });
 
@@ -101,19 +105,35 @@ class MainPageState extends State<MainPage>
       ),
 
       // 侧栏
+      // TODO 侧栏添加新的内容
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
           children: <Widget>[
-            ListTile(
-              leading: const Icon(Icons.settings),
-              title: const Text('设置'),
-              onTap: () {
-                // Update the state of the app
-                // ...
-                Navigator.pop(context);
-              },
+            const DrawerHeader(
+              decoration: BoxDecoration(
+                color: Colors.blue,
+              ),
+              child: Text(
+                '菜单',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                ),
+              ),
             ),
+            Padding(
+              padding: const EdgeInsets.only(top: 20.0), // 调整位置，避免被状态栏遮挡
+              child: ListTile(
+                leading: const Icon(Icons.settings),
+                title: const Text('设置'),
+                onTap: () {
+                  // 跳转到设置页面
+                  Navigator.pushNamed(context, '/settings');
+                },
+              ),
+            ),
+            // 你可以在这里添加更多的 ListTile
           ],
         ),
       ),
@@ -153,7 +173,7 @@ class MainPageState extends State<MainPage>
                   ),
             label: '消息',
           ),
-          // 如果用户没有登录的话，就展示默认的icon，否则展示用户头像
+          // 如果用户没有登录的话或者头像为''，就展示默认的icon，否则展示用户头像
           avatar == ''
               ? BottomNavigationBarItem(
                   icon: _currentIndex == 2

@@ -3,9 +3,9 @@ package handlers
 import (
 	"context"
 
-	"github.com/BigNoseCattyHome/aorb/backend/go-services/auth/models"
 	"github.com/BigNoseCattyHome/aorb/backend/go-services/auth/services"
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/auth"
+	"github.com/BigNoseCattyHome/aorb/backend/rpc/user"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/logging"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -57,16 +57,16 @@ func (a AuthServiceImpl) New() {
 func (a AuthServiceImpl) Login(ctx context.Context, request *auth.LoginRequest) (*auth.LoginResponse, error) {
 
 	// 解析请求
-	login_request := models.LoginRequest{
+	login_request := auth.LoginRequest{
 		Username:  request.Username,
-		Password:  request.Password, // 目前是只用到了这两个字段，后续可以根据需要添加
-		DeviceID:  request.DeviceId,
+		Password:  request.Password,
+		DeviceId:  request.DeviceId,
 		Nonce:     request.Nonce,
-		Timestamp: request.Timestamp.AsTime(),
+		Timestamp: request.Timestamp,
 	}
 
 	// 调用服务
-	token, exp_token, refresh_token, simple_user, err := services.AuthenticateUser(login_request)
+	token, exp_token, refresh_token, simple_user, err := services.AuthenticateUser(&login_request)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "login failed: %v", err)
 	}
@@ -81,7 +81,7 @@ func (a AuthServiceImpl) Login(ctx context.Context, request *auth.LoginRequest) 
 		RefreshToken: refresh_token,
 		SimpleUser: &auth.SimpleUser{
 			Avatar:    simple_user.Avatar,
-			Username:  simple_user.ID,
+			Username:  simple_user.Username,
 			Ipaddress: simple_user.Ipaddress,
 			Nickname:  simple_user.Nickname,
 		},
@@ -160,16 +160,16 @@ func (a AuthServiceImpl) Register(context context.Context, request *auth.Registe
 	log.Infof("Received Register request: %v", request)
 
 	// 解析参数
-	user := models.User{
+	user := user.User{
 		Username:  request.Username,
-		Password:  request.Password,
+		Password:  &request.Password,
 		Nickname:  request.Nickname,
 		Avatar:    request.Avatar,
-		Ipaddress: request.Ipaddress,
+		Ipaddress: &request.Ipaddress,
 	}
 
 	// 调用服务
-	err := services.RegisterUser(user)
+	err := services.RegisterUser(&user)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "register failed: %v", err)
 	}
