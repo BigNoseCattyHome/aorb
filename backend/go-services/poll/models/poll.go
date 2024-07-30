@@ -10,8 +10,7 @@ import (
 type Poll struct {
 	PollUuid     string                  `json:"poll_uuid" bson:"pollUuid, omitempty"`
 	Title        string                  `json:"title" bson:"title, omitempty"`
-	Option1      string                  `json:"option1" bson:"option1, omitempty"`
-	Option2      string                  `json:"option2" bson:"option2, omitempty"`
+	Options      []string                `json:"options" bson:"options, omitempty"`
 	OptionsCount []uint32                `json:"options_count" bson:"optionsCount, omitempty"`
 	PollType     string                  `json:"poll_type" bson:"pollType, omitempty"`
 	UserName     string                  `json:"username" bson:"userName, omitempty"`
