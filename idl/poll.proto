@@ -10,15 +10,14 @@ import "google/protobuf/timestamp.proto";
 message Poll{
   string poll_uuid = 1;  // 投票uuid
   string title = 2; // 投票标题
-  repeated string options = 3; // 选项
-  repeated int32 options_count = 4; // 投票计数
-  string poll_type = 5; // 投票类型
-  string username = 6;  // 投票发起人
-  google.protobuf.Timestamp create_at = 7;  // 创建时间
-  google.protobuf.Timestamp update_at = 8;  // 删除时间
-  google.protobuf.Timestamp delete_at = 9;  // 删除时间
-  repeated comment.Comment comment_list = 10; // 评论列表
-  repeated vote.Vote vote_list = 11; // 投票列表
+  string option1 = 3; // 选项 1
+  string option2 = 4;  // 选项 2
+  repeated uint32 options_count = 5; // 投票计数
+  string poll_type = 6; // 投票类型
+  string username = 7;  // 投票发起人
+  repeated comment.Comment comment_list = 8; // 评论列表
+  repeated vote.Vote vote_list = 9; // 投票列表
+  google.protobuf.Timestamp create_at = 10;  // 创建时间
 }
 
 message CreatePollRequest {
@@ -42,8 +41,8 @@ message GetPollResponse {
 }
 
 message ListPollRequest {
-  int32 offset = 1; // 第几页
-  int32 limit = 2;  // 一页多少
+  uint32 offset = 1; // 第几页
+  uint32 limit = 2;  // 一页多少
 }
 
 message ListPollResponse {

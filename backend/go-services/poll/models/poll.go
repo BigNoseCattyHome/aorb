@@ -9,16 +9,15 @@ import (
 
 type Poll struct {
 	PollUuid     string                  `json:"poll_uuid" bson:"pollUuid, omitempty"`
-	UserName     string                  `json:"username" bson:"userName, omitempty"`
-	PollType     string                  `json:"poll_type" bson:"pollType, omitempty"`
 	Title        string                  `json:"title" bson:"title, omitempty"`
-	Options      []string                `json:"options" bson:"options, omitempty"`
-	OptionsCount []int32                 `json:"options_count" bson:"optionsCount, omitempty"`
+	Option1      string                  `json:"option1" bson:"option1, omitempty"`
+	Option2      string                  `json:"option2" bson:"option2, omitempty"`
+	OptionsCount []uint32                `json:"options_count" bson:"optionsCount, omitempty"`
+	PollType     string                  `json:"poll_type" bson:"pollType, omitempty"`
+	UserName     string                  `json:"username" bson:"userName, omitempty"`
 	CommentList  []commentModels.Comment `json:"comment_list" bson:"commentList, omitempty"`
 	VoteList     []voteModels.Vote       `json:"vote_list" bson:"voteList, omitempty"`
-	CreateAt     time.Time               `json:"create_at" bson:"createAt,omitempty"`
-	UpdateAt     time.Time               `json:"update_at" bson:"updateAt,omitempty"`
-	DeleteAt     time.Time               `json:"delete_at" bson:"deleteAt,omitempty"`
+	CreateAt     time.Time               `json:"create_at" bson:"createAt, omitempty"`
 }
 
 type ListPollReq struct {

@@ -6,11 +6,10 @@ option go_package = "github.com/BigNoseCattyHome/aorb/backend/rpc/comment;commen
 import "google/protobuf/timestamp.proto";
 
 message Comment{
-  string comment_username = 1;
-  string content = 2; // 评论内容
-  string comment_uuid = 3;
+  string comment_uuid = 1;
+  string comment_username = 2;
+  string content = 3; // 评论内容
   google.protobuf.Timestamp create_at = 4;  // 创建时间
-  google.protobuf.Timestamp delete_at = 5;  // 删除时间
 }
 
 enum ActionCommentType{

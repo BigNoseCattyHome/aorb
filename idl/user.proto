@@ -24,7 +24,7 @@ message BlackList {
 }
 
 message CoinRecord {
-  int64 consume = 1; // 消耗的金币数
+  uint32 consume = 1; // 消耗的金币数
   string poll_id = 2; // 为其投币的问题ID
   string user_id = 3; // 使用者的ID
 }
