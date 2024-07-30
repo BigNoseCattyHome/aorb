@@ -8,17 +8,15 @@ import "vote.proto";
 import "google/protobuf/timestamp.proto";
 
 message Poll{
-  string id = 1;  // 投票id
+  string poll_uuid = 1;  // 投票uuid
   string title = 2; // 投票标题
-  repeated string option = 3; // 选项
-  repeated int32 options_count = 4; // 投票计数
-  string poll_type = 5; // 投票类型
-  string username = 6;  // 投票发起人
-  google.protobuf.Timestamp create_at = 7;  // 创建时间
-  google.protobuf.Timestamp update_at = 8;  // 删除时间
-  google.protobuf.Timestamp delete_at = 9;  // 删除时间
-  repeated comment.Comment comment_list = 10; // 评论列表
-  repeated vote.Vote vote_list = 11; // 投票列表
+  repeated string options = 4;
+  repeated uint32 options_count = 5; // 投票计数
+  string poll_type = 6; // 投票类型
+  string username = 7;  // 投票发起人
+  repeated comment.Comment comment_list = 8; // 评论列表
+  repeated vote.Vote vote_list = 9; // 投票列表
+  google.protobuf.Timestamp create_at = 10;  // 创建时间
 }
 
 message CreatePollRequest {
@@ -28,11 +26,11 @@ message CreatePollRequest {
 message CreatePollResponse {
   int32 status_code = 1;  // 状态码，0-成功，其他值-失败
   string status_msg = 2;  // 返回状态描述
-  string poll_id = 3;     // 返回创建的投票id
+  string poll_uuid = 3;     // 返回创建的投票uuid
 }
 
 message GetPollRequest {
-  string poll_id = 1;
+  string poll_uuid = 1;
 }
 
 message GetPollResponse {
@@ -42,8 +40,8 @@ message GetPollResponse {
 }
 
 message ListPollRequest {
-  int32 offset = 1; // 第几页
-  int32 limit = 2;  // 一页多少
+  uint32 offset = 1; // 第几页
+  uint32 limit = 2;  // 一页多少
 }
 
 message ListPollResponse {
@@ -52,8 +50,19 @@ message ListPollResponse {
   repeated Poll poll_list = 3;  // 投票列表
 }
 
+message PollExistRequest {
+  string poll_uuid = 1;
+}
+
+message PollExistResponse {
+  int32 status_code = 1;  // 状态码，0-成功，其他值-失败
+  string status_msg = 2;  // 返回状态描述
+  bool exist = 3;
+}
+
 service PollService{
   rpc CreatePoll (CreatePollRequest) returns (CreatePollResponse);
   rpc GetPoll (GetPollRequest) returns (GetPollResponse);
   rpc ListPoll (ListPollRequest) returns (ListPollResponse);
+  rpc PollExist (PollExistRequest) returns (PollExistResponse);
 }

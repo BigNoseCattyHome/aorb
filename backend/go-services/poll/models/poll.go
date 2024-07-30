@@ -1,20 +1,22 @@
 package models
 
 import (
+	commentModels "github.com/BigNoseCattyHome/aorb/backend/go-services/comment/models"
+	voteModels "github.com/BigNoseCattyHome/aorb/backend/go-services/vote/models"
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/poll"
 	"time"
 )
 
 type Poll struct {
-	ID          uint32    `json:"id" bson:"_id, omitempty"`
-	UserId      uint32    `json:"userId" bson:"userId, omitempty"`
-	PollType    string    `json:"poll_type" bson:"poll_type, omitempty"`
-	Title       string    `json:"title" bson:"title, omitempty"`
-	Options     []string  `json:"options" bson:"options, omitempty"`
-	OptionsRate []float64 `json:"optionsRate" bson:"optionsRate, omitempty"`
-	CreateAt    time.Time `json:"create_at" bson:"create_at,omitempty"`
-	UpdateAt    time.Time `json:"update_at" bson:"update_at,omitempty"`
-	DeleteAt    time.Time `json:"delete_at" bson:"delete_at,omitempty"`
+	PollUuid     string                  `json:"poll_uuid" bson:"pollUuid, omitempty"`
+	Title        string                  `json:"title" bson:"title, omitempty"`
+	Options      []string                `json:"options" bson:"options, omitempty"`
+	OptionsCount []uint32                `json:"options_count" bson:"optionsCount, omitempty"`
+	PollType     string                  `json:"poll_type" bson:"pollType, omitempty"`
+	UserName     string                  `json:"username" bson:"userName, omitempty"`
+	CommentList  []commentModels.Comment `json:"comment_list" bson:"commentList, omitempty"`
+	VoteList     []voteModels.Vote       `json:"vote_list" bson:"voteList, omitempty"`
+	CreateAt     time.Time               `json:"create_at" bson:"createAt, omitempty"`
 }
 
 type ListPollReq struct {

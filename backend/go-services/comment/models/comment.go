@@ -7,12 +7,10 @@ import (
 
 type Comment struct {
 	// 与mongodb交互的Comment实体
-	ID       uint32    `json:"id" bson:"_id,omitempty"`
-	UserId   uint32    `json:"user_id" bson:"user_id,omitempty"`
-	PollId   uint32    `json:"poll_id" bson:"poll_id,omitempty"`
-	Content  string    `json:"content" bson:"content,omitempty"`
-	CreateAt time.Time `json:"create_at" bson:"create_at,omitempty"`
-	DeleteAt time.Time `json:"delete_at" bson:"delete_at"`
+	CommentUuid     string    `json:"comment_uuid" bson:"commentUuid,omitempty"`
+	CommentUserName string    `json:"reviewer_userName" bson:"commentUserName,omitempty"`
+	Content         string    `json:"content" bson:"content,omitempty"`
+	CreateAt        time.Time `json:"create_at" bson:"createAt,omitempty"`
 }
 
 type ActionCommentReq struct {

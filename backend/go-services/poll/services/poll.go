@@ -1,42 +1,40 @@
-package main
+package services
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
-	"fmt"
-	eventModels "github.com/BigNoseCattyHome/aorb/backend/go-services/event/models"
+	commentModels "github.com/BigNoseCattyHome/aorb/backend/go-services/comment/models"
 	pollModels "github.com/BigNoseCattyHome/aorb/backend/go-services/poll/models"
-	"github.com/BigNoseCattyHome/aorb/backend/rpc/comment"
-	"github.com/BigNoseCattyHome/aorb/backend/rpc/poll"
-	"github.com/BigNoseCattyHome/aorb/backend/rpc/user"
+	voteModels "github.com/BigNoseCattyHome/aorb/backend/go-services/vote/models"
+	commentPb "github.com/BigNoseCattyHome/aorb/backend/rpc/comment"
+	pollPb "github.com/BigNoseCattyHome/aorb/backend/rpc/poll"
+	userPb "github.com/BigNoseCattyHome/aorb/backend/rpc/user"
+	votePb "github.com/BigNoseCattyHome/aorb/backend/rpc/vote"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/strings"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/extra/tracing"
 	grpc2 "github.com/BigNoseCattyHome/aorb/backend/utils/grpc"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/logging"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/rabbitmq"
-	"github.com/BigNoseCattyHome/aorb/backend/utils/storage/cached"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/storage/database"
+	"github.com/BigNoseCattyHome/aorb/backend/utils/uuid"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"strconv"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"sync"
 	"time"
 )
 
 type PollServiceImpl struct {
-	poll.PollServiceServer
+	pollPb.PollServiceServer
 }
 
 const (
 	PollCount = 3
 )
 
-var UserClient user.UserServiceClient
-var CommentClient comment.CommentServiceClient
+var UserClient userPb.UserServiceClient
+var CommentClient commentPb.CommentServiceClient
 
 var conn *amqp.Connection
 
@@ -49,9 +47,9 @@ func exitOnError(err error) {
 }
 func (s PollServiceImpl) New() {
 	userRpcConn := grpc2.Connect(config.UserRpcServerName)
-	UserClient = user.NewUserServiceClient(userRpcConn)
+	UserClient = userPb.NewUserServiceClient(userRpcConn)
 	commentRpcConn := grpc2.Connect(config.CommentRpcServerName)
-	CommentClient = comment.NewCommentServiceClient(commentRpcConn)
+	CommentClient = commentPb.NewCommentServiceClient(commentRpcConn)
 
 	var err error
 	conn, err = amqp.Dial(rabbitmq.BuildMqConnAddr())
@@ -82,356 +80,274 @@ func CloseMQConn() {
 	}
 }
 
-func producePoll(ctx context.Context, event eventModels.RecommendEvent) {
-	ctx, span := tracing.Tracer.Start(ctx, "FeedPublisher")
+func (s PollServiceImpl) CreatePoll(ctx context.Context, request *pollPb.CreatePollRequest) (resp *pollPb.CreatePollResponse, err error) {
+	ctx, span := tracing.Tracer.Start(ctx, "CreatePollService")
 	defer span.End()
 	logging.SetSpanWithHostname(span)
-	logger := logging.LogService("FeedService.FeedPublisher").WithContext(ctx)
-	data, err := json.Marshal(event)
-	if err != nil {
-		logger.WithFields(logrus.Fields{
-			"err": err,
-		}).Errorf("Error when marshal the event model")
-		logging.SetSpanError(span, err)
-		return
+	logger := logging.LogService("PollService.CreatePoll").WithContext(ctx)
+
+	var optionsCount = []uint32{0, 0}
+
+	newPoll := &pollModels.Poll{
+		PollUuid:     uuid.GenerateUuid(),
+		PollType:     request.Poll.GetPollType(),
+		Title:        request.Poll.GetTitle(),
+		Options:      request.Poll.GetOptions(),
+		OptionsCount: optionsCount,
+		UserName:     request.Poll.GetUsername(),
+		CommentList:  make([]commentModels.Comment, 0),
+		VoteList:     make([]voteModels.Vote, 0),
+		CreateAt:     time.Now(),
 	}
 
-	headers := rabbitmq.InjectAMQPHeaders(ctx)
-
-	err = channel.PublishWithContext(ctx,
-		strings.EventExchange,
-		strings.PollGetEvent,
-		false,
-		false,
-		amqp.Publishing{
-			ContentType: "text/plain",
-			Body:        data,
-			Headers:     headers,
-		})
-
+	collection := database.MongoDbClient.Database("aorb").Collection("polls")
+	_, err = collection.InsertOne(ctx, newPoll)
 	if err != nil {
 		logger.WithFields(logrus.Fields{
-			"err": err,
-		}).Errorf("Error when publishing the event model")
+			"poll_uuid": newPoll.PollUuid,
+			"username":  newPoll.UserName,
+			"err":       err,
+		}).Errorf("Error when inserting new poll")
 		logging.SetSpanError(span, err)
-		return
+		resp = &pollPb.CreatePollResponse{
+			StatusCode: strings.PollServiceInnerErrorCode,
+			StatusMsg:  strings.PollServiceInnerError,
+			PollUuid:   newPoll.PollUuid,
+		}
+		return resp, err
 	}
+
+	resp = &pollPb.CreatePollResponse{
+		StatusCode: strings.ServiceOKCode,
+		StatusMsg:  strings.ServiceOK,
+		PollUuid:   newPoll.PollUuid,
+	}
+	return resp, err
 }
 
-func (s PollServiceImpl) ListPolls(ctx context.Context, request *poll.ListPollRequest) (resp *poll.ListPollResponse, err error) {
-	ctx, span := tracing.Tracer.Start(ctx, "ListVideosService")
+func (s PollServiceImpl) GetPoll(ctx context.Context, request *pollPb.GetPollRequest) (resp *pollPb.GetPollResponse, err error) {
+	ctx, span := tracing.Tracer.Start(ctx, "GetPollService")
 	defer span.End()
 	logging.SetSpanWithHostname(span)
-	logger := logging.LogService("FeedService.ListVideos").WithContext(ctx)
+	logger := logging.LogService("PollService.GetPoll").WithContext(ctx)
 
-	now := time.Now().UnixMilli()
-	latestTime := now
-	if request.LatestTime != nil && *request.LatestTime != "" {
-		// Check if request.LatestTime is a timestamp
-		t, ok := isUnixMilliTimestamp(*request.LatestTime)
-		if ok {
-			latestTime = t
-		} else {
-			logger.WithFields(logrus.Fields{
-				"latestTime": request.LatestTime,
-			}).Errorf("The latestTime is not a unix timestamp")
-			logging.SetSpanError(span, errors.New("the latestTime is not a unit timestamp"))
-		}
+	collection := database.MongoDbClient.Database("aorb").Collection("polls")
+	filter := bson.D{
+		{"pollUuid", request.PollUuid},
 	}
 
-	find, nextTime, err := findPolls(ctx, latestTime)
+	result := collection.FindOne(ctx, filter)
 
-	nextTimeStamp := uint64(nextTime.UnixMilli())
+	if result.Err() != nil {
+		logger.WithFields(logrus.Fields{
+			"poll_uuid": request.PollUuid,
+			"err":       result.Err(),
+		}).Errorf("Error when getting poll of uuid %s", request.PollUuid)
+		resp = &pollPb.GetPollResponse{
+			StatusCode: strings.PollServiceInnerErrorCode,
+			StatusMsg:  strings.PollServiceInnerError,
+			Poll:       nil,
+		}
+		err = result.Err()
+		return
+	}
+
+	var pPoll pollModels.Poll
+	err = result.Decode(&pPoll)
 	if err != nil {
 		logger.WithFields(logrus.Fields{
-			"find": find,
-		}).Warnf("func findPolls meet trouble.")
-		logging.SetSpanError(span, err)
-
-		resp = &poll.ListPollResponse{
-			StatusCode: strings.FeedServiceInnerErrorCode,
-			StatusMsg:  strings.FeedServiceInnerError,
-			NextTime:   &nextTimeStamp,
-			PollList:   nil,
+			"poll_uuid": request.PollUuid,
+			"err":       err,
+		}).Errorf("Error when decoding poll of uuid %s", request.PollUuid)
+		resp = &pollPb.GetPollResponse{
+			StatusCode: strings.PollServiceInnerErrorCode,
+			StatusMsg:  strings.PollServiceInnerError,
+			Poll:       nil,
 		}
-		return resp, err
+		return
 	}
 
-	if len(find) == 0 {
-		resp = &poll.ListPollResponse{
-			StatusCode: strings.ServiceOKCode,
-			StatusMsg:  strings.ServiceOK,
-			NextTime:   nil,
-			PollList:   nil,
-		}
-		return resp, nil
+	resp = &pollPb.GetPollResponse{
+		StatusCode: strings.ServiceOKCode,
+		StatusMsg:  strings.ServiceOK,
+		Poll:       BuildPollPbModel(&pPoll),
 	}
 
-	var actorId uint32 = 0
-	if request.ActorId != nil {
-		actorId = *request.ActorId
-	}
-	polls := queryDetailed(ctx, logger, actorId, find)
-	if polls == nil {
+	return
+}
+
+func (s PollServiceImpl) ListPoll(ctx context.Context, request *pollPb.ListPollRequest) (resp *pollPb.ListPollResponse, err error) {
+	ctx, span := tracing.Tracer.Start(ctx, "ListPollService")
+	defer span.End()
+	logging.SetSpanWithHostname(span)
+	logger := logging.LogService("PollService.ListPoll").WithContext(ctx)
+
+	collection := database.MongoDbClient.Database("aorb").Collection("polls")
+	cursor, err := collection.Find(ctx, bson.M{})
+	if err != nil {
 		logger.WithFields(logrus.Fields{
-			"polls": polls,
-		}).Warnf("func queryDetailed meet trouble.")
+			"err": err,
+		}).Errorf("Error when listing polls")
+		resp = &pollPb.ListPollResponse{
+			StatusCode: strings.UnableToQueryPollErrorCode,
+			StatusMsg:  strings.UnableToQueryPollError,
+			PollList:   []*pollPb.Poll{},
+		}
+		return
+	}
+
+	var pAllPollList []pollModels.Poll
+	err = cursor.All(ctx, &pAllPollList)
+	if err != nil {
+		logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Errorf("Error when decoding polls")
+		resp = &pollPb.ListPollResponse{
+			StatusCode: strings.UnableToQueryPollErrorCode,
+			StatusMsg:  strings.UnableToQueryPollError,
+			PollList:   []*pollPb.Poll{},
+		}
+		return
+	}
+
+	var pPollList []pollModels.Poll
+	for i := request.Limit * (request.Offset - 1); i < request.Limit*request.Offset && i < uint32(len(pAllPollList)); i++ {
+		pPollList = append(pPollList, pAllPollList[i])
+	}
+
+	var rPollList []*pollPb.Poll
+	for _, pPoll := range pPollList {
+		rPollList = append(rPollList, BuildPollPbModel(&pPoll))
+	}
+
+	resp = &pollPb.ListPollResponse{
+		StatusCode: strings.ServiceOKCode,
+		StatusMsg:  strings.ServiceOK,
+		PollList:   rPollList,
+	}
+	return
+}
+
+func (s PollServiceImpl) PollExist(ctx context.Context, req *pollPb.PollExistRequest) (resp *pollPb.PollExistResponse, err error) {
+	ctx, span := tracing.Tracer.Start(ctx, "PollExistedService")
+	defer span.End()
+	logging.SetSpanWithHostname(span)
+	logger := logging.LogService("PollService.PollExisted").WithContext(ctx)
+
+	// TODO 使用二级缓存加速查询
+	//var tempPoll pollModels.Poll
+	//_, err = cached.GetWithFunc(ctx, fmt.Sprintf("PollExistedCached-%s", req.PollUuid), func(ctx context.Context, key string) (string, error) {
+	//	collection := database.MongoDbClient.Database("aorb").Collection("polls")
+	//	cursor := collection.FindOne(ctx, bson.M{"pollUuid": req.PollUuid})
+	//	if cursor.Err() != nil {
+	//		return "false", cursor.Err()
+	//	}
+	//	if err := cursor.Decode(&tempPoll); err != nil {
+	//		return "false", err
+	//	}
+	//	return "true", nil
+	//})
+
+	collection := database.MongoDbClient.Database("aorb").Collection("polls")
+	cursor := collection.FindOne(ctx, bson.M{"pollUuid": req.PollUuid})
+	if cursor.Err() != nil {
+		logger.WithFields(logrus.Fields{
+			"err":       cursor.Err(),
+			"poll_uuid": req.PollUuid,
+		}).Errorf("Error when checking if poll exists")
+		resp = &pollPb.PollExistResponse{
+			StatusCode: strings.UnableToQueryPollErrorCode,
+			StatusMsg:  strings.UnableToQueryPollError,
+			Exist:      false,
+		}
+		return
+	}
+
+	var pPoll pollModels.Poll
+	err = cursor.Decode(&pPoll)
+
+	if err != nil {
+		logger.WithFields(logrus.Fields{
+			"poll_uuid": req.PollUuid,
+		}).Errorf("Error when decoding poll")
 		logging.SetSpanError(span, err)
-		resp = &poll.ListPollResponse{
-			StatusCode: strings.FeedServiceInnerErrorCode,
-			StatusMsg:  strings.FeedServiceInnerError,
-			NextTime:   nil,
-			PollList:   nil,
+		resp = &pollPb.PollExistResponse{
+			StatusCode: strings.PollServiceInnerErrorCode,
+			StatusMsg:  strings.PollServiceInnerError,
+			Exist:      false,
 		}
 		return resp, err
 	}
+
+	if pPoll.PollUuid == "" {
+		logger.WithFields(logrus.Fields{
+			"poll_uuid": req.PollUuid,
+		}).Warnf("poll_uuid %s doesn't exist", req.PollUuid)
+		logging.SetSpanError(span, err)
+		resp = &pollPb.PollExistResponse{
+			StatusCode: strings.PollServiceInnerErrorCode,
+			StatusMsg:  strings.PollServiceInnerError,
+			Exist:      false,
+		}
+		return resp, err
+	}
+
+	resp = &pollPb.PollExistResponse{
+		StatusCode: strings.ServiceOKCode,
+		StatusMsg:  strings.ServiceOK,
+		Exist:      true,
+	}
+	return
+}
+
+func BuildPollPbModel(poll *pollModels.Poll) *pollPb.Poll {
+
+	rCommentList := make([]*commentPb.Comment, 0)
+	rVoteList := make([]*votePb.Vote, 0)
+
+	pCommentList := poll.CommentList
+	pVoteList := poll.VoteList
 
 	wg := sync.WaitGroup{}
-	wg.Add(1)
+	wg.Add(2)
+
 	go func() {
 		defer wg.Done()
-		var pollLists []uint32
-		for _, item := range polls {
-			pollLists = append(pollLists, item.Id)
+		for _, pComment := range pCommentList {
+			rComment := &commentPb.Comment{
+				CommentUsername: pComment.CommentUserName,
+				Content:         pComment.Content,
+				CommentUuid:     pComment.CommentUuid,
+				CreateAt:        timestamppb.New(pComment.CreateAt),
+			}
+			rCommentList = append(rCommentList, rComment)
 		}
-		producePoll(ctx, eventModels.RecommendEvent{
-			ActorId: *request.ActorId,
-			PollId:  pollLists,
-			Type:    1,
-			Source:  config.PollRpcServerName,
-		})
+	}()
+
+	go func() {
+		defer wg.Done()
+		for _, pVote := range pVoteList {
+			rVote := &votePb.Vote{
+				VoteUuid:     pVote.VoteUuid,
+				VoteUsername: pVote.VoteUserName,
+				Choice:       pVote.Choice,
+				CreateAt:     timestamppb.New(pVote.CreateAt),
+			}
+			rVoteList = append(rVoteList, rVote)
+		}
 	}()
 
 	wg.Wait()
-	resp = &poll.ListPollResponse{
-		StatusCode: strings.ServiceOKCode,
-		StatusMsg:  strings.ServiceOK,
-		NextTime:   &nextTimeStamp,
-		PollList:   polls,
+
+	return &pollPb.Poll{
+		PollUuid:     poll.PollUuid,
+		Title:        poll.Title,
+		Options:      poll.Options,
+		OptionsCount: poll.OptionsCount,
+		PollType:     poll.PollType,
+		Username:     poll.UserName,
+		CommentList:  rCommentList,
+		VoteList:     rVoteList,
+		CreateAt:     timestamppb.New(poll.CreateAt),
 	}
-	return resp, err
-}
-
-func (s PollServiceImpl) QueryPolls(ctx context.Context, req *poll.QueryPollRequest) (resp *poll.QueryPollResponse, err error) {
-	ctx, span := tracing.Tracer.Start(ctx, "QueryPollsService")
-	defer span.End()
-	logging.SetSpanWithHostname(span)
-	logger := logging.LogService("PollService.QueryPolls").WithContext(ctx)
-
-	rst, err := query(ctx, logger, req.ActorId, req.PollIds)
-	if err != nil {
-		logger.WithFields(logrus.Fields{
-			"rst": rst,
-		}).Warnf("func query meet trouble.")
-		logging.SetSpanError(span, err)
-		resp = &poll.QueryPollResponse{
-			StatusCode: strings.FeedServiceInnerErrorCode,
-			StatusMsg:  strings.FeedServiceInnerError,
-			PollList:   rst,
-		}
-		return resp, err
-	}
-
-	resp = &poll.QueryPollResponse{
-		StatusCode: strings.ServiceOKCode,
-		StatusMsg:  strings.ServiceOK,
-		PollList:   rst,
-	}
-	return resp, err
-}
-
-func (s PollServiceImpl) QueryPollExisted(ctx context.Context, req *poll.PollExistRequest) (resp *poll.PollExistResponse, err error) {
-	ctx, span := tracing.Tracer.Start(ctx, "QueryPollExistedService")
-	defer span.End()
-	logging.SetSpanWithHostname(span)
-	logger := logging.LogService("PollService.QueryPollExisted").WithContext(ctx)
-
-	var tempPoll pollModels.Poll
-	_, err = cached.GetWithFunc(ctx, fmt.Sprintf("PollExistedCached-%d", req.PollId), func(ctx context.Context, key string) (string, error) {
-		collection := database.MongoDbClient.Database("aorb").Collection("polls")
-		cursor := collection.FindOne(ctx, bson.M{"_id": req.PollId})
-		if cursor.Err() != nil {
-			return "false", cursor.Err()
-		}
-		if err := cursor.Decode(&tempPoll); err != nil {
-			return "false", err
-		}
-		return "true", nil
-	})
-
-	if err != nil {
-		logger.WithFields(logrus.Fields{
-			"poll_id": req.PollId,
-		}).Warnf("Error occurred while querying database")
-		logging.SetSpanError(span, err)
-		resp = &poll.PollExistResponse{
-			StatusCode: strings.FeedServiceInnerErrorCode,
-			StatusMsg:  strings.FeedServiceInnerError,
-			Existed:    false,
-		}
-		return resp, err
-	}
-
-	resp = &poll.PollExistResponse{
-		StatusCode: strings.ServiceOKCode,
-		StatusMsg:  strings.ServiceOK,
-		Existed:    true,
-	}
-	return
-}
-
-func query(ctx context.Context, logger *logrus.Entry, actorId uint32, pollIds []uint32) (resp []*poll.Poll, err error) {
-	var polls []*pollModels.Poll
-	collection := database.MongoDbClient.Database("aorb").Collection("polls")
-	filter := bson.M{"_id": bson.M{"$in": pollIds}}
-	cursor, err := collection.Find(ctx, filter)
-	if err != nil {
-		logger.WithFields(logrus.Fields{
-			"err": err,
-		}).Warnf("Something went wrong when finding polls")
-		return nil, err
-	}
-	for cursor.Next(ctx) {
-		var tempPoll *pollModels.Poll
-		if err = cursor.Decode(&tempPoll); err != nil {
-			logger.WithFields(logrus.Fields{
-				"err": err,
-			}).Warnf("Something went wrong when finding polls")
-			return nil, err
-		}
-		polls = append(polls, tempPoll)
-	}
-	return queryDetailed(ctx, logger, actorId, polls), nil
-}
-
-func queryDetailed(ctx context.Context, logger *logrus.Entry, actorId uint32, polls []*pollModels.Poll) (respPollList []*poll.Poll) {
-	ctx, span := tracing.Tracer.Start(ctx, "queryDetailed")
-	defer span.End()
-	logging.SetSpanWithHostname(span)
-	logger = logging.LogService("ListVideos.queryDetailed").WithContext(ctx)
-	respPollList = make([]*poll.Poll, len(polls))
-
-	for i, v := range polls {
-		respPollList[i] = &poll.Poll{
-			Id:    v.ID,
-			Title: v.Title,
-			User: &user.User{
-				Id: v.UserId,
-			},
-		}
-	}
-
-	userMap := make(map[uint32]*user.User)
-	for _, poll := range polls {
-		userMap[poll.UserId] = &user.User{}
-	}
-
-	userWg := sync.WaitGroup{}
-	userWg.Add(len(userMap))
-	for userId := range userMap {
-		go func(userId uint32) {
-			defer userWg.Done()
-			userResponse, localErr := UserClient.GetUserInfo(ctx, &user.UserRequest{
-				UserId:  userId,
-				ActorId: actorId,
-			})
-			if localErr != nil || userResponse.StatusCode != strings.ServiceOKCode {
-				logger.WithFields(logrus.Fields{
-					"UserId": userId,
-					"cause":  localErr,
-				}).Warning("failed to get user info")
-				logging.SetSpanError(span, localErr)
-			}
-			userMap[userId] = userResponse.User
-		}(userId)
-	}
-
-	wg := sync.WaitGroup{}
-	for i, p := range polls {
-		wg.Add(1)
-		go func(i int, v *pollModels.Poll) {
-			defer wg.Done()
-			commentCountResp, localErr := CommentClient.CountComment(ctx, &comment.CountCommentRequest{
-				ActorId: actorId,
-				PollId:  p.ID,
-			})
-			if localErr != nil {
-				logger.WithFields(logrus.Fields{
-					"poll_id": p.ID,
-					"err":     localErr,
-				}).Warning("failed to fetch comment count")
-				logging.SetSpanError(span, localErr)
-				return
-			}
-			respPollList[i].CommentCount = commentCountResp.CommentCount
-		}(i, p)
-	}
-
-	userWg.Wait()
-	wg.Wait()
-
-	for i, respPoll := range respPollList {
-		userId := respPoll.User.Id
-		respPollList[i].User = userMap[userId]
-	}
-	return
-}
-
-func findPolls(ctx context.Context, latestTime int64) ([]*pollModels.Poll, time.Time, error) {
-	logger := logging.LogService("ListPolls.findPolls").WithContext(ctx)
-
-	nextTime := time.UnixMilli(latestTime)
-
-	var polls []*pollModels.Poll
-	collections := database.MongoDbClient.Database("aorb").Collection("polls")
-	filter := bson.M{"created_at": bson.M{"$lte": nextTime}}
-	sort := bson.M{"created_at": -1}
-	findOptions := options.Find()
-	findOptions.SetLimit(PollCount)
-	findOptions.SetSort(sort)
-	cursor, err := collections.Find(context.TODO(), filter, findOptions)
-	if err != nil {
-		logger.WithFields(logrus.Fields{
-			"err": err,
-		}).Errorf("Error when finding the polls")
-		return nil, nextTime, err
-	}
-	defer cursor.Close(context.TODO())
-
-	for cursor.Next(context.TODO()) {
-		var poll pollModels.Poll
-		if err := cursor.Decode(&poll); err != nil {
-			logger.WithFields(logrus.Fields{
-				"err": err,
-			}).Errorf("Error when finding the polls")
-			return nil, nextTime, err
-		}
-		polls = append(polls, &poll)
-	}
-
-	if len(polls) != 0 {
-		nextTime = polls[len(polls)-1].CreateAt
-	}
-
-	logger.WithFields(logrus.Fields{
-		"nextTime":   nextTime,
-		"latestTime": time.UnixMilli(latestTime),
-		"PollsCount": len(polls),
-	}).Debugf("find polls")
-	return polls, nextTime, nil
-}
-
-func isUnixMilliTimestamp(s string) (int64, bool) {
-	timestamp, err := strconv.ParseInt(s, 10, 64)
-	if err != nil {
-		return 0, false
-	}
-
-	startTime := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
-	endTime := time.Now().AddDate(100, 0, 0)
-
-	t := time.UnixMilli(timestamp)
-	res := t.After(startTime) && t.Before(endTime)
-
-	return timestamp, res
 }

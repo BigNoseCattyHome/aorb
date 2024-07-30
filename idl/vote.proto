@@ -5,15 +5,16 @@ package rpc.vote;
 import "google/protobuf/timestamp.proto";
 
 message Vote{
-  string vote_username = 1;
-  string choice = 2;
-  google.protobuf.Timestamp create_at = 3;
-  google.protobuf.Timestamp delete_at = 4;
+  string vote_uuid = 1;
+  string vote_username = 2;
+  string choice = 3;
+  google.protobuf.Timestamp create_at = 4;
 }
 
 message CreateVoteRequest{
-  string poll_id = 1;
-  string choice = 2;
+  string poll_uuid = 1;
+  string username = 2;
+  string choice = 3;
 }
 
 message CreateVoteResponse{
@@ -22,14 +23,13 @@ message CreateVoteResponse{
 }
 
 message GetVoteCountRequest {
-  string poll_id = 1;
+  string poll_uuid = 1;
 }
 
 message GetVoteCountResponse {
   int32 status_code = 1;  // 状态码，0-成功，其他值-失败
   string status_msg = 2;  // 返回状态描述
-  int32 count_1 = 3;
-  int32 count_2 = 4;
+  repeated uint32 vote_count_list = 3;
 }
 
 service VoteService{
