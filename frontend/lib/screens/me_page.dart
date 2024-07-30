@@ -15,7 +15,7 @@ class MePage extends StatefulWidget {
 
 class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  late User user;
+  User user = User();
 
   @override
   void initState() {

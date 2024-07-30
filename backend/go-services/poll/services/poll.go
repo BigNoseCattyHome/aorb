@@ -270,13 +270,8 @@ func (s PollServiceImpl) ListPoll(ctx context.Context, request *poll.ListPollReq
 		return
 	}
 
-<<<<<<< HEAD
 	var pAllPollList []pollModels.Poll
 	err = cursor.All(ctx, &pAllPollList)
-=======
-	var pPollList []pollModels.Poll
-	err = cursor.All(ctx, &pPollList)
->>>>>>> 4c60b92 (完成了poll service的重构，除了ListPoll以外的接口都通过了测试)
 	if err != nil {
 		logger.WithFields(logrus.Fields{
 			"err": err,
@@ -289,61 +284,38 @@ func (s PollServiceImpl) ListPoll(ctx context.Context, request *poll.ListPollReq
 		return
 	}
 
-<<<<<<< HEAD
 	var pPollList []pollModels.Poll
 	for i := request.Limit * (request.Offset - 1); i < request.Limit*request.Offset && i < int32(len(pAllPollList)); i++ {
 		pPollList = append(pPollList, pAllPollList[i])
 	}
-=======
-	pPollList = pPollList[(request.Offset-1)*request.Limit : request.Offset*request.Offset+1]
->>>>>>> 4c60b92 (完成了poll service的重构，除了ListPoll以外的接口都通过了测试)
 
 	var rPollList []*poll.Poll
 	for _, pPoll := range pPollList {
 		var rCommentList []*comment.Comment
 		for _, pComment := range pPoll.CommentList {
-<<<<<<< HEAD
 			rComment := &comment.Comment{
-=======
-			rComment := comment.Comment{
->>>>>>> 4c60b92 (完成了poll service的重构，除了ListPoll以外的接口都通过了测试)
 				CommentUsername: pComment.ReviewerUserName,
 				Content:         pComment.Content,
 				CommentUuid:     pComment.CommentUuid,
 				CreateAt:        timestamppb.New(pComment.CreateAt),
 				DeleteAt:        timestamppb.New(pComment.DeleteAt),
 			}
-<<<<<<< HEAD
 			rCommentList = append(rCommentList, rComment)
-=======
-			rCommentList = append(rCommentList, &rComment)
->>>>>>> 4c60b92 (完成了poll service的重构，除了ListPoll以外的接口都通过了测试)
 		}
 
 		var rVoteList []*vote.Vote
 		for _, pVote := range pPoll.VoteList {
-<<<<<<< HEAD
 			rVote := &vote.Vote{
-=======
-			rVote := vote.Vote{
->>>>>>> 4c60b92 (完成了poll service的重构，除了ListPoll以外的接口都通过了测试)
 				VoteUuid:     pVote.VoteUuid,
 				VoteUsername: pVote.VoteUserName,
 				Choice:       pVote.Choice,
 				CreateAt:     timestamppb.New(pVote.CreateAt),
 				DeleteAt:     timestamppb.New(pVote.DeleteAt),
 			}
-<<<<<<< HEAD
 			rVoteList = append(rVoteList, rVote)
 		}
 
 		rPoll := &poll.Poll{
-=======
-			rVoteList = append(rVoteList, &rVote)
-		}
-
-		rPoll := poll.Poll{
->>>>>>> 4c60b92 (完成了poll service的重构，除了ListPoll以外的接口都通过了测试)
 			PollUuid:     pPoll.PollUuid,
 			Title:        pPoll.Title,
 			Options:      pPoll.Options,
@@ -357,11 +329,7 @@ func (s PollServiceImpl) ListPoll(ctx context.Context, request *poll.ListPollReq
 			DeleteAt:     timestamppb.New(pPoll.DeleteAt),
 		}
 
-<<<<<<< HEAD
 		rPollList = append(rPollList, rPoll)
-=======
-		rPollList = append(rPollList, &rPoll)
->>>>>>> 4c60b92 (完成了poll service的重构，除了ListPoll以外的接口都通过了测试)
 	}
 
 	resp = &poll.ListPollResponse{
