@@ -1,4 +1,4 @@
-# 👐 welcome to aorb
+# 👐 Welcome to Aorb
 
 ## 💖 简介
 
@@ -22,32 +22,17 @@
 aorb
 ├── backend
 │   ├── api-gateway
-│   │   ├── middleware
-│   │   └── models
 │   ├── go-services
 │   │   ├── auth
 │   │   ├── comment
 │   │   ├── event
 │   │   ├── poll
-│   │   └── user
-│   ├── java-services
-│   │   └── user
+│   │   ├── user
+│   │   └── vote
 │   ├── rpc
 │   └── utils
-│       ├── constants
-│       ├── consul
-│       ├── extra
-│       ├── grpc
-│       ├── json
-│       ├── logging
-│       ├── prom
-│       ├── rabbitmq
-│       └── storage
 ├── build
 ├── frontend
-│   ├── fonts
-│   ├── images
-│   ├── ios
 │   ├── lib
 │   │   ├── conf
 │   │   ├── generated
@@ -78,7 +63,7 @@ aorb
 git clone https://github.com/BigNoseCattyHome/aorb.git
 ```
 
-### 需要用到的工具
+### 需要安装的工具
 
 在这个项目中需要用到的工具有：
 
@@ -96,19 +81,19 @@ git clone https://github.com/BigNoseCattyHome/aorb.git
 
 ### 前端开发 
 
-开发和测试flutter应用
+开发和测试flutter应用，在项目根目录下执行
 
 ```shell
-make run_frontend
+make run frontend
 ```
 
-或者是尝试进入到frontend目录下，执行：
+或者是尝试进入到frontend目录下执行
 
 ```shell
 flutter run
 ```
 
-flutter会自动编译fronted/lib/main.dart文件并运行，选择一个合适的平台进行查看就好，不同平台需要满足特定的工具包。
+Flutter 会自动编译 `fronted/lib/main.dart` 文件并运行，选择一个合适的平台进行查看就好，不同平台需要满足特定的工具包。
 
 
 figma原型设计共享链接：[Aorb原型设计](https://www.figma.com/design/roDqwgrlbQo29vpSqeCVFw/Aorb?node-id=0-1&t=SOBamnPsEXegjKDF-1)
@@ -129,28 +114,57 @@ load("scripts/init_db.js")
 ```
 
 ### 后台各个服务的开启
-rabbitMQ(MAC):
+
+RabbitMQ:
 ```shell
-brew services start rabbitmq
+systemctl start rabbitmq-server     # Linux
+brew services start rabbitmq        # MacOS
 ```
-consul(MAC):
+
+Consul:
 ```shell
 consul agent -dev
 ```
-redis(MAC)
+
+Redis:
 ```shell
 redis-server
 ```
 
 ### 微服务的启动
 
-可以执行以下命令来启动微服务：
+可以执行以下命令来启动后端各个微服务
 
 ```shell
-make build
-make run_backend
+make run backend
 ```
 
+### 客户端启动
+
+执行以下命令来启动客户端，因为项目中运用了 gRPC 进行通讯，浏览器目前不支持
+
+推荐使用各个平台的客户端，比如Linux、Windows、MacOS等
+
+```shell
+make run frontend
+```
+
+#### 安卓设备
+
+对于在手机上进行真机测试，需要手机打开开发者模式，并且使用USB连接到电脑上，并将连接方式设置为文件传输。
+
+执行以下命令检查是否连接成功
+
+```shell
+adb devices
+```
+
+如果连接成功，执行以下命令启动客户端
+
+```shell
+make run frontend   # 在项目根目录下
+flutter run         # 在frontend目录下
+```
 
 ## 📝 开发文档
 
@@ -161,6 +175,7 @@ make run_backend
 [开发踩坑记录](http://sirius1y.top/posts/notes/dev/dev-aorb-grpc/)
 
 ## 踩坑记录补充
+
 1. 使用Apifox测试的时候返回了```invalid wire type[13 INTERNAL]```错误
 - 原因：本质上是因为客户端(Apifox)与服务端(项目后端)所使用的pb类型定义不一致
 - 解决方法：检查后端的proto文件，并且重新上传到Apifox，参考链接是[这篇博客](https://loesspie.com/2021/09/14/grpc-did-not-read-entire-message/)

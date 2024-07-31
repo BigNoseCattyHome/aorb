@@ -1,30 +1,33 @@
-echo "Please Run Me on the root dir, not in scripts dir."
+# ! /bin/bash
 
+AORB_HOME=$(pwd)
+
+# 清理 build 目录
 if [ -d "build" ]; then
-    echo "Output dir existed, deleting and recreating..."
-    rm -rf build
+  echo "./build/ dir existed, removing and recreating..."
+  rm -rf build
 fi
-mkdir -p build/services
 
-pushd backend/go-services || exit
+# 构建 gateway
+cd $AORB_HOME
+mkdir -p build/gateway
+cd backend/api-gateway || exit
+go build -o "$AORB_HOME/build/gateway/Gateway"
+
+# 构建 services
+cd $AORB_HOME
+mkdir -p build/services
+cd backend/go-services || exit
 
 for i in *; do
-  if [ -d "$i" ] && [ "$i" != "health" ]; then
-      echo "$i"
-      name="$i"
-      capName="${name}"
-      cd "$i"/services
-      go build -o "../../../../build/services/$i/${capName}Service"
-      cd ../..
+  if [ -d "$i" ]; then
+    name="$i"
+    capName="${name}"
+    cd "$i"
+    echo "Building $i service..."
+    go build -o "$AORB_HOME/build/services/$i/${capName}Service"
+    cd ..
   fi
 done
 
-popd || exit
-
-mkdir -p build/gateway
-
-cd backend/api-gateway || exit
-
-go build -o "../../build/gateway/Gateway"
-
-echo "OK!"
+echo "Build Done!"
