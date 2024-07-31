@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/strings"
 
 	"github.com/BigNoseCattyHome/aorb/backend/go-services/auth/models"
 	"github.com/BigNoseCattyHome/aorb/backend/go-services/auth/services"
@@ -73,8 +74,8 @@ func (a AuthServiceImpl) Login(ctx context.Context, request *auth.LoginRequest) 
 
 	// 返回响应
 	loginResponse := &auth.LoginResponse{
-		StatusCode:   true,
-		StatusMsg:    "User logged in successfully",
+		StatusCode:   strings.ServiceOKCode,
+		StatusMsg:    strings.ServiceOK,
 		Token:        token,
 		TokenType:    "Bearer",
 		ExpiresAt:    exp_token,
@@ -100,10 +101,11 @@ func (a AuthServiceImpl) Verify(context context.Context, request *auth.VerifyReq
 
 	// 返回响应
 	verifyResponse := &auth.VerifyResponse{
-		Success:   true,
-		UserId:    claims.UserId,
-		Username:  claims.Username,
-		ExpiresAt: claims.ExpiresAt,
+		StatusCode: strings.ServiceOKCode,
+		StatusMsg:  strings.ServiceOK,
+		UserId:     claims.UserId,
+		Username:   claims.Username,
+		ExpiresAt:  claims.ExpiresAt,
 	}
 	return verifyResponse, nil
 }
@@ -119,9 +121,10 @@ func (a AuthServiceImpl) Refresh(context context.Context, request *auth.RefreshR
 
 	// 返回响应
 	refreshResponse := &auth.RefreshResponse{
-		Success:   true,
-		Token:     newToken,
-		ExpiresAt: exp_token,
+		StatusCode: strings.ServiceOKCode,
+		StatusMsg:  strings.ServiceOK,
+		Token:      newToken,
+		ExpiresAt:  exp_token,
 	}
 	return refreshResponse, nil
 }
@@ -146,8 +149,8 @@ func (a AuthServiceImpl) Logout(context context.Context, request *auth.LogoutReq
 
 	// 返回响应
 	logoutResponse := &auth.LogoutResponse{
-		Success: true,
-		Message: "tokens revoked",
+		StatusCode: strings.ServiceOKCode,
+		StatusMsg:  strings.ServiceOK,
 	}
 	return logoutResponse, nil
 
@@ -174,8 +177,8 @@ func (a AuthServiceImpl) Register(context context.Context, request *auth.Registe
 
 	// 返回响应
 	registerResponse := &auth.RegisterResponse{
-		Success: true,
-		Message: "User registered successfully",
+		StatusCode: strings.ServiceOKCode,
+		StatusMsg:  strings.ServiceOK,
 	}
 	return registerResponse, nil
 }
