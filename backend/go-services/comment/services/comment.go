@@ -141,10 +141,9 @@ func (c CommentServiceImpl) ActionComment(ctx context.Context, request *comment.
 	logger := logging.LogService("CommentService.ActionComment").WithContext(ctx)
 	logger.WithFields(logrus.Fields{
 		"username":     request.Username,
-		"poll_id":      request.PollUuid,
+		"poll_id":      request.PollId,
 		"action_type":  request.ActionType,
-		"comment_text": request.GetCommentText(),
-		"comment_uuid": request.GetCommentUuid(),
+		"comment_text": request.CommentText,
 	}).Debugf("Process start")
 
 	var pCommentId string
@@ -478,7 +477,7 @@ func deleteComment(ctx context.Context, logger *logrus.Entry, span trace.Span, p
 	collections := database.MongoDbClient.Database("aorb").Collection("polls")
 
 	filter := bson.D{
-		{"pollUuid", pPollUuId},
+		{Key: "pollUuid", Value: pPollUuId},
 		{"commentList.commentUuid", commentUuid},
 	}
 

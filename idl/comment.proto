@@ -21,12 +21,9 @@ enum ActionCommentType{
 
 message ActionCommentRequest{
   string username = 1;
-  string poll_uuid = 2;
+  string poll_id = 2;
   ActionCommentType action_type = 3;
-  oneof action {
-    string comment_text = 4;
-    string comment_uuid = 5;
-  }
+  string comment_text = 4;
 }
 
 message ActionCommentResponse{

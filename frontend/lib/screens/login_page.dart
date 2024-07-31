@@ -5,7 +5,6 @@ import 'package:aorb/generated/google/protobuf/timestamp.pb.dart';
 import 'package:flutter/material.dart';
 import 'package:aorb/screens/register_page.dart';
 import 'package:aorb/conf/config.dart';
-import 'package:aorb/utils/ip_locator.dart';
 import 'package:aorb/services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
