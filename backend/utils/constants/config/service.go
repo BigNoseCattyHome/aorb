@@ -26,6 +26,7 @@ const AuthMetrics = ":37100"
 const CommentMetrics = ":37101"
 const PollMetrics = ":37102"
 const UserMetrics = ":37103"
+const VoteMetrics = ":37104"
 const PollProcessorRpcServiceName = "GuGoTik-PollProcessorService"
 
 const Event = "GuGoTik-Recommend"

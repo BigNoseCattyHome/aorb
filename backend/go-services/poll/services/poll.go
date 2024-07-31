@@ -143,6 +143,7 @@ func (s PollServiceImpl) GetPoll(ctx context.Context, request *pollPb.GetPollReq
 			"poll_uuid": request.PollUuid,
 			"err":       result.Err(),
 		}).Errorf("Error when getting poll of uuid %s", request.PollUuid)
+		logging.SetSpanError(span, err)
 		resp = &pollPb.GetPollResponse{
 			StatusCode: strings.PollServiceInnerErrorCode,
 			StatusMsg:  strings.PollServiceInnerError,
@@ -159,6 +160,7 @@ func (s PollServiceImpl) GetPoll(ctx context.Context, request *pollPb.GetPollReq
 			"poll_uuid": request.PollUuid,
 			"err":       err,
 		}).Errorf("Error when decoding poll of uuid %s", request.PollUuid)
+		logging.SetSpanError(span, err)
 		resp = &pollPb.GetPollResponse{
 			StatusCode: strings.PollServiceInnerErrorCode,
 			StatusMsg:  strings.PollServiceInnerError,
@@ -188,6 +190,7 @@ func (s PollServiceImpl) ListPoll(ctx context.Context, request *pollPb.ListPollR
 		logger.WithFields(logrus.Fields{
 			"err": err,
 		}).Errorf("Error when listing polls")
+		logging.SetSpanError(span, err)
 		resp = &pollPb.ListPollResponse{
 			StatusCode: strings.UnableToQueryPollErrorCode,
 			StatusMsg:  strings.UnableToQueryPollError,
@@ -202,6 +205,7 @@ func (s PollServiceImpl) ListPoll(ctx context.Context, request *pollPb.ListPollR
 		logger.WithFields(logrus.Fields{
 			"err": err,
 		}).Errorf("Error when decoding polls")
+		logging.SetSpanError(span, err)
 		resp = &pollPb.ListPollResponse{
 			StatusCode: strings.UnableToQueryPollErrorCode,
 			StatusMsg:  strings.UnableToQueryPollError,
@@ -255,6 +259,7 @@ func (s PollServiceImpl) PollExist(ctx context.Context, req *pollPb.PollExistReq
 			"err":       cursor.Err(),
 			"poll_uuid": req.PollUuid,
 		}).Errorf("Error when checking if poll exists")
+		logging.SetSpanError(span, err)
 		resp = &pollPb.PollExistResponse{
 			StatusCode: strings.UnableToQueryPollErrorCode,
 			StatusMsg:  strings.UnableToQueryPollError,
