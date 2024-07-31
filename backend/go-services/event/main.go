@@ -3,6 +3,10 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"strconv"
+	"sync"
+	"time"
+
 	"github.com/BigNoseCattyHome/aorb/backend/go-services/event/models"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/strings"
@@ -10,11 +14,9 @@ import (
 	"github.com/BigNoseCattyHome/aorb/backend/utils/extra/tracing"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/logging"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/rabbitmq"
+
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
-	"strconv"
-	"sync"
-	"time"
 )
 
 func exitOnError(err error) {

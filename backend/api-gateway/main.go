@@ -193,13 +193,15 @@ func getResponseType(method string) reflect.Type {
 
 	case "/rpc.user.UserService/GetUserInfo":
 		return reflect.TypeOf((*user.UserResponse)(nil))
-	case "/rpc.user.UserService/GetUserExistInformation":
+	case "/rpc.user.UserService/CheckUserExists":
 		return reflect.TypeOf((*user.UserExistResponse)(nil))
+	case "/rpc.user.UserService/IsUserFollowing":
+		return reflect.TypeOf((*user.IsUserFollowingResponse)(nil))
 
 	case "/rpc.comment.CommentService/ActionComment":
 		return reflect.TypeOf((*comment.ActionCommentResponse)(nil))
 	case "/rpc.comment.CommentService/ListComment":
-		return reflect.TypeOf((*comment.GetCommentResponse)(nil))
+		return reflect.TypeOf((*comment.ListCommentResponse)(nil))
 	case "/rpc.comment.CommentService/CountComment":
 		return reflect.TypeOf((*comment.CountCommentResponse)(nil))
 

@@ -20,8 +20,7 @@ class RegisterPageState extends State<RegisterPage> {
   bool _agreeToTerms = false; // 是否同意用户隐私政策条款
   bool _obscureText = true; // 是否隐藏密码
   String _province = 'Loading...'; // 用户IP的归属地
-  // 在页面构建的时候初始化AuthService
-  final AuthService _authService = AuthService(backendHost, backendPort);
+  final AuthService _authService = AuthService(); // 在页面构建的时候初始化AuthService
   final logger = getLogger();
 
   @override
@@ -110,7 +109,7 @@ class RegisterPageState extends State<RegisterPage> {
       // username和password是必填项，nickname, avatar, ipaddress是可选项
       final registerResponse = await _authService.register(
         _usernameController.text,
-        hash(_passwordController.text), // 对用户的密码进行哈希处理
+        _passwordController.text, // 这里是密码的明文，传输到后端进行存储的时候再进行哈希处理
         nickname: _usernameController.text,
         ipaddress: _province,
         avatar: '',

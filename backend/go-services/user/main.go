@@ -2,12 +2,19 @@ package main
 
 import (
 	"context"
+	"net"
+	"net/http"
+	"os"
+	"syscall"
+
+	"github.com/BigNoseCattyHome/aorb/backend/go-services/user/handlers"
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/user"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/consul"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/extra/tracing"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/logging"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/prom"
+
 	grpcprom "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
 	"github.com/oklog/run"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -16,10 +23,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
-	"net"
-	"net/http"
-	"os"
-	"syscall"
 )
 
 func main() {
@@ -67,10 +70,10 @@ func main() {
 	}
 	log.Infof("Rpc %s is running at %s now", config.UserRpcServerName, config.UserRpcServerAddr)
 
-	var srv UserServiceImpl
+	var srv handlers.UserServiceImpl
 	user.RegisterUserServiceServer(s, srv)
-	grpc_health_v1.RegisterHealthServer(s, health.NewServer())
 	srv.New()
+	grpc_health_v1.RegisterHealthServer(s, health.NewServer())
 	srvMetrics.InitializeMetrics(s)
 
 	g := &run.Group{}

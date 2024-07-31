@@ -1,6 +1,7 @@
 syntax = "proto3";
-package user;
+package rpc.user;
 option go_package = "github.com/BigNoseCattyHome/aorb/backend/rpc/user;user";
+import "google/protobuf/timestamp.proto";
 
 message User {
   string id = 1; // 用户ID
@@ -8,25 +9,31 @@ message User {
   string avatar = 3; // 用户头像
   string nickname = 4; // 用户昵称
 
-  optional double coins = 5; // 用户的金币数
-  optional CoinRecordList coins_record = 6; // 用户金币流水记录
-  optional FollowedList followed = 7; // 关注者列表
-  optional FollowerList follower = 8; // 被关注者列表
-  optional BlackList blacklist = 9; // 屏蔽好友列表
-  optional string ipaddress = 10; // IP归属地
-  optional PollAskList poll_ask = 11; // 发起过的问题id列表
-  optional PollAnsList poll_ans = 12; // 回答过的问题id列表
-  optional PollCollectList poll_collect = 13; // 收藏的问题id列表
+  // 这里定义了很多种消息类型，是为了方便以后的扩展
+
+  optional string password = 5; // 用户密码
+  optional double coins = 6; // 用户的金币数
+  optional CoinRecordList coins_record = 7; // 用户金币流水记录
+  optional FollowedList followed = 8; // 关注者列表
+  optional FollowerList follower = 9; // 被关注者列表
+  optional BlackList blacklist = 10; // 屏蔽好友列表
+  optional string ipaddress = 11; // IP归属地
+  optional PollAskList poll_ask = 12; // 发起过的问题id列表
+  optional PollAnsList poll_ans = 13; // 回答过的问题id列表
+  optional PollCollectList poll_collect = 14; // 收藏的问题id列表
+  google.protobuf.Timestamp create_at = 15;  // 创建时间
+  google.protobuf.Timestamp update_at = 16;  // 删除时间
+  google.protobuf.Timestamp delete_at = 17;  // 删除时间
 }
 
 message BlackList {
-  repeated string user_ids = 1; // 屏蔽好友的用户ID列表
+  repeated string usernames = 1; // 屏蔽好友的 username 列表
 }
 
 message CoinRecord {
   int64 consume = 1; // 消耗的金币数
   string poll_id = 2; // 为其投币的问题ID
-  string user_id = 3; // 使用者的ID
+  string username = 3; // 使用者的 username 
 }
 
 message CoinRecordList {
@@ -35,11 +42,11 @@ message CoinRecordList {
 
 
 message FollowedList {
-  repeated string user_ids = 1; // 关注者的用户ID列表
+  repeated string usernames = 1; // 关注者的 username 列表
 }
 
 message FollowerList {
-  repeated string user_ids = 1; // 被关注者的用户ID列表
+  repeated string usernames = 1; // 被关注者的 username 列表
 }
 
 message PollAskList {
@@ -55,12 +62,7 @@ message PollCollectList {
 }
 message UserRequest{
   string username = 1;
-<<<<<<< HEAD
   repeated string fields = 2;  // 可选字段列表，选择User中的字段进行查询
-=======
-  repeated string fields = 2;  // 新增: 可选字段列表
->>>>>>> pr/jinziguan123/15-1
-
 }
 
 message UserResponse{

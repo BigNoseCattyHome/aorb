@@ -11,7 +11,9 @@ class AuthService {
   var logger = getLogger();
 
   // 初始化_channel和_client
-  AuthService(String host, int port) {
+  AuthService() {
+    const host = backendHost;
+    const port = backendPort;
     logger.i('Attempting to connect to $backendHost:$backendPort');
 
     _channel = ClientChannel(
@@ -23,41 +25,44 @@ class AuthService {
     _client = AuthServiceClient(_channel);
   }
 
-Future<LoginResponse> login(String username, String password, String deviceId) async {
-  final request = LoginRequest()
-    ..username = username
-    ..password = password
-    ..deviceId = deviceId;
+  Future<LoginResponse> login(LoginRequest request) async {
+    try {
+      final LoginResponse response = await _client.login(request);
+      logger.i('Login response: $response');
 
-  try {
-    final LoginResponse response = await _client.login(request);
-    
-    if (response.statusCode == 0) {  
-      logger.i('Login successful for user: ${username.substring(0, 2)}...');  // 部分隐藏用户名
+      if (response.statusCode == 0) {
+        logger.i(
+            'Login successful for user: ${request.username.substring(0, 2)}...'); // 部分隐藏用户名
 
-      // 存储用户信息到本地
-      final prefs = await SharedPreferences.getInstance();
-      await Future.wait([
-        prefs.setString('authToken', response.token),
-        prefs.setString('refreshToken', response.refreshToken),
-        prefs.setString('userId', response.simpleUser.username),
-        prefs.setString('avatar', response.simpleUser.avatar),
-        prefs.setString('nickname', response.simpleUser.nickname),
-      ]);
-
-      return response;
-    } else {
-      logger.w('Login failed: ${response.statusMsg}');
-      throw Exception('Login failed: ${response.statusMsg}');
+        // 存储用户信息到本地
+        final prefs = await SharedPreferences.getInstance();
+        await Future.wait([
+          prefs.setString('authToken', response.token),
+          prefs.setString('refreshToken', response.refreshToken),
+          prefs.setString('username', response.simpleUser.username),
+          prefs.setString('avatar', response.simpleUser.avatar),
+          prefs.setString('nickname', response.simpleUser.nickname),
+        ]);
+        logger.d('Token saved to local storage: ${response.token}');
+        logger.d('Refresh token saved to local storage: ${response.refreshToken}');
+        logger.d('Username saved to local storage: ${response.simpleUser.username}');
+        logger.d('Avatar saved to local storage: ${response.simpleUser.avatar}');
+        logger.d('Nickname saved to local storage: ${response.simpleUser.nickname}');
+        
+        return response;
+      } else {
+        logger.w('Login failed: ${response.statusMsg}');
+        throw Exception('Login failed: ${response.statusMsg}');
+      }
+    } on GrpcError catch (e) {
+      logger.e('gRPC error during login: ${e.message}');
+      throw Exception('gRPC error during login: ${e.message}');
+    } catch (e) {
+      logger.e('Unexpected error during login: $e');
+      throw Exception('Unexpected error during login: $e');
     }
-  } on GrpcError catch (e) {
-    logger.e('gRPC error during login: ${e.message}');
-    throw Exception('gRPC error during login: ${e.message}');
-  } catch (e) {
-    logger.e('Unexpected error during login: $e');
-    throw Exception('Unexpected error during login: $e');
   }
-}
+
   Future<VerifyResponse> verify(String token) async {
     final request = VerifyRequest()..token = token;
     return await _client.verify(request);
@@ -97,8 +102,10 @@ Future<LoginResponse> login(String username, String password, String deviceId) a
 
   // 检查登录状态
   Future<bool> checkLoginStatus() async {
+    // 从本地获取token
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken');
+    logger.d('Token from local storage: $token');
 
     // 这里需要把成功登录返回的user信息返回到MainPage
     if (token != null) {

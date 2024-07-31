@@ -2,7 +2,7 @@ package models
 
 import (
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/comment"
-	"time"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type Comment struct {

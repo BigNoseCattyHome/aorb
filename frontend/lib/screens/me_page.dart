@@ -15,7 +15,7 @@ class MePage extends StatefulWidget {
 
 class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  late User user;
+  User user = User();
 
   @override
   void initState() {
@@ -116,7 +116,7 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
                                       );
                                     },
                                     child: Text(
-                                        '关注：${user.followed.userIds.length}', // ~ 用户关注的人数
+                                        '关注：${user.followed.usernames.length}', // ~ 用户关注的人数
                                         style: const TextStyle(
                                             color: Colors.white,
                                             fontSize: 12,
@@ -133,7 +133,7 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
                                       );
                                     },
                                     child: Text(
-                                        '被关注：${user.follower.userIds.length}', // ~ 用户的粉丝数量
+                                        '被关注：${user.follower.usernames.length}', // ~ 用户的粉丝数量
                                         style: const TextStyle(
                                             color: Colors.white,
                                             fontSize: 12,
