@@ -105,8 +105,8 @@ class UserService {
 
       // 判断user对象是否有followed字段
       if (response.user.hasFollowed()) {
-        return response.user.followed.userIds
-            .map((userId) => User()..id = userId)
+        return response.user.followed.usernames
+            .map((username) => User()..username = username)
             .toList();
       } else {
         return []; // 如果没有关注列表，返回空列表
@@ -130,8 +130,8 @@ class UserService {
 
       // 判断user对象是否有follower字段
       if (response.user.hasFollower()) {
-        return response.user.followed.userIds
-            .map((userId) => User()..id = userId)
+        return response.user.followed.usernames
+            .map((username) => User()..username = username)
             .toList();
       } else {
         return []; // 如果没有粉丝列表，返回空列表

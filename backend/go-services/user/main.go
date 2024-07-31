@@ -7,7 +7,7 @@ import (
 	"os"
 	"syscall"
 
-	"github.com/BigNoseCattyHome/aorb/backend/go-services/user/services"
+	"github.com/BigNoseCattyHome/aorb/backend/go-services/user/handlers"
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/user"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/consul"
@@ -70,7 +70,7 @@ func main() {
 	}
 	log.Infof("Rpc %s is running at %s now", config.UserRpcServerName, config.UserRpcServerAddr)
 
-	var srv services.UserServiceImpl
+	var srv handlers.UserServiceImpl
 	user.RegisterUserServiceServer(s, srv)
 	srv.New()
 	grpc_health_v1.RegisterHealthServer(s, health.NewServer())

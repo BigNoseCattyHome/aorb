@@ -1,5 +1,5 @@
 syntax = "proto3";
-package user;
+package rpc.user;
 option go_package = "github.com/BigNoseCattyHome/aorb/backend/rpc/user;user";
 import "google/protobuf/timestamp.proto";
 
@@ -27,13 +27,13 @@ message User {
 }
 
 message BlackList {
-  repeated string user_ids = 1; // 屏蔽好友的用户ID列表
+  repeated string usernames = 1; // 屏蔽好友的 username 列表
 }
 
 message CoinRecord {
   int64 consume = 1; // 消耗的金币数
   string poll_id = 2; // 为其投币的问题ID
-  string user_id = 3; // 使用者的ID
+  string username = 3; // 使用者的 username 
 }
 
 message CoinRecordList {
@@ -42,11 +42,11 @@ message CoinRecordList {
 
 
 message FollowedList {
-  repeated string user_ids = 1; // 关注者的用户ID列表
+  repeated string usernames = 1; // 关注者的 username 列表
 }
 
 message FollowerList {
-  repeated string user_ids = 1; // 被关注者的用户ID列表
+  repeated string usernames = 1; // 被关注者的 username 列表
 }
 
 message PollAskList {
