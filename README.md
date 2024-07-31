@@ -158,3 +158,9 @@ make run_backend
 
 [Git使用指南](http://sirius1y.top/posts/notes/dev/%E6%8C%87%E5%8D%97%E5%9B%A2%E9%98%9Fgit%E5%8D%8F%E4%BD%9C/)
 
+[开发踩坑记录](http://sirius1y.top/posts/notes/dev/dev-aorb-grpc/)
+
+## 踩坑记录补充
+1. 使用Apifox测试的时候返回了```invalid wire type[13 INTERNAL]```错误
+- 原因：本质上是因为客户端(Apifox)与服务端(项目后端)所使用的pb类型定义不一致
+- 解决方法：检查后端的proto文件，并且重新上传到Apifox，参考链接是[这篇博客](https://loesspie.com/2021/09/14/grpc-did-not-read-entire-message/)
