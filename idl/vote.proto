@@ -20,6 +20,7 @@ message CreateVoteRequest{
 message CreateVoteResponse{
   int32 status_code = 1;  // 状态码，0-成功，其他值-失败
   string status_msg = 2;  // 返回状态描述
+  string vote_uuid = 3;
 }
 
 message GetVoteCountRequest {
@@ -34,5 +35,5 @@ message GetVoteCountResponse {
 
 service VoteService{
   rpc CreateVote (CreateVoteRequest) returns (CreateVoteResponse);
-  rpc GetVote (GetVoteCountRequest) returns (GetVoteCountResponse);
+  rpc GetVoteCount (GetVoteCountRequest) returns (GetVoteCountResponse);
 }

@@ -179,3 +179,7 @@ flutter run         # 在frontend目录下
 1. 使用Apifox测试的时候返回了```invalid wire type[13 INTERNAL]```错误
 - 原因：本质上是因为客户端(Apifox)与服务端(项目后端)所使用的pb类型定义不一致
 - 解决方法：检查后端的proto文件，并且重新上传到Apifox，参考链接是[这篇博客](https://loesspie.com/2021/09/14/grpc-did-not-read-entire-message/)
+2. Consul报错：```too many colons in address```
+- 原因：grpc的包里面没有针对consul的解析器，无法讲请求解析到正确的微服务端口
+- 解决方法：在每个微服务的main.go中引入```import _ "github.com/mbobakov/grpc-consul-resolver"```，[参考链接](https://blog.csdn.net/dorlolo/article/details/123416857)
+

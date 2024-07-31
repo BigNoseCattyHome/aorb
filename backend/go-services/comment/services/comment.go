@@ -116,6 +116,7 @@ func (c CommentServiceImpl) ActionComment(ctx context.Context, request *commentP
 		fallthrough
 	default:
 		logger.Warnf("Invalid action type")
+		logging.SetSpanError(span, err)
 		resp = &commentPb.ActionCommentResponse{
 			StatusCode: strings.ActionCommentTypeInvalidCode,
 			StatusMsg:  strings.ActionCommentTypeInvalid,
@@ -163,7 +164,7 @@ func (c CommentServiceImpl) ActionComment(ctx context.Context, request *commentP
 	if err != nil {
 		logger.WithFields(logrus.Fields{
 			"err": err,
-		}).Errorf("Query video existence happens error")
+		}).Errorf("Query poll existence happens error")
 		logging.SetSpanError(span, err)
 		resp = &commentPb.ActionCommentResponse{
 			StatusCode: strings.PollServiceInnerErrorCode,
@@ -281,7 +282,6 @@ func (c CommentServiceImpl) ListComment(ctx context.Context, request *commentPb.
 			"err": err,
 		}).Errorf("Error When Decoding Cursor of Poll")
 		logging.SetSpanError(span, err)
-
 		resp = &commentPb.ListCommentResponse{
 			StatusCode: strings.UnableToQueryCommentErrorCode,
 			StatusMsg:  strings.UnableToQueryCommentError,
@@ -335,6 +335,7 @@ func (c CommentServiceImpl) CountComment(ctx context.Context, request *commentPb
 			"err":       err,
 			"poll_uuid": request.PollUuid,
 		}).Errorf("Error when searching poll")
+		logging.SetSpanError(span, err)
 		resp = &commentPb.CountCommentResponse{
 			StatusCode:   strings.UnableToQueryCommentErrorCode,
 			StatusMsg:    strings.UnableToQueryCommentError,
@@ -355,28 +356,6 @@ func (c CommentServiceImpl) CountComment(ctx context.Context, request *commentPb
 		"response": resp,
 	}).Debugf("Process done.")
 	return
-}
-
-func count(ctx context.Context, pollUuid string) (count int64, err error) {
-	ctx, span := tracing.Tracer.Start(ctx, "CountComment")
-	defer span.End()
-	logger := logging.LogService("CommentService.CountComment").WithContext(ctx)
-
-	collections := database.MongoDbClient.Database("aorb").Collection("polls")
-	filter := bson.D{{"pollUuid", pollUuid}}
-	result := collections.FindOne(ctx, filter)
-
-	var pPoll pollModels.Poll
-	result.Decode(&pPoll)
-	count = int64(len(pPoll.CommentList))
-
-	if err != nil {
-		logger.WithFields(logrus.Fields{
-			"err": err,
-		}).Errorf("Faild to count comments")
-		logging.SetSpanError(span, err)
-	}
-	return count, err
 }
 
 func deleteComment(ctx context.Context, logger *logrus.Entry, span trace.Span, username string, pPollUuId string, commentUuid string) (resp *commentPb.ActionCommentResponse, err error) {
@@ -447,7 +426,6 @@ func deleteComment(ctx context.Context, logger *logrus.Entry, span trace.Span, u
 			"username":     username,
 		}).Errorf("Failed to delete comment")
 		logging.SetSpanError(span, err)
-
 		resp = &commentPb.ActionCommentResponse{
 			StatusCode: strings.UnableToQueryCommentErrorCode,
 			StatusMsg:  strings.UnableToQueryCommentError,
@@ -467,7 +445,7 @@ func addComment(ctx context.Context, logger *logrus.Entry, span trace.Span, user
 
 	collections := database.MongoDbClient.Database("aorb").Collection("polls")
 
-	rComment := commentModels.Comment{
+	pComment := commentModels.Comment{
 		CommentUuid:     uuid.GenerateUuid(),
 		CommentUserName: username,
 		Content:         pCommentText,
@@ -475,10 +453,10 @@ func addComment(ctx context.Context, logger *logrus.Entry, span trace.Span, user
 	}
 
 	newComment := bson.D{
-		{"commentUuid", rComment.CommentUuid},
-		{"commentUserName", rComment.CommentUserName},
-		{"content", rComment.Content},
-		{"createAt", rComment.CreateAt},
+		{"commentUuid", pComment.CommentUuid},
+		{"commentUserName", pComment.CommentUserName},
+		{"content", pComment.Content},
+		{"createAt", pComment.CreateAt},
 	}
 
 	update := bson.D{
@@ -523,10 +501,10 @@ func addComment(ctx context.Context, logger *logrus.Entry, span trace.Span, user
 		StatusCode: strings.ServiceOKCode,
 		StatusMsg:  strings.ServiceOK,
 		Comment: &commentPb.Comment{
-			CommentUuid:     rComment.CommentUuid,
+			CommentUuid:     pComment.CommentUuid,
 			CommentUsername: username,
-			Content:         rComment.Content,
-			CreateAt:        timestamppb.New(rComment.CreateAt),
+			Content:         pComment.Content,
+			CreateAt:        timestamppb.New(pComment.CreateAt),
 		},
 	}
 	return
