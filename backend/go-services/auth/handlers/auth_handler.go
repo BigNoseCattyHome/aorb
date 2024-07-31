@@ -3,6 +3,8 @@ package handlers
 import (
 	"context"
 
+	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/strings"
+
 	"github.com/BigNoseCattyHome/aorb/backend/go-services/auth/services"
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/auth"
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/user"
@@ -73,8 +75,8 @@ func (a AuthServiceImpl) Login(ctx context.Context, request *auth.LoginRequest) 
 
 	// 返回响应
 	loginResponse := &auth.LoginResponse{
-		StatusCode:   0,
-		StatusMsg:    "user login successfully",
+		StatusCode:   strings.ServiceOKCode,
+		StatusMsg:    strings.ServiceOK,
 		Token:        token,
 		TokenType:    "Bearer",
 		ExpiresAt:    exp_token,
@@ -100,8 +102,8 @@ func (a AuthServiceImpl) Verify(context context.Context, request *auth.VerifyReq
 
 	// 返回响应
 	verifyResponse := &auth.VerifyResponse{
-		StatusCode: 0,
-		StatusMsg:  "verify token successfully",
+		StatusCode: strings.ServiceOKCode,
+		StatusMsg:  strings.ServiceOK,
 		UserId:     claims.UserId,
 		Username:   claims.Username,
 		ExpiresAt:  claims.ExpiresAt,
@@ -120,8 +122,8 @@ func (a AuthServiceImpl) Refresh(context context.Context, request *auth.RefreshR
 
 	// 返回响应
 	refreshResponse := &auth.RefreshResponse{
-		StatusCode: 0,
-		StatusMsg:  "refresh token successfully",
+		StatusCode: strings.ServiceOKCode,
+		StatusMsg:  strings.ServiceOK,
 		Token:      newToken,
 		ExpiresAt:  exp_token,
 	}
@@ -148,8 +150,8 @@ func (a AuthServiceImpl) Logout(context context.Context, request *auth.LogoutReq
 
 	// 返回响应
 	logoutResponse := &auth.LogoutResponse{
-		StatusCode: 0,
-		StatusMsg:  "user logout successfully",
+		StatusCode: strings.ServiceOKCode,
+		StatusMsg:  strings.ServiceOK,
 	}
 	return logoutResponse, nil
 
@@ -176,8 +178,8 @@ func (a AuthServiceImpl) Register(context context.Context, request *auth.Registe
 
 	// 返回响应
 	registerResponse := &auth.RegisterResponse{
-		StatusCode: 0,
-		StatusMsg:  "user register successfully",
+		StatusCode: strings.ServiceOKCode,
+		StatusMsg:  strings.ServiceOK,
 	}
 	return registerResponse, nil
 }

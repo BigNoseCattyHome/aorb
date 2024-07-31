@@ -8,11 +8,10 @@ import (
 
 type Comment struct {
 	// 与mongodb交互的Comment实体
-	CommentUuid      string    `json:"commentUuid" bson:"commentUuid,omitempty"`
-	ReviewerUserName string    `json:"reviewer_userName" bson:"reviewerUserName,omitempty"`
-	Content          string    `json:"content" bson:"content,omitempty"`
-	CreateAt         time.Time `json:"create_at" bson:"createAt,omitempty"`
-	DeleteAt         time.Time `json:"delete_at" bson:"deleteAt"`
+	CommentUuid     string    `json:"comment_uuid" bson:"commentUuid,omitempty"`
+	CommentUserName string    `json:"reviewer_userName" bson:"commentUserName,omitempty"`
+	Content         string    `json:"content" bson:"content,omitempty"`
+	CreateAt        time.Time `json:"create_at" bson:"createAt,omitempty"`
 }
 
 type ActionCommentReq struct {
