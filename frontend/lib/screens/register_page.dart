@@ -20,8 +20,7 @@ class RegisterPageState extends State<RegisterPage> {
   bool _agreeToTerms = false; // 是否同意用户隐私政策条款
   bool _obscureText = true; // 是否隐藏密码
   String _province = 'Loading...'; // 用户IP的归属地
-  // 在页面构建的时候初始化AuthService
-  final AuthService _authService = AuthService(backendHost, backendPort);
+  final AuthService _authService = AuthService(); // 在页面构建的时候初始化AuthService
   final logger = getLogger();
 
   @override
@@ -110,7 +109,7 @@ class RegisterPageState extends State<RegisterPage> {
       // username和password是必填项，nickname, avatar, ipaddress是可选项
       final registerResponse = await _authService.register(
         _usernameController.text,
-        hash(_passwordController.text), // 对用户的密码进行哈希处理
+        _passwordController.text, // 这里是密码的明文，传输到后端进行存储的时候再进行哈希处理
         nickname: _usernameController.text,
         ipaddress: _province,
         avatar: '',
@@ -118,16 +117,16 @@ class RegisterPageState extends State<RegisterPage> {
 
       // ~ 控制台输出注册结果
       logger.i('registerResponse: $registerResponse');
-      final endTime = DateTime.now();      // 记录结束调用的时间和耗时
+      final endTime = DateTime.now(); // 记录结束调用的时间和耗时
       final duration = endTime.difference(startTime);
       logger.i(
           'Register call completed at $endTime (Duration: ${duration.inMilliseconds}ms)');
       // 输出注册响应
       logger.i('Register response:');
-      logger.i('Success: ${registerResponse.success}');
-      logger.i('Message: ${registerResponse.message}');
+      logger.i('statusCode: ${registerResponse.statusCode}');
+      logger.i('statusMsg: ${registerResponse.statusMsg}');
 
-      if (registerResponse.success) {
+      if (registerResponse.statusCode == 0) {
         // 注册成功后的处理逻辑
         Navigator.pop(context);
       } else {

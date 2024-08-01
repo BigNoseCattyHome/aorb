@@ -30,7 +30,7 @@ class User {
     ///被关注者
     final List<String> follower;
     
-    ///用户ID
+    ///用户ID，这个是Objectid，由服务端mongodb生成，不支持修改
     final String id;
     
     ///IP归属地
@@ -39,14 +39,17 @@ class User {
     ///用户昵称
     final String nickname;
     
-    ///发起过的问题
-    final List<String> questionsAsk;
-    
     ///回答过的问题
-    final List<String> questionsAsw;
+    final List<String> pollAns;
+    
+    ///发起过的问题
+    final List<String> pollAsk;
     
     ///收藏的问题
-    final List<String> questionsCollect;
+    final List<String> pollCollect;
+    
+    ///用户登录名
+    final String username;
 
     User({
         required this.avatar,
@@ -58,9 +61,10 @@ class User {
         required this.id,
         required this.ipaddress,
         required this.nickname,
-        required this.questionsAsk,
-        required this.questionsAsw,
-        required this.questionsCollect,
+        required this.pollAns,
+        required this.pollAsk,
+        required this.pollCollect,
+        required this.username,
     });
 
     factory User.fromJson(Map<String, dynamic> json) => User(
@@ -73,9 +77,10 @@ class User {
         id: json["id"],
         ipaddress: json["ipaddress"],
         nickname: json["nickname"],
-        questionsAsk: List<String>.from(json["questions_ask"].map((x) => x)),
-        questionsAsw: List<String>.from(json["questions_asw"].map((x) => x)),
-        questionsCollect: List<String>.from(json["questions_collect"].map((x) => x)),
+        pollAns: List<String>.from(json["poll_ans"].map((x) => x)),
+        pollAsk: List<String>.from(json["poll_ask"].map((x) => x)),
+        pollCollect: List<String>.from(json["poll_collect"].map((x) => x)),
+        username: json["username"],
     );
 
     Map<String, dynamic> toJson() => {
@@ -88,9 +93,10 @@ class User {
         "id": id,
         "ipaddress": ipaddress,
         "nickname": nickname,
-        "questions_ask": List<dynamic>.from(questionsAsk.map((x) => x)),
-        "questions_asw": List<dynamic>.from(questionsAsw.map((x) => x)),
-        "questions_collect": List<dynamic>.from(questionsCollect.map((x) => x)),
+        "poll_ans": List<dynamic>.from(pollAns.map((x) => x)),
+        "poll_ask": List<dynamic>.from(pollAsk.map((x) => x)),
+        "poll_collect": List<dynamic>.from(pollCollect.map((x) => x)),
+        "username": username,
     };
 }
 

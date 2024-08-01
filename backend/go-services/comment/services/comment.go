@@ -22,6 +22,7 @@ import (
 	"github.com/BigNoseCattyHome/aorb/backend/utils/storage/cached"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/storage/database"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/uuid"
+
 	_ "github.com/mbobakov/grpc-consul-resolver"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
@@ -363,7 +364,7 @@ func deleteComment(ctx context.Context, logger *logrus.Entry, span trace.Span, u
 	collections := database.MongoDbClient.Database("aorb").Collection("polls")
 
 	filter := bson.D{
-		{"pollUuid", pPollUuId},
+		{Key: "pollUuid", Value: pPollUuId},
 		{"commentList.commentUuid", commentUuid},
 	}
 

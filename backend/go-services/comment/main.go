@@ -2,6 +2,11 @@ package main
 
 import (
 	"context"
+	"net"
+	"net/http"
+	"os"
+	"syscall"
+
 	"github.com/BigNoseCattyHome/aorb/backend/go-services/comment/services"
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/comment"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
@@ -18,10 +23,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
-	"net"
-	"net/http"
-	"os"
-	"syscall"
 )
 
 // grpc comment服务器主入口

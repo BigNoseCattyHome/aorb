@@ -1,17 +1,19 @@
+import 'package:aorb/conf/config.dart';
 import 'package:flutter/material.dart';
 import 'package:aorb/models/poll.dart';
-import 'package:aorb/models/user.dart';
+
 import 'package:aorb/services/user_service.dart';
 import 'package:aorb/services/poll_service.dart';
 import 'package:aorb/widgets/say_something.dart';
 import 'package:aorb/widgets/comment_piece.dart';
 import 'package:aorb/widgets/poll_detail.dart';
+import 'package:aorb/generated/user.pbgrpc.dart';
 
 class PollDetailPage extends StatefulWidget {
-  final String userId; // 用户ID
+  final String username; // 用户ID
   final String postUserId; // 这篇帖子发布者ID
   const PollDetailPage(
-      {super.key, required this.postUserId, required this.userId});
+      {super.key, required this.postUserId, required this.username});
 
   @override
   PollDetailPageState createState() => PollDetailPageState();
@@ -30,8 +32,10 @@ class PollDetailPageState extends State<PollDetailPage>
     super.initState();
 
     // 获取关注状态
-    UserService()
-        .fetchFollowStatus(widget.userId, widget.postUserId)
+    IsUserFollowingRequest request_follow = IsUserFollowingRequest()
+      ..username = widget.username;
+    UserService(backendHost, backendPort)
+        .isUserFollowing(request_follow)
         .then((isFollowed) {
       setState(() {
         this.isFollowed = isFollowed;
@@ -39,10 +43,10 @@ class PollDetailPageState extends State<PollDetailPage>
     });
 
     // 获取用户信息: nickname, avatar
-    UserService()
-        .fetchUserInfo(widget.userId, ['nickname', 'avatar']).then((user) {
+    UserRequest request = UserRequest()..username = widget.username;
+    UserService(backendHost, backendPort).getUserInfo(request).then((response) {
       setState(() {
-        this.user = user;
+        user = response.user;
       });
     });
 

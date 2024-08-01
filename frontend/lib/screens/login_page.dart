@@ -1,22 +1,25 @@
+import 'dart:math';
+
+import 'package:aorb/generated/auth.pbgrpc.dart';
+import 'package:aorb/generated/google/protobuf/timestamp.pb.dart';
 import 'package:flutter/material.dart';
 import 'package:aorb/screens/register_page.dart';
 import 'package:aorb/conf/config.dart';
-import 'package:aorb/utils/ip_locator.dart';
 import 'package:aorb/services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
-  
+
   @override
   LoginPageState createState() => LoginPageState();
 }
 
 class LoginPageState extends State<LoginPage> {
-  
   final _usernameController = TextEditingController(); //控制输入框
   final _passwordController = TextEditingController();
-  final AuthService _authService = AuthService(backendHost, backendPort);
-  String _province = 'Loading...'; // 用户IP的归属地
+  final AuthService _authService = AuthService();
+  // TODO 在proto文件中加上这个字段
+  late String _province ; // 用户IP的归属地
   final logger = getLogger();
 
   bool _obscureText = true; //控制密码可见
@@ -26,32 +29,38 @@ class LoginPageState extends State<LoginPage> {
     });
   }
 
-void _login() async {
-  try {
-    //等待
-    final loginResponse = await _authService.login(
-      _usernameController.text,
-      _passwordController.text,
-      _province  //ip地址，对应login参数，这里只是一个字符串，等待实现获取地址的方法(对应第19行)
-    );
+  void _login() async {
+    try {
+      logger.d('the username input is: ${_usernameController.text}');
+      logger.d('the password input is: ${_passwordController.text}');
 
-    logger.i('loginResponse: $loginResponse');
-    
-    if (loginResponse.statusCode) {
-      // 登录成功后的处理逻辑
-      Navigator.pushReplacementNamed(context, '/home');
-    } else {
-      // 登录失败后的处理逻辑，弹出错误提示
+      LoginRequest request = LoginRequest()
+        ..username = _usernameController.text
+        ..password = _passwordController.text
+        ..deviceId = 'web'
+        ..timestamp = Timestamp.create()
+        ..nonce = Random().nextInt(1000000).toString();
+
+      //等待
+      final loginResponse = await _authService.login(request);
+
+      logger.i('loginResponse: $loginResponse');
+
+      if (loginResponse.statusCode == 0) {
+        // 登录成功后的处理逻辑
+        Navigator.pushReplacementNamed(context, '/me');
+      } else {
+        // 登录失败后的处理逻辑，弹出错误提示
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('登录失败: ${loginResponse.statusMsg}')),
+        );
+      }
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('登录失败: ${loginResponse.statusMsg}')),
+        SnackBar(content: Text('登录失败: $e')),
       );
     }
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('登录失败: $e')),
-    );
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -94,6 +103,7 @@ void _login() async {
             const SizedBox(height: 32),
 
             TextFormField(
+              controller: _usernameController,
               decoration: const InputDecoration(
                 labelText: '用户名',
                 border: InputBorder.none,
@@ -109,17 +119,18 @@ void _login() async {
 
             const SizedBox(height: 16),
             TextFormField(
+              controller: _passwordController,
               obscureText: _obscureText,
               decoration: InputDecoration(
                 labelText: '密码',
                 border: InputBorder.none,
-                enabledBorder: UnderlineInputBorder(
+                enabledBorder: const UnderlineInputBorder(
                   borderSide: BorderSide(color: Colors.grey),
                 ),
-                focusedBorder: UnderlineInputBorder(
+                focusedBorder: const UnderlineInputBorder(
                   borderSide: BorderSide(color: Colors.blue),
                 ),
-                prefixIcon: Icon(Icons.key),
+                prefixIcon: const Icon(Icons.key),
                 suffixIcon: IconButton(
                   icon: Icon(
                     _obscureText ? Icons.visibility : Icons.visibility_off,
@@ -135,15 +146,15 @@ void _login() async {
               textColor: Colors.white,
               padding: const EdgeInsets.all(16),
               shape: const CircleBorder(),
-              child: const Icon(Icons.arrow_forward),
               onPressed: _login,
+              child: const Icon(Icons.arrow_forward),
             ),
             const SizedBox(height: 16),
             TextButton(
               onPressed: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => RegisterPage(),
+                    builder: (context) => const RegisterPage(),
                   ),
                 );
               },

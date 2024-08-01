@@ -1,8 +1,9 @@
 package models
 
 import (
-	"github.com/BigNoseCattyHome/aorb/backend/rpc/comment"
 	"time"
+
+	"github.com/BigNoseCattyHome/aorb/backend/rpc/comment"
 )
 
 type Comment struct {

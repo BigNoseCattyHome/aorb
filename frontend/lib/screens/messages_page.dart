@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-//TODO 分tabbar，然后调用消息卡片
+
 // 定义 MessagesPage 组件，它是一个有状态的组件（StatefulWidget）
 class MessagesPage extends StatefulWidget {
   // 传入的 TabController，用于控制顶部导航栏的切换
@@ -22,8 +22,8 @@ class MessagesPageState extends State<MessagesPage> {
   @override
   void initState() {
     super.initState();
-    // 将传入的 TabController 赋值给 _tabController
-    _tabController = widget.tabController;
+    _tabController =
+        widget.tabController; // 将传入的 TabController 赋值给 _tabController
   }
 
   // 释放资源
@@ -37,22 +37,25 @@ class MessagesPageState extends State<MessagesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Messages'), // 标题栏
+      // appBar 由 MainPage 管理
+
+      // body 部分通过 TabBarView 显示不同的页面
+      body: TabBarView(
+        controller: _tabController, // 使用 _tabController 控制页面切换
+        children: [
+          // 第一个页面：提醒
+          _buildNoticeList(),
+          // 第二个页面：私信
+          _buildMessageList()
+        ],
       ),
-      body: _buildMessageList(), // 构建消息列表
     );
   }
 
   // 构建消息列表
-  Widget _buildMessageList() {
+  Widget _buildNoticeList() {
     // 示例消息数据
-    final messages = [
-      {'title': 'Message 1', 'content': 'Hello, this is the first message.', 'isRead': true},
-      {'title': 'Message 2', 'content': 'Hello, this is the second message.', 'isRead': false},
-      {'title': 'Message 3', 'content': 'Hello, this is the third message.', 'isRead': true},
-      {'title': 'Message 4', 'content': 'Hello, this is the fourth message.', 'isRead': false},
-    ];
+    final messages = [];
 
     // 使用 ListView.builder 动态生成列表项
     return ListView.builder(
@@ -63,7 +66,9 @@ class MessagesPageState extends State<MessagesPage> {
           title: Text(message['title'] as String), // 消息标题
           subtitle: Text(message['content'] as String), // 消息内容
           // 如果消息未读，则显示红点图标，否则不显示
-          trailing: message['isRead'] as bool ? null : const Icon(Icons.circle, color: Colors.red, size: 10),
+          trailing: message['isRead'] as bool
+              ? null
+              : const Icon(Icons.circle, color: Colors.red, size: 10),
           // 点击消息项，显示消息详情
           onTap: () {
             _showMessageDetail(message as Map<String, String>);
@@ -71,6 +76,10 @@ class MessagesPageState extends State<MessagesPage> {
         );
       },
     );
+  }
+
+  Widget _buildMessageList() {
+    return Container();
   }
 
   // 显示消息详情页面
@@ -105,16 +114,4 @@ class MessageDetailPage extends StatelessWidget {
       ),
     );
   }
-}
-
-// 程序入口
-void main() {
-  runApp(MaterialApp(
-    home: DefaultTabController(
-      length: 1, // TabController 的长度
-      child: Scaffold(
-        body: MessagesPage(tabController: TabController(length: 1, vsync: ScaffoldState())), // 加载 MessagesPage
-      ),
-    ),
-  ));
 }

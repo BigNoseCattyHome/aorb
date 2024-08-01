@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/BigNoseCattyHome/aorb/backend/utils/storage/database"
-
-	"github.com/BigNoseCattyHome/aorb/backend/go-services/auth/models"
+	"github.com/BigNoseCattyHome/aorb/backend/rpc/auth"
+	"github.com/BigNoseCattyHome/aorb/backend/rpc/user"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/logging"
+	"github.com/BigNoseCattyHome/aorb/backend/utils/storage/database"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -19,7 +21,7 @@ import (
 var log = logging.LogService(config.AuthRpcServerName) // 使用logging库，添加日志字段为微服务的名字
 
 // 注册
-func RegisterUser(newUser models.User) error {
+func RegisterUser(newUser *user.User) error {
 	log.Infof("Attempting to register user: %s", newUser.Username)
 
 	// 注册用户的逻辑
@@ -32,22 +34,19 @@ func RegisterUser(newUser models.User) error {
 		log.Warnf("User already exists: %s", newUser.Username)
 		return errors.New("用户名已存在")
 	}
-
-	// 生成新的ObjectID
-	newUser.ID = primitive.NewObjectID().Hex()
-
-	// 初始化其他字段
-	newUser.Coins = 0
-	newUser.Blacklist = []string{}
-	newUser.CoinsRecord = []models.CoinRecord{}
-	newUser.Followed = []string{}
-	newUser.Follower = []string{}
-	newUser.QuestionsAsk = []string{}
-	newUser.QuestionsAsw = []string{}
-	newUser.QuestionsCollect = []string{}
-	newUser.CreateAt = time.Now()
-	newUser.UpdateAt = time.Now()
-	newUser.DeleteAt = time.Time{}
+	coins := float64(0)
+	newUser.Id = primitive.NewObjectID().Hex()
+	newUser.Coins = &coins
+	newUser.Blacklist = &user.BlackList{}
+	newUser.CoinsRecord = &user.CoinRecordList{}
+	newUser.Followed = &user.FollowedList{}
+	newUser.Follower = &user.FollowerList{}
+	newUser.PollAsk = &user.PollAskList{}
+	newUser.PollAns = &user.PollAnsList{}
+	newUser.PollCollect = &user.PollCollectList{}
+	newUser.CreateAt = timestamppb.Now()
+	newUser.UpdateAt = timestamppb.Now()
+	newUser.DeleteAt = timestamppb.New(time.Time{})
 
 	// 保存用户到数据库
 	if err := storeUser(newUser); err != nil {
@@ -61,7 +60,7 @@ func RegisterUser(newUser models.User) error {
 }
 
 // 将用户保存到数据库
-func storeUser(user models.User) error {
+func storeUser(user *user.User) error {
 	collection := database.MongoDbClient.Database("aorb").Collection("users")
 
 	// 将用户信息插入到数据库中
@@ -75,71 +74,66 @@ func storeUser(user models.User) error {
 }
 
 // 验证用户密码是否正确，返回 JWT令牌，过期时间，刷新令牌，用户基本信息，错误信息
-func AuthenticateUser(user models.LoginRequest) (string, int64, string, models.SimpleUser, error) {
+func AuthenticateUser(user *auth.LoginRequest) (string, int64, string, auth.SimpleUser, error) {
 	// 检查用户是否存在
+	log.Debug("user: ", user)
 	storedUser, err := getUserByID(user.Username)
+	log.Info("storedUser: ", storedUser)
 	if err != nil {
 		log.Error("Failed to get user from database: ", err)
-		return "", 0, "", models.SimpleUser{}, errors.New("failed to get user from database")
+		return "", 0, "", auth.SimpleUser{}, errors.New("failed to get user from database")
 	}
 
 	// 检查用户名对应的密码是否正确
-	if user.Password != storedUser.Password {
+	if user.Password != *storedUser.Password {
 		log.Error("Invalid password")
-		return "", 0, "", models.SimpleUser{}, errors.New("invalid password")
+		return "", 0, "", auth.SimpleUser{}, errors.New("invalid password")
 	}
 
 	// 生成JWT令牌
 	tokenString, exp_token, err := GenerateAccessToken(storedUser)
 	if err != nil {
 		log.Error("Failed to generate JWT token: ", err)
-		return "", 0, "", models.SimpleUser{}, errors.New("failed to generate JWT token")
+		return "", 0, "", auth.SimpleUser{}, errors.New("failed to generate JWT token")
 	}
 
 	// 生成刷新令牌
 	fresh_token, err := GenerateRefreshToken(storedUser)
 	if err != nil {
 		log.Error("Failed to generate refresh token: ", err)
-		return "", 0, "", models.SimpleUser{}, errors.New("failed to generate refresh token")
+		return "", 0, "", auth.SimpleUser{}, errors.New("failed to generate refresh token")
 	}
 
 	// 全部顺利执行，返回用户的基本信息
-	simple_user := models.SimpleUser{
-		ID:        storedUser.ID,
+	simple_user := auth.SimpleUser{
+		Username:  storedUser.Username,
 		Nickname:  storedUser.Nickname,
 		Avatar:    storedUser.Avatar,
-		Ipaddress: storedUser.Ipaddress,
+		Ipaddress: *storedUser.Ipaddress,
 	}
 
 	return tokenString, exp_token, fresh_token, simple_user, nil
 }
 
 // 从数据库获取用户
-func getUserByID(userName string) (models.User, error) {
-	user := models.User{}
-
-	// 将字符串转换为 ObjectID
-	//objectID, err := primitive.ObjectIDFromHex(id)
-	//if err != nil {
-	//	log.Println("Failed to convert string to ObjectID: ", err)
-	//	return models.User{}, err
-	//}
+func getUserByID(userName string) (*user.User, error) {
+	res := &user.User{} // 返回指针
 
 	// 使用 ObjectID 进行查询
-	result := database.MongoDbClient.Database("aorb").Collection("users").FindOne(context.TODO(), bson.M{"userName": userName})
+	result := database.MongoDbClient.Database("aorb").Collection("users").FindOne(context.TODO(), bson.M{"username": userName})
 
 	// 解码结果到 user 结构体
-	err := result.Decode(&user)
+	err := result.Decode(res)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			log.Println("No user found with ID: ", userName)
 		} else {
 			log.Println("Failed to decode result: ", err)
 		}
-		return models.User{}, err
+		return nil, err
 	}
 
-	return user, nil
+	return res, nil
 }
 
 // 查询是否username已经存在
