@@ -1,5 +1,7 @@
 # ! /bin/bash
 
+echo "Please Run Me on the root dir, not in scripts dir."
+
 AORB_HOME=$(pwd)
 
 # 清理 build 目录
@@ -9,10 +11,10 @@ if [ -d "build" ]; then
 fi
 
 # 构建 gateway
-cd $AORB_HOME
-mkdir -p build/gateway
-cd backend/api-gateway || exit
-go build -o "$AORB_HOME/build/gateway/Gateway"
+#cd $AORB_HOME
+#mkdir -p build/gateway
+#cd backend/api-gateway || exit
+#go build -o "$AORB_HOME/build/gateway/Gateway"
 
 # 构建 services
 cd $AORB_HOME

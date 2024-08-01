@@ -185,33 +185,30 @@ func (c CommentServiceImpl) ActionComment(ctx context.Context, request *commentP
 		return
 	}
 
-	// TODO 等user模块完善之后再取消注释
 	//// get target user
-	//userResponse, err := userClient.GetUserInfo(ctx, &user.UserRequest{
-	//	Username: request.Username,
-	//})
-	//
-	//if err != nil || userResponse.StatusCode != strings.ServiceOKCode {
-	//	if userResponse.StatusCode == strings.UserNotExistedCode {
-	//		resp = &commentPb.ActionCommentResponse{
-	//			StatusCode: strings.UserNotExistedCode,
-	//			StatusMsg:  strings.UserNotExisted,
-	//		}
-	//		return
-	//	}
-	//	logger.WithFields(logrus.Fields{
-	//		"err":      err,
-	//		"userName": request.Username,
-	//	}).Errorf("User service error")
-	//	logging.SetSpanError(span, err)
-	//	resp = &commentPb.ActionCommentResponse{
-	//		StatusCode: strings.UnableToQueryUserErrorCode,
-	//		StatusMsg:  strings.UnableToQueryUserError,
-	//	}
-	//	return
-	//}
-	//
-	//pUser := userResponse.User
+	userResponse, err := userClient.GetUserInfo(ctx, &user.UserRequest{
+		Username: request.Username,
+	})
+
+	if err != nil || userResponse.StatusCode != strings.ServiceOKCode {
+		if userResponse.StatusCode == strings.UserNotExistedCode {
+			resp = &commentPb.ActionCommentResponse{
+				StatusCode: strings.UserNotExistedCode,
+				StatusMsg:  strings.UserNotExisted,
+			}
+			return
+		}
+		logger.WithFields(logrus.Fields{
+			"err":      err,
+			"userName": request.Username,
+		}).Errorf("User service error")
+		logging.SetSpanError(span, err)
+		resp = &commentPb.ActionCommentResponse{
+			StatusCode: strings.UnableToQueryUserErrorCode,
+			StatusMsg:  strings.UnableToQueryUserError,
+		}
+		return
+	}
 
 	switch request.ActionType {
 	case commentPb.ActionCommentType_ACTION_COMMENT_TYPE_ADD:
