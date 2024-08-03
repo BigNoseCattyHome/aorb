@@ -10,6 +10,7 @@ import (
 	"github.com/BigNoseCattyHome/aorb/backend/utils/logging"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/prom"
 	grpcprom "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
+	_ "github.com/mbobakov/grpc-consul-resolver"
 	"github.com/oklog/run"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"

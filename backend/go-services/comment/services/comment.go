@@ -494,6 +494,32 @@ func addComment(ctx context.Context, logger *logrus.Entry, span trace.Span, user
 	//}()
 	//wg.Wait()
 
+	// TODO 后续可能会添加的 向user的userans中插入该提问的uuid
+	//userCollection := database.MongoDbClient.Database("aorb").Collection("users")
+	//filter4InsertPollUuid2UserAns := bson.D{
+	//	{"username", username},
+	//}
+	//update4InsertPollUuid2Userans := bson.D{
+	//	{"$push", bson.D{
+	//		{"pollans.poll_ids", pPollUuId},
+	//	}},
+	//}
+	//
+	//_, err = userCollection.UpdateOne(ctx, filter4InsertPollUuid2UserAns, update4InsertPollUuid2Userans)
+	//if err != nil {
+	//	logger.WithFields(logrus.Fields{
+	//		"err":       err,
+	//		"poll_uuid": pPollUuId,
+	//		"username":  username,
+	//	}).Errorf("Error when inserting poll_uuid into user %s's pollansList", username)
+	//	logging.SetSpanError(span, err)
+	//	resp = &commentPb.ActionCommentResponse{
+	//		StatusCode: strings.UnableToCreateCommentErrorCode,
+	//		StatusMsg:  strings.UnableToCreateCommentError,
+	//	}
+	//	return
+	//}
+
 	resp = &commentPb.ActionCommentResponse{
 		StatusCode: strings.ServiceOKCode,
 		StatusMsg:  strings.ServiceOK,

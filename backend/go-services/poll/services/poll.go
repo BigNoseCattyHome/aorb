@@ -87,6 +87,31 @@ func (s PollServiceImpl) CreatePoll(ctx context.Context, request *pollPb.CreateP
 	logging.SetSpanWithHostname(span)
 	logger := logging.LogService("PollService.CreatePoll").WithContext(ctx)
 
+	// 先查有没有这个用户
+	userResponse, err := UserClient.GetUserInfo(ctx, &userPb.UserRequest{
+		Username: request.Poll.Username,
+	})
+
+	if err != nil || userResponse == nil || userResponse.StatusCode != strings.ServiceOKCode {
+		if userResponse == nil || userResponse.StatusCode == strings.UserNotExistedCode {
+			resp = &pollPb.CreatePollResponse{
+				StatusCode: strings.UserNotExistedCode,
+				StatusMsg:  strings.UserNotExisted,
+			}
+			return
+		}
+		logger.WithFields(logrus.Fields{
+			"err":      err,
+			"userName": request.Poll.Username,
+		}).Errorf("Poll service error")
+		logging.SetSpanError(span, err)
+		resp = &pollPb.CreatePollResponse{
+			StatusCode: strings.UnableToQueryUserErrorCode,
+			StatusMsg:  strings.UnableToQueryUserError,
+		}
+		return
+	}
+
 	var optionsCount = []uint32{0, 0}
 
 	newPoll := &pollModels.Poll{
@@ -109,6 +134,32 @@ func (s PollServiceImpl) CreatePoll(ctx context.Context, request *pollPb.CreateP
 			"username":  newPoll.UserName,
 			"err":       err,
 		}).Errorf("Error when inserting new poll")
+		logging.SetSpanError(span, err)
+		resp = &pollPb.CreatePollResponse{
+			StatusCode: strings.PollServiceInnerErrorCode,
+			StatusMsg:  strings.PollServiceInnerError,
+			PollUuid:   newPoll.PollUuid,
+		}
+		return resp, err
+	}
+
+	// 将pollUuid加入user的PollAsk_List中
+	userCollection := database.MongoDbClient.Database("aorb").Collection("users")
+	filter4InsertPollUuid2PollAsk := bson.D{
+		{"username", newPoll.UserName},
+	}
+	update4InsertPollUuid2PollAsk := bson.D{
+		{"$push", bson.D{
+			{"pollask.pollids", newPoll.PollUuid},
+		}},
+	}
+	_, err = userCollection.UpdateOne(ctx, filter4InsertPollUuid2PollAsk, update4InsertPollUuid2PollAsk)
+	if err != nil {
+		logger.WithFields(logrus.Fields{
+			"poll_uuid": newPoll.PollUuid,
+			"username":  newPoll.UserName,
+			"err":       err,
+		}).Errorf("Error when inserting poll_uuid into user %s's pollask_list", request.Poll.Username)
 		logging.SetSpanError(span, err)
 		resp = &pollPb.CreatePollResponse{
 			StatusCode: strings.PollServiceInnerErrorCode,
