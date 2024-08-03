@@ -5,12 +5,12 @@ conn = new Mongo();
 db = conn.getDB("aorb");
 
 // 检查是否存在数据库 aorb，如果存在则清空所有集合
-// if (db.getCollectionInfos().length > 0) {
-//     db.getCollectionNames().forEach(function (collectionName) {
-//         db[collectionName].drop();
-//     });
-//     print("Database 'aorb_test' has been cleared.");
-// }
+if (db.getCollectionInfos().length > 0) {
+    db.getCollectionNames().forEach(function (collectionName) {
+        db[collectionName].drop();
+    });
+    print("Database 'aorb_test' has been cleared.");
+}
 
 
 
@@ -59,13 +59,13 @@ for (let i = 1; i <= 6; i++) {
         },
         ipaddress: "Shanghai",
         pollask: {
-            poll_ids: []
+            pollids: []
         },
         pollans: {
-            poll_ids: []
+            pollids: []
         },
         pollcollect: {
-            poll_ids: []
+            pollids: []
         }
     });
 }
@@ -112,13 +112,13 @@ for (let i = 7; i <= 14; i++) {
         },
         ipaddress: "Shanghai",
         pollask: {
-            poll_ids: []
+            pollids: []
         },
         pollans: {
-            poll_ids: []
+            pollids: []
         },
         pollcollect: {
-            poll_ids: []
+            pollids: []
         }
     });
 }
@@ -165,13 +165,13 @@ for (let i = 15; i <= 20; i++) {
         },
         ipaddress: "Shanghai",
         pollask: {
-            poll_ids: []
+            pollids: []
         },
         pollans: {
-            poll_ids: []
+            pollids: []
         },
         pollcollect: {
-            poll_ids: []
+            pollids: []
         }
     });
 }

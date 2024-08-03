@@ -87,6 +87,31 @@ func (s PollServiceImpl) CreatePoll(ctx context.Context, request *pollPb.CreateP
 	logging.SetSpanWithHostname(span)
 	logger := logging.LogService("PollService.CreatePoll").WithContext(ctx)
 
+	// 先查有没有这个用户
+	userResponse, err := UserClient.GetUserInfo(ctx, &userPb.UserRequest{
+		Username: request.Poll.Username,
+	})
+
+	if err != nil || userResponse == nil || userResponse.StatusCode != strings.ServiceOKCode {
+		if userResponse == nil || userResponse.StatusCode == strings.UserNotExistedCode {
+			resp = &pollPb.CreatePollResponse{
+				StatusCode: strings.UserNotExistedCode,
+				StatusMsg:  strings.UserNotExisted,
+			}
+			return
+		}
+		logger.WithFields(logrus.Fields{
+			"err":      err,
+			"userName": request.Poll.Username,
+		}).Errorf("Poll service error")
+		logging.SetSpanError(span, err)
+		resp = &pollPb.CreatePollResponse{
+			StatusCode: strings.UnableToQueryUserErrorCode,
+			StatusMsg:  strings.UnableToQueryUserError,
+		}
+		return
+	}
+
 	var optionsCount = []uint32{0, 0}
 
 	newPoll := &pollModels.Poll{

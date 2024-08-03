@@ -109,6 +109,31 @@ func (s VoteServiceImpl) CreateVote(ctx context.Context, request *votePb.CreateV
 		return
 	}
 
+	// get target user
+	userResponse, err := userClient.GetUserInfo(ctx, &userPb.UserRequest{
+		Username: request.Username,
+	})
+
+	if err != nil || userResponse.StatusCode != strings.ServiceOKCode {
+		if userResponse.StatusCode == strings.UserNotExistedCode {
+			response = &votePb.CreateVoteResponse{
+				StatusCode: strings.UserNotExistedCode,
+				StatusMsg:  strings.UserNotExisted,
+			}
+			return
+		}
+		logger.WithFields(logrus.Fields{
+			"err":      err,
+			"userName": request.Username,
+		}).Errorf("Vote service error")
+		logging.SetSpanError(span, err)
+		response = &votePb.CreateVoteResponse{
+			StatusCode: strings.UnableToQueryUserErrorCode,
+			StatusMsg:  strings.UnableToQueryUserError,
+		}
+		return
+	}
+
 	collection := database.MongoDbClient.Database("aorb").Collection("polls")
 
 	// Whether user had already voted or not
