@@ -188,8 +188,7 @@ for (let i = 1; i <= 10; i++) {
         pollUuid: `dfbeb25d-f79d-4003-aafb-995ea6fe345${i}`,
         title: `投票标题${i}`,
         userName: `user${i}`,
-        voteList: [],
-        votes: []
+        voteList: []
     };
 
     for (let j = 1; j <= 10; j++) {
@@ -202,13 +201,6 @@ for (let i = 1; i <= 10; i++) {
 
         poll.voteList.push({
             voteUuid: `79421094-de8e-44e6-bb03-adc381a0b5a${j}`,
-            voteUserName: `user${j}`,
-            choice: j % 2 === 0 ? "选项A" : "选项B",
-            createAt: new ISODate(`2023-07-15T10:30:00.000Z`)
-        });
-
-        poll.votes.push({
-            voteUuid: `b791e9e5-8f4d-4f3f-8599-96ccc7b2f77${j}`,
             voteUserName: `user${j}`,
             choice: j % 2 === 0 ? "选项A" : "选项B",
             createAt: new ISODate(`2023-07-15T10:30:00.000Z`)

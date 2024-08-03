@@ -118,6 +118,32 @@ func (s PollServiceImpl) CreatePoll(ctx context.Context, request *pollPb.CreateP
 		return resp, err
 	}
 
+	// 将pollUuid加入user的PollAsk_List中
+	userCollection := database.MongoDbClient.Database("aorb").Collection("users")
+	filter4InsertPollUuid2PollAsk := bson.D{
+		{"username", newPoll.UserName},
+	}
+	update4InsertPollUuid2PollAsk := bson.D{
+		{"$push", bson.D{
+			{"pollask.pollids", newPoll.PollUuid},
+		}},
+	}
+	_, err = userCollection.UpdateOne(ctx, filter4InsertPollUuid2PollAsk, update4InsertPollUuid2PollAsk)
+	if err != nil {
+		logger.WithFields(logrus.Fields{
+			"poll_uuid": newPoll.PollUuid,
+			"username":  newPoll.UserName,
+			"err":       err,
+		}).Errorf("Error when inserting poll_uuid into user %s's pollask_list", request.Poll.Username)
+		logging.SetSpanError(span, err)
+		resp = &pollPb.CreatePollResponse{
+			StatusCode: strings.PollServiceInnerErrorCode,
+			StatusMsg:  strings.PollServiceInnerError,
+			PollUuid:   newPoll.PollUuid,
+		}
+		return resp, err
+	}
+
 	resp = &pollPb.CreatePollResponse{
 		StatusCode: strings.ServiceOKCode,
 		StatusMsg:  strings.ServiceOK,

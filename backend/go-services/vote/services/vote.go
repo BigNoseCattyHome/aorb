@@ -173,7 +173,7 @@ func (s VoteServiceImpl) CreateVote(ctx context.Context, request *votePb.CreateV
 	}
 	update := bson.D{
 		{"$push", bson.D{
-			{"votes", newVote},
+			{"voteList", newVote},
 		}},
 		{"$inc", bson.D{
 			{fmt.Sprintf("optionsCount.%d", findIndex(pPoll.Options, request.Choice)), 1},
@@ -187,6 +187,32 @@ func (s VoteServiceImpl) CreateVote(ctx context.Context, request *votePb.CreateV
 			"err":       err,
 			"poll_uuid": request.PollUuid,
 		}).Errorf("VoteService create vote action failed to response when creating vote")
+		logging.SetSpanError(span, err)
+		response = &votePb.CreateVoteResponse{
+			StatusCode: strings.UnableToQueryPollErrorCode,
+			StatusMsg:  strings.UnableToQueryPollError,
+		}
+		return
+	}
+
+	// 将对应的pollUuid加入user的pollans中
+	userCollection := database.MongoDbClient.Database("aorb").Collection("users")
+	filter4InsertPollUuid2PollAns := bson.D{
+		{"username", pVote.VoteUserName},
+	}
+	update4InsertPollUuid2PollAns := bson.D{
+		{"$push", bson.D{
+			{"pollans.pollids", request.PollUuid},
+		}},
+	}
+	_, err = userCollection.UpdateOne(ctx, filter4InsertPollUuid2PollAns, update4InsertPollUuid2PollAns)
+
+	if err != nil {
+		logger.WithFields(logrus.Fields{
+			"err":       err,
+			"poll_uuid": request.PollUuid,
+			"username":  pVote.VoteUserName,
+		}).Errorf("Error when inserting poll_uuid into user %s's pollans_list", pVote.VoteUserName)
 		logging.SetSpanError(span, err)
 		response = &votePb.CreateVoteResponse{
 			StatusCode: strings.UnableToQueryPollErrorCode,
