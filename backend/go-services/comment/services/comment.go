@@ -5,7 +5,11 @@ package services
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
+	redisUtil "github.com/BigNoseCattyHome/aorb/backend/utils/storage/redis"
+	"github.com/redis/go-redis/v9"
 	"time"
 
 	commentModels "github.com/BigNoseCattyHome/aorb/backend/go-services/comment/models"
@@ -19,7 +23,6 @@ import (
 	grpc2 "github.com/BigNoseCattyHome/aorb/backend/utils/grpc"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/logging"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/rabbitmq"
-	"github.com/BigNoseCattyHome/aorb/backend/utils/storage/cached"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/storage/database"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/uuid"
 
@@ -124,38 +127,6 @@ func (c CommentServiceImpl) ActionComment(ctx context.Context, request *commentP
 		return
 	}
 
-	// TODO 添加redis进行评论限流
-	// Rate limiting
-	//limiter := redis_rate.NewLimiter(redis.Client)
-	//limiterKey := actionCommentLimitKey(request.Username)
-	//limiterRes, err := limiter.Allow(ctx, limiterKey, redis_rate.PerSecond(actionCommentMaxQPS))
-	//if err != nil {
-	//	logger.WithFields(logrus.Fields{
-	//		"err":      err,
-	//		"userName": request.Username,
-	//	}).Errorf("ActionComment limiter error")
-	//	logging.SetSpanError(span, err)
-	//
-	//	resp = &commentPb.ActionCommentResponse{
-	//		StatusCode: strings.UnableToCreateCommentErrorCode,
-	//		StatusMsg:  strings.UnableToCreateCommentError,
-	//	}
-	//	return
-	//}
-	//
-	//if limiterRes.Allowed == 0 {
-	//	logger.WithFields(logrus.Fields{
-	//		"err":      err,
-	//		"userName": request.Username,
-	//	}).Infof("Action comment query too frequently by user %s", request.Username)
-	//
-	//	resp = &commentPb.ActionCommentResponse{
-	//		StatusCode: strings.ActionCommentLimitedCode,
-	//		StatusMsg:  strings.ActionCommentLimited,
-	//	}
-	//	return
-	//}
-
 	// Check if poll exists
 	pollExistResp, err := pollClient.PollExist(ctx, &poll.PollExistRequest{
 		PollUuid: request.PollUuid,
@@ -218,11 +189,17 @@ func (c CommentServiceImpl) ActionComment(ctx context.Context, request *commentP
 	}
 
 	if err != nil {
+		logger.WithFields(logrus.Fields{
+			"err":      err,
+			"userName": request.Username,
+		}).Errorf("Error when executing ActionComment Service")
+		logging.SetSpanError(span, err)
+		resp = &commentPb.ActionCommentResponse{
+			StatusCode: strings.UnableToQueryUserErrorCode,
+			StatusMsg:  strings.UnableToQueryUserError,
+		}
 		return
 	}
-
-	countCommentKey := fmt.Sprintf("Comment-Count-%s", request.PollUuid)
-	cached.TagDelete(ctx, countCommentKey)
 
 	logger.WithFields(logrus.Fields{
 		"response": resp,
@@ -240,6 +217,51 @@ func (c CommentServiceImpl) ListComment(ctx context.Context, request *commentPb.
 		"poll_uuid": request.PollUuid,
 	}).Debugf("Process start")
 
+	// TODO 添加redis
+	// 设置redis键
+	key := request.PollUuid
+
+	// 从redis中获取数据
+	redisResult, err := redisUtil.RedisClient.Get(ctx, key).Result()
+	if err != nil && !errors.Is(err, redis.Nil) {
+		logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Errorf("Error when getting data from redis")
+		logging.SetSpanError(span, err)
+		resp = &commentPb.ListCommentResponse{
+			StatusCode: strings.PollServiceInnerErrorCode,
+			StatusMsg:  strings.PollServiceInnerError,
+		}
+		return
+	}
+
+	if redisResult != "" {
+		// 如果存在数据
+		var responseCommentList []*commentPb.Comment
+		err = json.Unmarshal([]byte(redisResult), &responseCommentList)
+		if err != nil {
+			logger.WithFields(logrus.Fields{
+				"err": err,
+			}).Errorf("Error when unmarshal data from redis")
+			logging.SetSpanError(span, err)
+			resp = &commentPb.ListCommentResponse{
+				StatusCode: strings.PollServiceInnerErrorCode,
+				StatusMsg:  strings.PollServiceInnerError,
+			}
+			return
+		}
+		resp = &commentPb.ListCommentResponse{
+			StatusCode:  strings.ServiceOKCode,
+			StatusMsg:   strings.ServiceOK,
+			CommentList: responseCommentList,
+		}
+		logger.WithFields(logrus.Fields{
+			"response": resp,
+		}).Debugf("Process done.")
+		return
+	}
+
+	// redis中不存在，查找数据库
 	// 查看poll是否存在
 	pollExistResp, err := pollClient.PollExist(ctx, &poll.PollExistRequest{
 		PollUuid: request.PollUuid,
@@ -298,6 +320,32 @@ func (c CommentServiceImpl) ListComment(ctx context.Context, request *commentPb.
 		StatusCode:  strings.ServiceOKCode,
 		StatusMsg:   strings.ServiceOK,
 		CommentList: rCommentList,
+	}
+
+	// 将数据存入redis
+	jsonBytes, err := json.Marshal(&rCommentList)
+	if err != nil {
+		logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Errorf("Error when marshalling commentList to json")
+		logging.SetSpanError(span, err)
+		resp = &commentPb.ListCommentResponse{
+			StatusCode: strings.UnableToQueryCommentErrorCode,
+			StatusMsg:  strings.UnableToQueryCommentError,
+		}
+		return
+	}
+	err = redisUtil.RedisClient.Set(ctx, key, string(jsonBytes), time.Hour).Err()
+	if err != nil {
+		logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Errorf("Error when inserting commentList into redis")
+		logging.SetSpanError(span, err)
+		resp = &commentPb.ListCommentResponse{
+			StatusCode: strings.UnableToQueryCommentErrorCode,
+			StatusMsg:  strings.UnableToQueryCommentError,
+		}
+		return
 	}
 
 	logger.WithFields(logrus.Fields{

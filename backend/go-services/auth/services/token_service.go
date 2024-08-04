@@ -58,7 +58,7 @@ func VerifyAccessToken(tokenString string) (*Claims, error) {
 	})
 
 	if err != nil {
-		if err == jwt.ErrSignatureInvalid {
+		if errors.Is(err, jwt.ErrSignatureInvalid) {
 			log.Println("Invalid token signature")
 			return nil, errors.New("invalid token signature")
 		}

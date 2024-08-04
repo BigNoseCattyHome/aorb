@@ -15,7 +15,7 @@ type TimeTicker struct {
 
 func (t *TimeTicker) Start() {
 	for range t.Tick.C {
-		err := t.Work(redis.Client)
+		err := t.Work(redis.RedisClient)
 		if err != nil {
 			logging.Logger.WithFields(logrus.Fields{
 				"err": err,
