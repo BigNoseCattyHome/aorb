@@ -42,45 +42,52 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
       body: Stack(
         children: [
           // 背景图片部分
-          // TODO 添加用户个性化的设置，比如背景图片，消息卡片的颜色等
           Positioned(
             top: 0,
             left: 0,
             right: 0,
             child: Container(
-              height: MediaQuery.of(context).size.height * 0.4, // 设置背景图片的高度
+              height: MediaQuery.of(context).size.height * 0.4,
               decoration: BoxDecoration(
                 image: DecorationImage(
-                  image: NetworkImage(user.avatar), // ~ 用户的背景图片设置
+                  image: NetworkImage(user.avatar), // TODO 修改背景图片
                   fit: BoxFit.cover,
                 ),
               ),
             ),
           ),
-          // 上层布局，包含左右布局
-          Positioned.fill(
+
+          SafeArea(
             child: Column(
               children: [
+                // 个人信息部分
                 Expanded(
                   flex: 3,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // 左侧信息栏
+                        Expanded(
+                          flex: 3,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text(user.nickname, // ~ 用户昵称
-                                  style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 32,
-                                      fontWeight: FontWeight.bold,
-                                      height: 1.5)),
+                              const SizedBox(height: 30),
+                              // 用户昵称
+                              Text(
+                                user.nickname,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.bold,
+                                  height: 1.5,
+                                ),
+                              ),
+                              // Aorb ID
                               Row(
-                                children: <Widget>[
+                                children: [
                                   Text(
                                     'Aorb ID: ',
                                     style: TextStyle(
@@ -90,7 +97,7 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
                                     ),
                                   ),
                                   SelectableText(
-                                    user.id, // ~ 用户ID
+                                    user.id,
                                     style: TextStyle(
                                       color: Colors.grey[100],
                                       fontSize: 12,
@@ -99,112 +106,122 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
                                   ),
                                 ],
                               ),
-                              Text('IP归属地: ${user.ipaddress}', // ~ 用户IP归属地
-                                  style: TextStyle(
-                                      color: Colors.grey[100],
-                                      fontSize: 12,
-                                      height: 1.5)),
+                              // IP归属地
+                              Text(
+                                'IP归属地: ${user.ipaddress}',
+                                style: TextStyle(
+                                  color: Colors.grey[100],
+                                  fontSize: 12,
+                                  height: 1.5,
+                                ),
+                              ),
+                              const SizedBox(height: 25),
+                              // 关注和被关注信息
                               Row(
                                 children: [
                                   GestureDetector(
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) =>
-                                                FollowPage(username: user.id)),
-                                      );
-                                    },
+                                    onTap: () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            FollowPage(username: user.username),
+                                      ),
+                                    ),
                                     child: Text(
-                                        '关注：${user.followed.usernames.length}', // ~ 用户关注的人数
-                                        style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 12,
-                                            height: 2)),
+                                      '关注：${user.followed.usernames.length}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        height: 2,
+                                      ),
+                                    ),
                                   ),
                                   const SizedBox(width: 16),
                                   GestureDetector(
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) =>
-                                                FollowPage(username: user.id)),
-                                      );
-                                    },
+                                    onTap: () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            FollowPage(username: user.username),
+                                      ),
+                                    ),
                                     child: Text(
-                                        '被关注：${user.follower.usernames.length}', // ~ 用户的粉丝数量
-                                        style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 12,
-                                            height: 2)),
+                                      '被关注：${user.follower.usernames.length}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        height: 2,
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),
+                              // 金币信息
                               Row(
                                 children: [
-                                  const Text('我的背包：',
-                                      style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 12,
-                                          height: 2)),
+                                  const Text(
+                                    '我的背包：',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      height: 2,
+                                    ),
+                                  ),
                                   const Icon(
-                                    // 金币图标
                                     Icons.monetization_on,
                                     color: Colors.white,
                                     size: 16,
                                   ),
-                                  Text(user.coins.toString(), // ~ 用户的金币数量
-                                      style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 12,
-                                          height: 2)),
-                                  const Spacer(),
-
-                                  // TODO 调整“编辑资料”按钮的位置
-                                  ElevatedButton(
-                                    onPressed: () {}, // TODO 添加上编辑资料的逻辑
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.blue[700],
-                                      foregroundColor: Colors.white,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
+                                  Text(
+                                    user.coins.toString(),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      height: 2,
                                     ),
-                                    child: const Text('编辑资料'),
                                   ),
                                 ],
                               ),
                             ],
                           ),
                         ),
-                      ),
-                      Expanded(
-                        flex: 1,
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: LayoutBuilder(
-                            builder: (context, constraints) {
-                              double avatarSize =
-                                  constraints.maxHeight / 6.5; // ^ 玄学调参
-                              return CircleAvatar(
-                                radius: avatarSize,
+                        // 右侧头像和编辑资料按钮
+                        Expanded(
+                          flex: 1,
+                          child: Column(
+                            children: [
+                              const SizedBox(height: 50),
+                              // 头像
+                              CircleAvatar(
+                                radius: 40,
                                 backgroundColor: Colors.white,
                                 child: CircleAvatar(
-                                  radius: avatarSize - 2, // 确保边框宽度
-                                  backgroundImage:
-                                      NetworkImage(user.avatar), // ~ 用户头像
+                                  radius: 38,
+                                  backgroundImage: NetworkImage(user.avatar),
                                   backgroundColor: Colors.transparent,
                                 ),
-                              );
-                            },
+                              ),
+                              const SizedBox(height: 20),
+                              // 编辑资料按钮
+                              OutlinedButton(
+                                onPressed: () {}, // TODO: 添加编辑资料逻辑
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.white,
+                                  side: const BorderSide(color: Colors.white),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                ),
+                                child: const Text('编辑资料'),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-                // 回答问题部分
+                // 下半部分（TabBar和TabBarView）
                 Expanded(
                   flex: 5,
                   child: Container(
@@ -221,15 +238,16 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
                           controller: _tabController,
                           labelColor: Colors.blue[700],
                           labelStyle: const TextStyle(
-                            fontSize: 20,
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
                           unselectedLabelColor: Colors.grey[400],
                           indicator: UnderlineTabIndicator(
-                              borderSide: BorderSide(
-                                  width: 2.0, color: Colors.blue.shade700),
-                              insets:
-                                  const EdgeInsets.symmetric(horizontal: 20.0)),
+                            borderSide: BorderSide(
+                                width: 2.0, color: Colors.blue.shade700),
+                            insets:
+                                const EdgeInsets.symmetric(horizontal: 20.0),
+                          ),
                           indicatorSize: TabBarIndicatorSize.label,
                           indicatorWeight: 3,
                           indicatorColor: Colors.blue[700],
@@ -242,7 +260,6 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
                         Expanded(
                           child: TabBarView(
                             controller: _tabController,
-                            // TODO 添加上从服务器拉取内容
                             children: const [
                               Center(child: Text('我发起的内容')),
                               Center(child: Text('我回答的内容')),
