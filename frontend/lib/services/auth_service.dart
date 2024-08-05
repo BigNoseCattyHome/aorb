@@ -4,8 +4,6 @@ import 'package:aorb/generated/user.pb.dart';
 import 'package:grpc/grpc.dart';
 import 'package:aorb/generated/auth.pbgrpc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 
 // @sirius2alpha 2024-07-17
 class AuthService {

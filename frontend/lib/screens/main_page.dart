@@ -142,7 +142,7 @@ class MainPageState extends State<MainPage>
 
                     // 退出登录后，刷新页面
                     Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (context) => MainPage()),
+                      MaterialPageRoute(builder: (context) => const MainPage()),
                       (Route<dynamic> route) => false,
                     );
                   } else {

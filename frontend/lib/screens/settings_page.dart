@@ -15,7 +15,7 @@ class SettingsPage extends StatelessWidget {
             await prefs.clear();
             logger.i('All data cleared.');
           },
-          child: Text('Clear Preferences'),
+          child: const Text('Clear Preferences'),
         ),
       ),
     );

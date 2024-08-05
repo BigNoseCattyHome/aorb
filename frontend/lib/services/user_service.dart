@@ -91,54 +91,5 @@ class UserService {
       throw Exception('Failed to login: $e');
     }
   }
-
-  // 查询用户的关注列表
-  Future<List<User>> getFollowList(String username) async {
-    // 创建UserRequest对象
-    UserRequest request = UserRequest()
-      ..username = username
-      ..fields.addAll(['followed']); // 使用addAll方法添加字段
-
-    try {
-      // 调用getUserInfo方法，获取用户信息
-      UserResponse response = await getUserInfo(request);
-
-      // 判断user对象是否有followed字段
-      if (response.user.hasFollowed()) {
-        return response.user.followed.usernames
-            .map((username) => User()..username = username)
-            .toList();
-      } else {
-        return []; // 如果没有关注列表，返回空列表
-      }
-    } catch (e) {
-      logger.e('Error getting follow list: $e');
-      throw Exception('Failed to get follow list: $e');
-    }
-  }
-
-  // 查询用户的粉丝列表
-  Future<List<User>> getFanList(String username) async {
-    // 创建UserRequest对象
-    UserRequest request = UserRequest()
-      ..username = username
-      ..fields.addAll(['follower']); // 使用addAll方法添加字段
-
-    try {
-      // 调用getUserInfo方法，获取用户信息
-      UserResponse response = await getUserInfo(request);
-
-      // 判断user对象是否有follower字段
-      if (response.user.hasFollower()) {
-        return response.user.followed.usernames
-            .map((username) => User()..username = username)
-            .toList();
-      } else {
-        return []; // 如果没有粉丝列表，返回空列表
-      }
-    } catch (e) {
-      logger.e('Error getting fan list: $e');
-      throw Exception('Failed to get fan list: $e');
-    }
-  }
+  
 }

@@ -5,13 +5,13 @@ import 'package:image_picker/image_picker.dart';
 class EditProfilePage extends StatefulWidget {
   final User user;
 
-  EditProfilePage({required this.user});
+  const EditProfilePage({super.key, required this.user});
 
   @override
-  _EditProfilePageState createState() => _EditProfilePageState();
+  EditProfilePageState createState() => EditProfilePageState();
 }
 
-class _EditProfilePageState extends State<EditProfilePage> {
+class EditProfilePageState extends State<EditProfilePage> {
   late User _user;
   final ImagePicker _picker = ImagePicker();
 
@@ -216,13 +216,13 @@ class EditTextPage extends StatefulWidget {
   final String initialValue;
   final int maxLines;
 
-  EditTextPage({required this.title, required this.initialValue, this.maxLines = 1});
+  const EditTextPage({super.key, required this.title, required this.initialValue, this.maxLines = 1});
 
   @override
-  _EditTextPageState createState() => _EditTextPageState();
+  EditTextPageState createState() => EditTextPageState();
 }
 
-class _EditTextPageState extends State<EditTextPage> {
+class EditTextPageState extends State<EditTextPage> {
   late TextEditingController _controller;
 
   @override
@@ -266,13 +266,13 @@ class _EditTextPageState extends State<EditTextPage> {
 class EditGenderPage extends StatefulWidget {
   final Gender initialGender;
 
-  EditGenderPage({required this.initialGender});
+  const EditGenderPage({super.key, required this.initialGender});
 
   @override
-  _EditGenderPageState createState() => _EditGenderPageState();
+  EditGenderPageState createState() => EditGenderPageState();
 }
 
-class _EditGenderPageState extends State<EditGenderPage> {
+class EditGenderPageState extends State<EditGenderPage> {
   late Gender _selectedGender;
 
   @override

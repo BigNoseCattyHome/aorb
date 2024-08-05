@@ -63,103 +63,106 @@ class LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
+      body: ListView(
         padding: const EdgeInsets.all(32.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            const Text(
-              '欢迎来到Aorb',
-              style: TextStyle(
-                fontSize: 40,
-                fontWeight: FontWeight.bold,
+        children: <Widget>[
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              const SizedBox(height: 120),
+              const Text(
+                '欢迎来到Aorb',
+                style: TextStyle(
+                  fontSize: 40,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.left, // 左对齐
               ),
-              textAlign: TextAlign.left, // 左对齐
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              '登录账户解锁更多功能~',
-              style: TextStyle(
-                fontSize: 20,
-                color: Colors.black87,
-                fontWeight: FontWeight.bold,
+              const SizedBox(height: 8),
+              const Text(
+                '登录账户解锁更多功能~',
+                style: TextStyle(
+                  fontSize: 20,
+                  color: Colors.black87,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.left, // 左对齐
               ),
-              textAlign: TextAlign.left, // 左对齐
-            ),
-            const SizedBox(height: 32),
-            CircleAvatar(
-              radius: 50,
-              backgroundColor: Colors.grey[300],
-              child: Icon(
-                Icons.person,
-                size: 50,
-                color: Colors.grey[600],
+              const SizedBox(height: 80),
+              CircleAvatar(
+                radius: 50,
+                backgroundColor: Colors.grey[300],
+                child: Icon(
+                  Icons.person,
+                  size: 50,
+                  color: Colors.grey[600],
+                ),
               ),
-            ),
 
-            const SizedBox(height: 32),
+              const SizedBox(height: 20),
 
-            TextFormField(
-              controller: _usernameController,
-              decoration: const InputDecoration(
-                labelText: '用户名',
-                border: InputBorder.none,
-                enabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.grey),
-                ),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.blue),
-                ),
-                prefixIcon: Icon(Icons.person),
-              ),
-            ),
-
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _passwordController,
-              obscureText: _obscureText,
-              decoration: InputDecoration(
-                labelText: '密码',
-                border: InputBorder.none,
-                enabledBorder: const UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.grey),
-                ),
-                focusedBorder: const UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.blue),
-                ),
-                prefixIcon: const Icon(Icons.key),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _obscureText ? Icons.visibility : Icons.visibility_off,
+              TextFormField(
+                controller: _usernameController,
+                decoration: const InputDecoration(
+                  labelText: '用户名',
+                  border: InputBorder.none,
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey),
                   ),
-                  onPressed: _toggleObscureText,
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.blue),
+                  ),
+                  prefixIcon: Icon(Icons.person),
                 ),
               ),
-            ),
-            const SizedBox(height: 24),
-            // 圆形的按钮，内含右边的箭头，表示登录的按钮
-            MaterialButton(
-              color: Colors.blue,
-              textColor: Colors.white,
-              padding: const EdgeInsets.all(16),
-              shape: const CircleBorder(),
-              onPressed: _login,
-              child: const Icon(Icons.arrow_forward),
-            ),
-            const SizedBox(height: 16),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const RegisterPage(),
+
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _passwordController,
+                obscureText: _obscureText,
+                decoration: InputDecoration(
+                  labelText: '密码',
+                  border: InputBorder.none,
+                  enabledBorder: const UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey),
                   ),
-                );
-              },
-              child: const Text('没有账户？注册'),
-            ),
-          ],
-        ),
+                  focusedBorder: const UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.blue),
+                  ),
+                  prefixIcon: const Icon(Icons.key),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscureText ? Icons.visibility : Icons.visibility_off,
+                    ),
+                    onPressed: _toggleObscureText,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              // 圆形的按钮，内含右边的箭头，表示登录的按钮
+              MaterialButton(
+                color: Colors.blue,
+                textColor: Colors.white,
+                padding: const EdgeInsets.all(16),
+                shape: const CircleBorder(),
+                onPressed: _login,
+                child: const Icon(Icons.arrow_forward),
+              ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const RegisterPage(),
+                    ),
+                  );
+                },
+                child: const Text('没有账户？注册'),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

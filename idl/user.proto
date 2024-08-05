@@ -100,8 +100,26 @@ message IsUserFollowingResponse {
   string status_msg = 2;  // 返回状态描述
   bool is_following = 3;    // 是否正在关注
 }
+
+// UpdateUserRequest 消息，包含需要修改的用户信息字段
+message UpdateUserRequest {
+  string username = 1; // 用户登录名，用于标识哪个用户需要更新
+  optional string nickname = 2; // 用户昵称
+  optional string bio = 3; // 个人简介
+  optional Gender gender = 4; // 用户性别
+  optional string bgpic_me = 5; // 我的页面背景图片
+  optional string bgpic_pollcard = 6; // 问题卡片背景图片
+}
+
+// UpdateUserResponse 消息，包含更新操作的状态码和状态消息
+message UpdateUserResponse {
+  int32 status_code = 1;  // 状态码，0-成功，其他值-失败
+  string status_msg = 2;  // 返回状态描述
+}
+
 service UserService{
   rpc GetUserInfo(UserRequest) returns (UserResponse);
   rpc CheckUserExists(UserExistRequest) returns (UserExistResponse);
   rpc IsUserFollowing(IsUserFollowingRequest) returns (IsUserFollowingResponse);
+  rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse); // 新增的更新用户信息方法
 }

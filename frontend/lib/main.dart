@@ -10,7 +10,7 @@ void main() {
   
   // 设置状态栏透明
   SystemChrome.setSystemUIOverlayStyle(
-    SystemUiOverlayStyle(
+    const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent, // 设置状态栏透明
       statusBarIconBrightness: Brightness.dark, // 设置状态栏图标的亮度
     ),

@@ -32,10 +32,10 @@ class PollDetailPageState extends State<PollDetailPage>
     super.initState();
 
     // 获取关注状态
-    IsUserFollowingRequest request_follow = IsUserFollowingRequest()
+    IsUserFollowingRequest requestFollow = IsUserFollowingRequest()
       ..username = widget.username;
     UserService(backendHost, backendPort)
-        .isUserFollowing(request_follow)
+        .isUserFollowing(requestFollow)
         .then((isFollowed) {
       setState(() {
         this.isFollowed = isFollowed;
