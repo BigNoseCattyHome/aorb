@@ -1,3 +1,4 @@
+import 'package:aorb/screens/edit_profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:aorb/conf/config.dart';
 import 'package:aorb/screens/follow_page.dart';
@@ -41,7 +42,6 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
     return Scaffold(
       body: Stack(
         children: [
-          // 背景图片部分
           Positioned(
             top: 0,
             left: 0,
@@ -50,13 +50,16 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
               height: MediaQuery.of(context).size.height * 0.4,
               decoration: BoxDecoration(
                 image: DecorationImage(
-                  image: NetworkImage(user.avatar), // TODO 修改背景图片
+                  image: NetworkImage(user.bgpicMe),
                   fit: BoxFit.cover,
+                  colorFilter: ColorFilter.mode(
+                    Colors.black.withOpacity(0.4), // 透明度的黑色遮罩
+                    BlendMode.darken,
+                  ),
                 ),
               ),
             ),
           ),
-
           SafeArea(
             child: Column(
               children: [
@@ -204,7 +207,14 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
                               const SizedBox(height: 20),
                               // 编辑资料按钮
                               OutlinedButton(
-                                onPressed: () {}, // TODO: 添加编辑资料逻辑
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            EditProfilePage(user: user)),
+                                  );
+                                },
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: Colors.white,
                                   side: const BorderSide(color: Colors.white),

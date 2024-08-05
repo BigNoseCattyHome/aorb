@@ -1,11 +1,18 @@
 package services
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"mime/multipart"
+	"net/http"
+	"net/url"
 	"time"
 
+	"github.com/BigNoseCattyHome/aorb/backend/go-services/auth/conf"
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/auth"
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/user"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
@@ -47,6 +54,9 @@ func RegisterUser(newUser *user.User) error {
 	newUser.CreateAt = timestamppb.Now()
 	newUser.UpdateAt = timestamppb.Now()
 	newUser.DeleteAt = timestamppb.New(time.Time{})
+	newUser.BgpicMe = &conf.DefaultUserBgpic
+	newUser.BgpicPollcard = &conf.DefaultUserPollcard
+	newUser.Bio = &conf.DefaultUserBio
 
 	// 保存用户到数据库
 	if err := storeUser(newUser); err != nil {
@@ -110,6 +120,7 @@ func AuthenticateUser(user *auth.LoginRequest) (string, int64, string, auth.Simp
 		Nickname:  storedUser.Nickname,
 		Avatar:    storedUser.Avatar,
 		Ipaddress: *storedUser.Ipaddress,
+		Gender:    storedUser.Gender,
 	}
 
 	return tokenString, exp_token, fresh_token, simple_user, nil
@@ -157,4 +168,80 @@ func getUserByUsername(username string) (bool, error) {
 
 	// 找到匹配的用户
 	return true, nil
+}
+
+// SmmsResponse represents the response structure from SM.MS API
+type SmmsResponse struct {
+	Success bool   `json:"success"`
+	Code    string `json:"code"`
+	Message string `json:"message"`
+	Data    struct {
+		URL string `json:"url"`
+	} `json:"data"`
+}
+
+// 生成用户头像并上传到 SM.MS 图床
+func GenerateAvatar(imageURL, multiavatarToken, smmsToken, fileName string) (*string, error) {
+	// 解析原始 URL
+	u, err := url.Parse(imageURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse image URL: %w", err)
+	}
+
+	// 创建查询参数
+	query := u.Query()
+	query.Set("apikey", multiavatarToken)
+
+	// 将查询参数添加回 URL
+	u.RawQuery = query.Encode()
+
+	// 下载头像
+	log.Debug("Downloading avatar from: ", u.String())
+	avatarResp, err := http.Get(u.String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to downloard the avator: %w", err)
+	}
+	defer avatarResp.Body.Close()
+
+	// 准备multipart表单
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, err := writer.CreateFormFile("smfile", fileName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create form file: %w", err)
+	}
+	_, err = io.Copy(part, avatarResp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to copy file: %w", err)
+	}
+	writer.Close()
+
+	// 创建上传请求
+	req, err := http.NewRequest("POST", "https://sm.ms/api/v2/upload", body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.Header.Set("Authorization", smmsToken)
+
+	// 发送请求
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// 解析响应
+	var smmsResp SmmsResponse
+	err = json.NewDecoder(resp.Body).Decode(&smmsResp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	if !smmsResp.Success {
+		return nil, fmt.Errorf("failed to upload avatar: %s", smmsResp.Message)
+	}
+
+	return &smmsResp.Data.URL, nil
 }

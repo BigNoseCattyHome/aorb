@@ -1,8 +1,11 @@
 // auth_service.dart
 import 'package:aorb/conf/config.dart';
+import 'package:aorb/generated/user.pb.dart';
 import 'package:grpc/grpc.dart';
 import 'package:aorb/generated/auth.pbgrpc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 // @sirius2alpha 2024-07-17
 class AuthService {
@@ -44,11 +47,15 @@ class AuthService {
           prefs.setString('nickname', response.simpleUser.nickname),
         ]);
         logger.d('Token saved to local storage: ${response.token}');
-        logger.d('Refresh token saved to local storage: ${response.refreshToken}');
-        logger.d('Username saved to local storage: ${response.simpleUser.username}');
-        logger.d('Avatar saved to local storage: ${response.simpleUser.avatar}');
-        logger.d('Nickname saved to local storage: ${response.simpleUser.nickname}');
-        
+        logger.d(
+            'Refresh token saved to local storage: ${response.refreshToken}');
+        logger.d(
+            'Username saved to local storage: ${response.simpleUser.username}');
+        logger
+            .d('Avatar saved to local storage: ${response.simpleUser.avatar}');
+        logger.d(
+            'Nickname saved to local storage: ${response.simpleUser.nickname}');
+
         return response;
       } else {
         logger.w('Login failed: ${response.statusMsg}');
@@ -83,11 +90,12 @@ class AuthService {
     return await _client.logout(request);
   }
 
-  Future<RegisterResponse> register(String username, String password,
+  Future<RegisterResponse> register(String username, String password,Gender gender,
       {String? nickname, String? avatar, String? ipaddress}) async {
     final request = RegisterRequest()
       ..username = username
-      ..password = password;
+      ..password = password
+      ..gender = gender;
 
     if (nickname != null) request.nickname = nickname;
     if (avatar != null) request.avatar = avatar;
@@ -115,40 +123,3 @@ class AuthService {
     }
   }
 }
-
-// void main() async {
-//   final authService = AuthService('localhost', 9000);
-
-//   try {
-//     // 登录
-//     final loginResponse =
-//         await authService.login('user_id', 'password', 'device_id');
-//     print('Login success: ${loginResponse.success}');
-//     print('Token: ${loginResponse.token}');
-
-//     // 验证 token
-//     final verifyResponse = await authService.verify(loginResponse.token);
-//     print('Verify success: ${verifyResponse.success}');
-
-//     // 刷新 token
-//     final refreshResponse =
-//         await authService.refresh(loginResponse.refreshToken);
-//     print('Refresh success: ${refreshResponse.success}');
-//     print('New token: ${refreshResponse.token}');
-
-//     // 注册新用户
-//     final registerResponse = await authService
-//         .register('new_username', 'new_password', nickname: 'New User');
-//     print('Register success: ${registerResponse.success}');
-
-//     // 登出
-//     final logoutResponse = await authService.logout(
-//         loginResponse.token, loginResponse.refreshToken);
-//     print('Logout success: ${logoutResponse.success}');
-//   } catch (e) {
-//     print('Error: $e');
-//   } finally {
-//     // 关闭连接
-//     await authService.dispose();
-//   }
-// }

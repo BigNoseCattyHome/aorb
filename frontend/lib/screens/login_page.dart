@@ -18,8 +18,6 @@ class LoginPageState extends State<LoginPage> {
   final _usernameController = TextEditingController(); //控制输入框
   final _passwordController = TextEditingController();
   final AuthService _authService = AuthService();
-  // TODO 在proto文件中加上这个字段
-  late String _province ; // 用户IP的归属地
   final logger = getLogger();
 
   bool _obscureText = true; //控制密码可见

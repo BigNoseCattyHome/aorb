@@ -2,14 +2,16 @@ package handlers
 
 import (
 	"context"
+	"os"
 
-	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/strings"
-
+	"github.com/BigNoseCattyHome/aorb/backend/go-services/auth/conf"
 	"github.com/BigNoseCattyHome/aorb/backend/go-services/auth/services"
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/auth"
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/user"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
+	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/strings"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/logging"
+	"github.com/joho/godotenv"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"google.golang.org/grpc/codes"
 
@@ -161,17 +163,32 @@ func (a AuthServiceImpl) Logout(context context.Context, request *auth.LogoutReq
 func (a AuthServiceImpl) Register(context context.Context, request *auth.RegisterRequest) (*auth.RegisterResponse, error) {
 	log.Infof("Received Register request: %v", request)
 
+	// 生成随机头像并上传到图床
+	imageURL := "https://api.multiavatar.com/" + request.Username + ".png"
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+	smmsToken := os.Getenv("SMMS_TOKEN") // .env文件已添加到.gitignore
+	multiavatarToken := os.Getenv("MULTIAVATAR_KEY")
+	avatarUrl, err := services.GenerateAvatar(imageURL, multiavatarToken, smmsToken, "avatar_"+request.Username+".png")
+	if err != nil {
+		avatarUrl = &conf.DefaultUserAvatar
+		return nil, status.Errorf(codes.Unauthenticated, "generate avatar failed: %v", err)
+	}
+
 	// 解析参数
 	user := user.User{
 		Username:  request.Username,
 		Password:  &request.Password,
 		Nickname:  request.Nickname,
-		Avatar:    request.Avatar,
+		Avatar:    *avatarUrl,
 		Ipaddress: &request.Ipaddress,
+		Gender:    request.Gender,
 	}
 
 	// 调用服务
-	err := services.RegisterUser(&user)
+	err = services.RegisterUser(&user)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "register failed: %v", err)
 	}

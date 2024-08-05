@@ -8,22 +8,31 @@ message User {
   string username = 2; // 用户登录名
   string avatar = 3; // 用户头像
   string nickname = 4; // 用户昵称
+  Gender gender = 5; // 用户性别
 
-  // 这里定义了很多种消息类型，是为了方便以后的扩展
+  optional string password = 6; // 用户密码
+  optional string bio = 7; // 个人简介
+  optional double coins = 8; // 用户的金币数
+  optional CoinRecordList coins_record = 9; // 用户金币流水记录
+  optional FollowedList followed = 10; // 关注者列表
+  optional FollowerList follower = 11; // 被关注者列表
+  optional BlackList blacklist = 12; // 屏蔽好友列表
+  optional string ipaddress = 13; // IP归属地
+  optional string bgpic_me = 14; // 我的页面背景图片
+  optional string bgpic_pollcard = 15; // 问题卡片背景图片
+  optional PollAskList poll_ask = 16; // 发起过的问题id列表
+  optional PollAnsList poll_ans = 17; // 回答过的问题id列表
+  optional PollCollectList poll_collect = 18; // 收藏的问题id列表
+  google.protobuf.Timestamp create_at = 19;  // 创建时间
+  google.protobuf.Timestamp update_at = 20;  // 删除时间
+  google.protobuf.Timestamp delete_at = 21;  // 删除时间
+}
 
-  optional string password = 5; // 用户密码
-  optional double coins = 6; // 用户的金币数
-  optional CoinRecordList coins_record = 7; // 用户金币流水记录
-  optional FollowedList followed = 8; // 关注者列表
-  optional FollowerList follower = 9; // 被关注者列表
-  optional BlackList blacklist = 10; // 屏蔽好友列表
-  optional string ipaddress = 11; // IP归属地
-  optional PollAskList poll_ask = 12; // 发起过的问题id列表
-  optional PollAnsList poll_ans = 13; // 回答过的问题id列表
-  optional PollCollectList poll_collect = 14; // 收藏的问题id列表
-  google.protobuf.Timestamp create_at = 15;  // 创建时间
-  google.protobuf.Timestamp update_at = 16;  // 删除时间
-  google.protobuf.Timestamp delete_at = 17;  // 删除时间
+enum Gender {
+  UNKNOWN = 0;
+  MALE = 1;
+  FEMALE = 2;
+  OTHER = 3;
 }
 
 message BlackList {

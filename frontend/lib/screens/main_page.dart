@@ -105,39 +105,55 @@ class MainPageState extends State<MainPage>
       ),
 
       // 侧栏
-      // TODO 侧栏添加新的内容
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
           children: <Widget>[
-            const DrawerHeader(
-              decoration: BoxDecoration(
-                color: Colors.blue,
-              ),
-              child: Text(
-                '菜单',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                ),
-              ),
+            const SizedBox(height: 80),
+            ListTile(
+              leading: const Icon(Icons.settings),
+              title: const Text('设置'),
+              onTap: () {
+                // 跳转到设置页面
+                Navigator.pushNamed(context, '/settings');
+              },
             ),
-            Padding(
-              padding: const EdgeInsets.only(top: 20.0), // 调整位置，避免被状态栏遮挡
-              child: ListTile(
-                leading: const Icon(Icons.settings),
-                title: const Text('设置'),
-                onTap: () {
-                  // 跳转到设置页面
-                  Navigator.pushNamed(context, '/settings');
+            // 如果用户已登录，显示退出登录按钮
+            if (isLoggedIn)
+              ListTile(
+                leading: const Icon(Icons.logout),
+                title: const Text('退出登录'),
+                onTap: () async {
+                  final prefs = await SharedPreferences.getInstance();
+                  // 从本地获取token
+                  final accessToken = prefs.getString('authToken');
+                  final refreshToken = prefs.getString('refreshToken');
+
+                  // 检查 token 是否为 null
+                  if (accessToken != null && refreshToken != null) {
+                    // 退出登录
+                    await AuthService().logout(accessToken, refreshToken);
+                    await prefs.remove('authToken');
+                    await prefs.remove('refreshToken');
+                    await prefs.remove('username');
+                    await prefs.remove('avatar');
+                    await prefs.remove('nickname');
+                    logger.i('user\'s login info cleared.');
+
+                    // 退出登录后，刷新页面
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (context) => MainPage()),
+                      (Route<dynamic> route) => false,
+                    );
+                  } else {
+                    // 处理 token 为 null 的情况，例如显示错误信息
+                    logger.e('Token is null');
+                  }
                 },
               ),
-            ),
-            // 你可以在这里添加更多的 ListTile
           ],
         ),
       ),
-
       // 底部导航栏
       bottomNavigationBar: BottomNavigationBar(
         items: <BottomNavigationBarItem>[
