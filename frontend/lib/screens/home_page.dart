@@ -1,6 +1,7 @@
 // home_page.dart
+import 'package:aorb/generated/google/protobuf/timestamp.pb.dart';
 import 'package:flutter/material.dart';
-import 'package:aorb/widgets/question_unvoted.dart'; // 引入未投票问题组件
+import 'package:aorb/widgets/poll_card.dart'; // 引入未投票问题组件
 import 'dart:async';
 
 class HomePage extends StatefulWidget {
@@ -15,7 +16,7 @@ class HomePage extends StatefulWidget {
 class HomePageState extends State<HomePage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController; // 顶部导航栏控制器
-  late Future<List<QuestionUnvoted>> _futureQuestions;
+  late Future<List<PollCard>> _futureQuestions;
 
   @override
   void initState() {
@@ -49,7 +50,7 @@ class HomePageState extends State<HomePage>
 
       // 中间的投票卡片
       body: TabBarView(controller: _tabController, children: [
-        FutureBuilder<List<QuestionUnvoted>>(
+        FutureBuilder<List<PollCard>>(
           future: _futureQuestions,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
@@ -62,17 +63,13 @@ class HomePageState extends State<HomePage>
               return ListView.builder(
                 itemCount: snapshot.data!.length,
                 itemBuilder: (context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0, vertical: 8.0), // 设置外边距
-                    child: snapshot.data![index],
-                  );
+                  return snapshot.data![index];
                 },
               );
             }
           },
         ),
-        FutureBuilder<List<QuestionUnvoted>>(
+        FutureBuilder<List<PollCard>>(
           future: _futureQuestions,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
@@ -99,67 +96,67 @@ class HomePageState extends State<HomePage>
     );
   }
 
-  Future<List<QuestionUnvoted>> _fetchQuestions() async {
+  Future<List<PollCard>> _fetchQuestions() async {
     // 模拟从服务器获取数据
     await Future.delayed(const Duration(seconds: 2));
     return [
-      const QuestionUnvoted(
-        title: '午饭吃什么呀?',
+      PollCard(
+        title: "午饭吃什么呀?",
         content: '想了半天没有想出来到底要吃什么，好纠结，真可恶！',
-        options: ['麻辣烫', '炸鸡汉堡'],
-        votePercentage: [0.4, 0.6],
+        options: const ['麻辣烫', '炸鸡汉堡'],
+        votePercentage: const [0.4, 0.6],
         voteCount: 20,
-        time: '发布于 5 小时前',
+        time: Timestamp.fromDateTime(DateTime.parse("2024-07-01 12:05:00")),
         avatar: 'https://s2.loli.net/2024/05/27/2MgJcvLtOVKmAdn.jpg',
         nickname: '爱吃饭的小袁同学',
         userId: '1',
-        postId: '1',
+        pollId: '1',
         backgroundImage: 'gradient:0xFF8DB3EB,0xFFF895CA',
         selectedOption: -1,
       ),
-      const QuestionUnvoted(
+      PollCard(
         title: '下午去哪里玩?',
         content: '天气很好，感觉顾村公园和外滩都挺不错的，选哪个？',
-        options: ['顾村公园', '外滩'],
-        votePercentage: [0.16, 0.84],
+        options: const ['顾村公园', '外滩'],
+        votePercentage: const [0.16, 0.84],
         voteCount: 76,
-        time: '发布于 36 分钟前',
+        time: Timestamp.fromDateTime(DateTime.parse("2024-07-01 12:05:00")),
         avatar: 'https://s2.loli.net/2024/05/25/icuYCOP9HB1JbIx.png',
         nickname: '花枝鼠gogo来帮忙',
         userId: '2',
-        postId: '2',
+        pollId: '2',
         backgroundImage: '0xFF354967',
         selectedOption: -1,
       ),
-      const QuestionUnvoted(
+      PollCard(
         title: '要不要去小美家玩啊？',
         content: '小美小美小美好香的小美，Bad 小新',
-        options: ['麻辣烫', '炸鸡汉堡'],
-        votePercentage: [0.4, 0.6],
+        options: const ['麻辣烫', '炸鸡汉堡'],
+        votePercentage: const [0.4, 0.6],
         voteCount: 20,
-        time: '发布于 7 小时前',
+        time: Timestamp.fromDateTime(DateTime.parse("2024-07-01 12:05:00")),
         avatar: 'https://s2.loli.net/2024/05/27/QzKM41C3Vs5FeHW.jpg',
         nickname: '风见澈Siri',
         userId: '3',
-        postId: '3',
+        pollId: '3',
         backgroundImage: 'https://s2.loli.net/2024/05/25/HqJM8dTuSRbUNBO.jpg',
         selectedOption: -1,
       ),
-      const QuestionUnvoted(
+      PollCard(
         title: 'Exploring the Enigmatic World of Quantum Mechanics',
         content:
             'Quantum mechanics is a fundamental theory in physics that provides a description of the physical properties of nature at the scale of atoms and subatomic particles. However, it\'s not as straightforward as classical physics. Can you help me understand some of the key concepts and phenomena of quantum mechanics?',
-        options: [
+        options: const [
           'Yes, I\'d love to.',
           'I\'m familiar with quantum mechanics.',
         ],
-        votePercentage: [0.4, 0.6],
+        votePercentage: const [0.4, 0.6],
         voteCount: 20,
-        time: '发布于昨天',
+        time: Timestamp.fromDateTime(DateTime.parse("2024-07-01 12:05:00")),
         avatar: 'https://s2.loli.net/2024/05/27/alt3BKPYhzmV4E7.jpg',
         nickname: 'Anti Cris',
         userId: '4',
-        postId: '4',
+        pollId: '4',
         backgroundImage: 'gradient:0x7FFCE300,0xFFFF5065,0xFF1F9AC1',
         selectedOption: -1,
       ),

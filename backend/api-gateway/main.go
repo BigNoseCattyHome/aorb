@@ -78,7 +78,7 @@ var serviceNameMapping = map[string]string{
 	"rpc.user.UserService":           config.UserRpcServerName,
 	"rpc.comment.CommentService":     config.CommentRpcServerName,
 	"rpc.vote.VoteService":           config.VoteRpcServerName,
-	"rpc.poll.QuestionService":       config.PollRpcServerName,
+	"rpc.poll.PollService":           config.PollRpcServerName,
 	"rpc.recommend.RecommendService": config.RecommendRpcServerName,
 }
 
@@ -214,6 +214,8 @@ func getResponseType(method string) reflect.Type {
 		return reflect.TypeOf((*poll.GetPollResponse)(nil))
 	case "/rpc.poll.PollService/ListPoll":
 		return reflect.TypeOf((*poll.ListPollResponse)(nil))
+	case "/rpc.poll.PollService/PollExist":
+		return reflect.TypeOf((*poll.PollExistResponse)(nil))
 
 	case "/rpc.vote.VoteService/CreateVote":
 		return reflect.TypeOf((*vote.CreateVoteResponse)(nil))

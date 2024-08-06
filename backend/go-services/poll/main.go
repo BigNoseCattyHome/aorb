@@ -43,7 +43,7 @@ func main() {
 
 	//profiling.InitPyroscope("AorB.PollService")
 
-	log := logging.LogService(config.PollProcessorRpcServiceName)
+	log := logging.LogService(config.PollRpcServerName)
 	lis, err := net.Listen("tcp", config.Conf.Pod.PodIp+config.PollRpcServerAddr)
 
 	if err != nil {
@@ -67,7 +67,7 @@ func main() {
 	if err := consul.RegisterConsul(config.PollRpcServerName, config.PollRpcServerAddr); err != nil {
 		log.Panicf("Rpc %s register consul happens error for: %v", config.PollRpcServerName, err)
 	}
-	log.Infof("Rpc %s is running at %s now", config.PollProcessorRpcServiceName, config.PollRpcServerAddr)
+	log.Infof("Rpc %s is running at %s now", config.PollRpcServerName, config.PollRpcServerAddr)
 
 	var srv services.PollServiceImpl
 	poll.RegisterPollServiceServer(s, srv)

@@ -1,8 +1,13 @@
-import 'package:aorb/screens/edit_profile_page.dart';
+import 'package:aorb/widgets/poll_list_view.dart';
 import 'package:flutter/material.dart';
+
+import 'package:aorb/screens/edit_profile_page.dart';
 import 'package:aorb/screens/follow_page.dart';
+import 'package:aorb/services/poll_service.dart';
 import 'package:aorb/services/user_service.dart';
+
 import 'package:aorb/generated/user.pbgrpc.dart';
+import 'package:aorb/generated/poll.pb.dart';
 
 // 只有在登录的情况下才会展示这个页面，当没有登录的时候展示LoginPage，通过MainPage来检查登录状态并进行控制
 class MePage extends StatefulWidget {
@@ -40,6 +45,61 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  IconData _getGenderIcon(Gender gender) {
+    switch (gender) {
+      case Gender.MALE:
+        return Icons.male;
+      case Gender.FEMALE:
+        return Icons.female;
+      case Gender.OTHER:
+        return Icons.transgender;
+      default:
+        return Icons.question_mark;
+    }
+  }
+
+  Color _getGenderColor(Gender gender) {
+    switch (gender) {
+      case Gender.MALE:
+        return Colors.blue;
+      case Gender.FEMALE:
+        return Colors.pink;
+      case Gender.OTHER:
+        return Colors.orange;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  Future<Map<String, dynamic>> _fetchPollData(String pollId) async {
+    // 调用PollService获取投票信息
+    final pollResponse = await PollService().GetPoll(
+      GetPollRequest()..pollUuid = pollId,
+    );
+    final poll = pollResponse.poll;
+
+    // 调用UserService获取用户信息
+    final userInfoResponse = await UserService().getUserInfo(
+      UserRequest()..username = poll.username,
+    );
+    final userInfo = userInfoResponse.user;
+
+    // 计算总票数
+    final totalVotes = poll.optionsCount.reduce((a, b) => a + b);
+
+    // 计算每个选项的百分比
+    List<double> percentages = poll.optionsCount.map((int value) {
+      return (value / totalVotes) * 100;
+    }).toList();
+
+    return {
+      'poll': poll,
+      'userInfo': userInfo,
+      'totalVotes': totalVotes,
+      'percentages': percentages,
+    };
   }
 
   @override
@@ -114,6 +174,26 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
                                   ),
                                 ],
                               ),
+                              // username
+                              Text(
+                                '用户名: ${user.username}',
+                                style: TextStyle(
+                                  color: Colors.grey[100],
+                                  fontSize: 12,
+                                  height: 1.5,
+                                ),
+                              ),
+
+                              // Bio
+                              Text(
+                                'Bio: ${user.bio}',
+                                style: TextStyle(
+                                  color: Colors.grey[100],
+                                  fontSize: 12,
+                                  height: 1.5,
+                                ),
+                              ),
+
                               // IP归属地
                               Text(
                                 'IP归属地: ${user.ipaddress}',
@@ -203,13 +283,34 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
                               CircleAvatar(
                                 radius: 40,
                                 backgroundColor: Colors.white,
-                                child: CircleAvatar(
-                                  radius: 38,
-                                  backgroundImage: NetworkImage(user.avatar),
-                                  backgroundColor: Colors.transparent,
+                                child: Stack(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 38,
+                                      backgroundImage:
+                                          NetworkImage(user.avatar),
+                                      backgroundColor: Colors.transparent,
+                                    ),
+                                    Positioned(
+                                      right: 0,
+                                      bottom: 0,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(2),
+                                        decoration: const BoxDecoration(
+                                          color: Colors.white,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          _getGenderIcon(user.gender),
+                                          color: _getGenderColor(user.gender),
+                                          size: 16,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              const SizedBox(height: 20),
+                              const SizedBox(height: 50),
                               // 编辑资料按钮
                               OutlinedButton(
                                 onPressed: () async {
@@ -258,7 +359,7 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
                           controller: _tabController,
                           labelColor: Colors.blue[700],
                           labelStyle: const TextStyle(
-                            fontSize: 18,
+                            fontSize: 17,
                             fontWeight: FontWeight.bold,
                           ),
                           unselectedLabelColor: Colors.grey[400],
@@ -280,10 +381,19 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
                         Expanded(
                           child: TabBarView(
                             controller: _tabController,
-                            children: const [
-                              Center(child: Text('我发起的内容')),
-                              Center(child: Text('我回答的内容')),
-                              Center(child: Text('我收藏的内容')),
+                            children: [
+                              PollListView(
+                                pollIds: user.pollAsk.pollIds,
+                                emptyMessage: '您还没有发起任何投票',
+                              ),
+                              PollListView(
+                                pollIds: user.pollAns.pollIds,
+                                emptyMessage: '您还没有回答任何投票',
+                              ),
+                              PollListView(
+                                pollIds: user.pollCollect.pollIds,
+                                emptyMessage: '您还没有收藏任何投票',
+                              ),
                             ],
                           ),
                         ),

@@ -1,5 +1,5 @@
+import 'package:aorb/generated/poll.pb.dart';
 import 'package:flutter/material.dart';
-import 'package:aorb/models/poll.dart';
 
 import 'package:aorb/services/user_service.dart';
 import 'package:aorb/services/poll_service.dart';
@@ -33,9 +33,7 @@ class PollDetailPageState extends State<PollDetailPage>
     // 获取关注状态
     IsUserFollowingRequest requestFollow = IsUserFollowingRequest()
       ..username = widget.username;
-    UserService()
-        .isUserFollowing(requestFollow)
-        .then((isFollowed) {
+    UserService().isUserFollowing(requestFollow).then((isFollowed) {
       setState(() {
         this.isFollowed = isFollowed;
       });
@@ -50,10 +48,12 @@ class PollDetailPageState extends State<PollDetailPage>
     });
 
     // 获取投票详情
-    PollService().fetchPoll(widget.postUserId).then((poll) {
+    PollService()
+        .GetPoll(GetPollRequest()..pollUuid = widget.postUserId)
+        .then((pollResponse) {
       setState(() {
-        this.poll = poll;
-        cntComments = poll.comments.length;
+        poll = pollResponse.poll;
+        cntComments = pollResponse.poll.commentList.length;
       });
     });
 
@@ -133,10 +133,14 @@ class PollDetailPageState extends State<PollDetailPage>
         // 内容详情
         PollDetail(
             title: poll.title,
-            content: poll.description,
+            content: poll.content,
             options: poll.options,
-            votePercentage: poll.optionsRate,
-            time: poll.time,
+            votePercentage: poll.optionsCount.map((value) {
+              return poll.optionsCount.reduce((a, b) => a + b) > 0
+                  ? (value / poll.optionsCount.reduce((a, b) => a + b)) * 100
+                  : 0.0;
+            }).toList(),
+            time: poll.createAt.toDateTime(),
             ipaddress: poll.ipaddress),
 
         // 分割线
