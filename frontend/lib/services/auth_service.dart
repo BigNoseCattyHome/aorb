@@ -21,7 +21,9 @@ class AuthService {
       host,
       port: port,
       options: const ChannelOptions(
-          credentials: ChannelCredentials.insecure()), // ! 生产环境需要更改
+        credentials: ChannelCredentials.insecure(), // ! 生产环境需要更改
+        idleTimeout: Duration(seconds: 60), // 增加空闲超时
+      ),
     );
     _client = AuthServiceClient(_channel);
   }
@@ -88,7 +90,8 @@ class AuthService {
     return await _client.logout(request);
   }
 
-  Future<RegisterResponse> register(String username, String password,Gender gender,
+  Future<RegisterResponse> register(
+      String username, String password, Gender gender,
       {String? nickname, String? avatar, String? ipaddress}) async {
     final request = RegisterRequest()
       ..username = username
@@ -99,7 +102,8 @@ class AuthService {
     if (avatar != null) request.avatar = avatar;
     if (ipaddress != null) request.ipaddress = ipaddress;
 
-    return await _client.register(request);
+    return await _client.register(request,
+        options: CallOptions(timeout: const Duration(seconds: 30)));
   }
 
   Future<void> dispose() async {

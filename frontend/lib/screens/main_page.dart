@@ -21,7 +21,7 @@ class MainPageState extends State<MainPage>
     with SingleTickerProviderStateMixin {
   late int _currentIndex; // 用于控制底部到行栏的切换
   late TabController tabController; // tabController用于控制子页面的顶部导航栏的切换
-  late bool isLoggedIn; // 是否登录
+  bool isLoggedIn = false; // 是否登录
   late String username; // 在initstate中从本地读取，用于传递给 _pages中的MePage
   late String avatar; // 在initstate中从本地读取，用于底部状态栏的icon的展示
   late List<Widget> _pages;

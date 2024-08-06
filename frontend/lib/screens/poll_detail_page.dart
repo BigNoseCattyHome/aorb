@@ -1,4 +1,3 @@
-import 'package:aorb/conf/config.dart';
 import 'package:flutter/material.dart';
 import 'package:aorb/models/poll.dart';
 
@@ -34,7 +33,7 @@ class PollDetailPageState extends State<PollDetailPage>
     // 获取关注状态
     IsUserFollowingRequest requestFollow = IsUserFollowingRequest()
       ..username = widget.username;
-    UserService(backendHost, backendPort)
+    UserService()
         .isUserFollowing(requestFollow)
         .then((isFollowed) {
       setState(() {
@@ -44,7 +43,7 @@ class PollDetailPageState extends State<PollDetailPage>
 
     // 获取用户信息: nickname, avatar
     UserRequest request = UserRequest()..username = widget.username;
-    UserService(backendHost, backendPort).getUserInfo(request).then((response) {
+    UserService().getUserInfo(request).then((response) {
       setState(() {
         user = response.user;
       });

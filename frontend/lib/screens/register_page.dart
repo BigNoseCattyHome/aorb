@@ -91,6 +91,7 @@ class RegisterPageState extends State<RegisterPage> {
       final startTime = DateTime.now();
       logger.d('Starting register call at $startTime');
 
+      
       final registerResponse = await _authService.register(
         _usernameController.text,
         _passwordController.text,

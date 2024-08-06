@@ -109,3 +109,58 @@ func IsUserFollowing(username string, target_username string) (*user.IsUserFollo
 		IsFollowing: isFollowing,
 	}, nil
 }
+
+func UpdateUserInService(ctx context.Context, userId string, updateFields map[string]interface{}) (resp *user.UpdateUserResponse, err error) {
+	log.Debug("Updating user in service: ", userId)
+	collection := database.MongoDbClient.Database("aorb").Collection("users")
+
+	// 如果是对username进行更新，需要先检查是否有重复的username
+	if username, ok := updateFields["username"].(string); ok {
+		exists, err := checkUserExistsbyUsername(username)
+		if err != nil {
+			log.Error("Failed to check username existence: ", err)
+			return nil, err
+		}
+		if exists {
+			return &user.UpdateUserResponse{
+				StatusCode: strings.UserAlreadyExistsErrorCode,
+				StatusMsg:  strings.UserAlreadyExistsError,
+			}, nil
+		}
+	}
+
+	// 使用 userId 作为过滤条件
+	result, err := collection.UpdateOne(ctx, bson.M{"id": userId}, bson.M{"$set": updateFields})
+	if err != nil {
+		log.Error("Failed to update user: ", err)
+		return nil, err
+	}
+
+	// 检查是否有文档被更新
+	if result.ModifiedCount == 0 {
+		log.Warn("No user was updated")
+		return &user.UpdateUserResponse{
+			StatusCode: strings.NoUserUpdatedErrorCode,
+			StatusMsg:  strings.NoUserUpdatedError,
+		}, nil
+	}
+
+	resp = &user.UpdateUserResponse{
+		StatusCode: strings.ServiceOKCode,
+		StatusMsg:  strings.ServiceOK,
+	}
+
+	return resp, nil
+}
+
+// checkUserExistsbyUsername 检查用户名是否存在，内部方法
+func checkUserExistsbyUsername(username string) (bool, error) {
+	collection := database.MongoDbClient.Database("aorb").Collection("users")
+	filter := bson.M{"username": username}
+	count, err := collection.CountDocuments(context.Background(), filter)
+	if err != nil {
+		log.Error("Failed to check username existence: ", err)
+		return false, err
+	}
+	return count > 0, nil
+}

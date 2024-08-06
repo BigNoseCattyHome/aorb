@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:aorb/generated/user.pbgrpc.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:aorb/generated/user.pb.dart';
+import 'package:aorb/services/user_service.dart';
+import 'package:aorb/utils/image_upload.dart';
+import 'dart:io';
 
 class EditProfilePage extends StatefulWidget {
   final User user;
-
-  const EditProfilePage({super.key, required this.user});
+  final Function(User) onUserUpdated;
+  const EditProfilePage(
+      {Key? key, required this.user, required this.onUserUpdated})
+      : super(key: key);
 
   @override
   EditProfilePageState createState() => EditProfilePageState();
@@ -21,26 +26,52 @@ class EditProfilePageState extends State<EditProfilePage> {
     _user = widget.user;
   }
 
+  void _updateUser() {
+    widget.onUserUpdated(_user);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('编辑个人资料', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
-      ),
-      body: ListView(
-        children: [
-          _buildAvatarSection(),
-          _buildDivider(),
-          _buildEditItem('昵称', _user.nickname, () => _editNickname()),
-          _buildEditItem('用户名', _user.username, () => _editUsername()),
-          _buildEditItem('个人简介', _user.bio, () => _editBio()),
-          _buildEditItem('性别', _genderToString(_user.gender), () => _editGender()),
-          _buildImageItem('背景图片', _user.bgpicMe, () => _editBgPicMe()),
-          _buildImageItem('投票背景图片', _user.bgpicPollcard, () => _editBgPicPollcard()),
-        ],
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.pop(context, _user);
+        return false;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('编辑个人资料',
+              style:
+                  TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+          backgroundColor: Colors.white,
+          elevation: 0,
+          iconTheme: const IconThemeData(color: Colors.black),
+        ),
+        body: ListView(
+          children: [
+            _buildAvatarSection(),
+            _buildDivider(),
+            _buildEditItem(
+                '昵称',
+                _user.nickname,
+                () => _editField('昵称', _user.nickname, "nickname",
+                    (value) => _user.nickname = value)),
+            _buildEditItem(
+                '用户名',
+                _user.username,
+                () => _editField('用户名', _user.username, "username",
+                    (value) => _user.username = value)),
+            _buildEditItem(
+                '个人简介',
+                _user.bio,
+                () => _editField(
+                    '个人简介', _user.bio, "bio", (value) => _user.bio = value)),
+            _buildEditItem(
+                '性别', _genderToString(_user.gender), () => _editGender()),
+            _buildImageItem('背景图片', _user.bgpicMe, () => _editImage('bgpicMe')),
+            _buildImageItem('投票背景图片', _user.bgpicPollcard,
+                () => _editImage('bgpicPollcard')),
+          ],
+        ),
       ),
     );
   }
@@ -53,7 +84,9 @@ class EditProfilePageState extends State<EditProfilePage> {
           children: [
             CircleAvatar(
               radius: 60,
-              backgroundImage: NetworkImage(_user.avatar),
+              backgroundImage: _user.avatar.startsWith('http')
+                  ? NetworkImage(_user.avatar)
+                  : FileImage(File(_user.avatar)) as ImageProvider,
             ),
             Positioned(
               bottom: 0,
@@ -65,7 +98,7 @@ class EditProfilePageState extends State<EditProfilePage> {
                 ),
                 child: IconButton(
                   icon: const Icon(Icons.edit, color: Colors.white),
-                  onPressed: _editAvatar,
+                  onPressed: () => _editImage('avatar'),
                 ),
               ),
             ),
@@ -85,7 +118,8 @@ class EditProfilePageState extends State<EditProfilePage> {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(value.isEmpty ? '未设置' : value, style: TextStyle(color: Colors.grey[600])),
+          Text(value.isEmpty ? '未设置' : value,
+              style: TextStyle(color: Colors.grey[600])),
           const Icon(Icons.chevron_right, color: Colors.grey),
         ],
       ),
@@ -100,20 +134,27 @@ class EditProfilePageState extends State<EditProfilePage> {
         onTap: onTap,
         child: ClipRRect(
           borderRadius: BorderRadius.circular(8),
-          child: Image.network(
-            imageUrl,
-            width: 60,
-            height: 60,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                width: 60,
-                height: 60,
-                color: Colors.grey[300],
-                child: const Icon(Icons.image, color: Colors.grey),
-              );
-            },
-          ),
+          child: imageUrl.startsWith('http')
+              ? Image.network(
+                  imageUrl,
+                  width: 60,
+                  height: 60,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      width: 60,
+                      height: 60,
+                      color: Colors.grey[300],
+                      child: const Icon(Icons.image, color: Colors.grey),
+                    );
+                  },
+                )
+              : Image.file(
+                  File(imageUrl),
+                  width: 60,
+                  height: 60,
+                  fit: BoxFit.cover,
+                ),
         ),
       ),
     );
@@ -132,48 +173,21 @@ class EditProfilePageState extends State<EditProfilePage> {
     }
   }
 
-  void _editAvatar() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      // TODO: 实现头像上传逻辑
-      setState(() {
-        _user.avatar = image.path; // 这里应该是上传后的URL
-      });
-    }
-  }
-
-  void _editNickname() async {
+  void _editField(String title, String initialValue, String type,
+      Function(String) onSave) async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => EditTextPage(title: '昵称', initialValue: _user.nickname)),
+      MaterialPageRoute(
+          builder: (context) => EditTextPage(
+              title: title,
+              initialValue: initialValue,
+              type: type,
+              userId: _user.id)),
     );
     if (result != null) {
       setState(() {
-        _user.nickname = result;
-      });
-    }
-  }
-
-  void _editUsername() async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => EditTextPage(title: '用户名', initialValue: _user.username)),
-    );
-    if (result != null) {
-      setState(() {
-        _user.username = result;
-      });
-    }
-  }
-
-  void _editBio() async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => EditTextPage(title: '个人简介', initialValue: _user.bio, maxLines: 5)),
-    );
-    if (result != null) {
-      setState(() {
-        _user.bio = result;
+        onSave(result);
+        _updateUser();
       });
     }
   }
@@ -181,32 +195,72 @@ class EditProfilePageState extends State<EditProfilePage> {
   void _editGender() async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => EditGenderPage(initialGender: _user.gender)),
+      MaterialPageRoute(
+          builder: (context) =>
+              EditGenderPage(initialGender: _user.gender, userId: _user.id)),
     );
     if (result != null) {
       setState(() {
         _user.gender = result;
+        _updateUser();
       });
     }
   }
 
-  void _editBgPicMe() async {
+  void _editImage(String field) async {
+    // 选择图片
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      // TODO: 实现图片上传逻辑，获取新的URL
-      setState(() {
-        _user.bgpicMe = image.path; // 这里应该是上传后的URL
-      });
-    }
-  }
 
-  void _editBgPicPollcard() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    // 如果图像大小超过 5MB，提示重新上传
     if (image != null) {
-      // TODO: 实现图片上传逻辑，获取新的URL
+      final File file = File(image.path);
+      final size = file.lengthSync();
+      if (size > 5 * 1024 * 1024) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('图片大小不能超过 5MB'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+        return;
+      }
+    }
+
+    if (image != null) {
+      // 将图片上传到图床
+      final imageUrl = await ImageUploadService()
+          .uploadImage(File(image.path), '${field}_${_user.username}');
+      // 更新用户信息
       setState(() {
-        _user.bgpicPollcard = image.path; // 这里应该是上传后的URL
+        switch (field) {
+          case 'avatar':
+            _user.avatar = imageUrl;
+            break;
+          case 'bgpicMe':
+            _user.bgpicMe = imageUrl;
+            break;
+          case 'bgpicPollcard':
+            _user.bgpicPollcard = imageUrl;
+            break;
+        }
+        _updateUser();
       });
+      // 构建UpdateUserRequest
+      var request = UpdateUserRequest();
+      request.userId = _user.id;
+      switch (field) {
+        case 'avatar':
+          request.avatar = imageUrl;
+          break;
+        case 'bgpicMe':
+          request.bgpicMe = imageUrl;
+          break;
+        case 'bgpicPollcard':
+          request.bgpicPollcard = imageUrl;
+          break;
+      }
+      // 发送gRPC请求更新用户信息
+      UserService().updateUser(request);
     }
   }
 }
@@ -214,9 +268,16 @@ class EditProfilePageState extends State<EditProfilePage> {
 class EditTextPage extends StatefulWidget {
   final String title;
   final String initialValue;
-  final int maxLines;
+  final String type;
+  final String userId;
 
-  const EditTextPage({super.key, required this.title, required this.initialValue, this.maxLines = 1});
+  const EditTextPage({
+    Key? key,
+    required this.title,
+    required this.initialValue,
+    required this.type,
+    required this.userId,
+  }) : super(key: key);
 
   @override
   EditTextPageState createState() => EditTextPageState();
@@ -235,13 +296,28 @@ class EditTextPageState extends State<EditTextPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('编辑${widget.title}', style: const TextStyle(color: Colors.black)),
+        title: Text('编辑${widget.title}',
+            style: const TextStyle(color: Colors.black)),
         backgroundColor: Colors.white,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
         actions: [
           TextButton(
             onPressed: () {
+              var request = UpdateUserRequest();
+              request.userId = widget.userId;
+              switch (widget.type) {
+                case 'nickname':
+                  request.nickname = _controller.text;
+                  break;
+                case 'bio':
+                  request.bio = _controller.text;
+                  break;
+                case 'username':
+                  request.username = _controller.text;
+                  break;
+              }
+              UserService().updateUser(request);
               Navigator.pop(context, _controller.text);
             },
             child: const Text('保存', style: TextStyle(color: Colors.blue)),
@@ -252,7 +328,6 @@ class EditTextPageState extends State<EditTextPage> {
         padding: const EdgeInsets.all(16.0),
         child: TextField(
           controller: _controller,
-          maxLines: widget.maxLines,
           decoration: InputDecoration(
             border: const OutlineInputBorder(),
             labelText: widget.title,
@@ -265,8 +340,11 @@ class EditTextPageState extends State<EditTextPage> {
 
 class EditGenderPage extends StatefulWidget {
   final Gender initialGender;
+  final String userId;
 
-  const EditGenderPage({super.key, required this.initialGender});
+  const EditGenderPage(
+      {Key? key, required this.initialGender, required this.userId})
+      : super(key: key);
 
   @override
   EditGenderPageState createState() => EditGenderPageState();
@@ -292,6 +370,10 @@ class EditGenderPageState extends State<EditGenderPage> {
         actions: [
           TextButton(
             onPressed: () {
+              var request = UpdateUserRequest()
+                ..userId = widget.userId
+                ..gender = _selectedGender;
+              UserService().updateUser(request);
               Navigator.pop(context, _selectedGender);
             },
             child: const Text('保存', style: TextStyle(color: Colors.blue)),
@@ -323,6 +405,16 @@ class EditGenderPageState extends State<EditGenderPage> {
           RadioListTile<Gender>(
             title: const Text('其他'),
             value: Gender.OTHER,
+            groupValue: _selectedGender,
+            onChanged: (Gender? value) {
+              setState(() {
+                _selectedGender = value!;
+              });
+            },
+          ),
+          RadioListTile<Gender>(
+            title: const Text('未知'),
+            value: Gender.UNKNOWN,
             groupValue: _selectedGender,
             onChanged: (Gender? value) {
               setState(() {

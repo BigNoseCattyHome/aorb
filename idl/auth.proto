@@ -13,6 +13,7 @@ message LoginRequest {
   string device_id = 3; // 设备ID
   google.protobuf.Timestamp timestamp = 4; // 时间戳
   string nonce = 5; // 随机数
+  string ipaddress = 6; // IP地址
 }
 
 message LoginResponse {

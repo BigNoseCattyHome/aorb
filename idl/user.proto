@@ -4,7 +4,7 @@ option go_package = "github.com/BigNoseCattyHome/aorb/backend/rpc/user;user";
 import "google/protobuf/timestamp.proto";
 
 message User {
-  string id = 1; // 用户ID
+  string id = 1; // 用户ID,等于插入数据库后的_id中的$oid
   string username = 2; // 用户登录名
   string avatar = 3; // 用户头像
   string nickname = 4; // 用户昵称
@@ -103,12 +103,14 @@ message IsUserFollowingResponse {
 
 // UpdateUserRequest 消息，包含需要修改的用户信息字段
 message UpdateUserRequest {
-  string username = 1; // 用户登录名，用于标识哪个用户需要更新
-  optional string nickname = 2; // 用户昵称
-  optional string bio = 3; // 个人简介
-  optional Gender gender = 4; // 用户性别
-  optional string bgpic_me = 5; // 我的页面背景图片
-  optional string bgpic_pollcard = 6; // 问题卡片背景图片
+  string user_id = 1; // 用户ID
+  optional string username = 2; // 用户登录名，用于标识哪个用户需要更新
+  optional string nickname = 3; // 用户昵称
+  optional string bio = 4; // 个人简介
+  optional Gender gender = 5; // 用户性别
+  optional string bgpic_me = 6; // 我的页面背景图片
+  optional string bgpic_pollcard = 7; // 问题卡片背景图片
+  optional string avatar = 8; // 用户头像
 }
 
 // UpdateUserResponse 消息，包含更新操作的状态码和状态消息

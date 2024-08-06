@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:aorb/screens/register_page.dart';
 import 'package:aorb/conf/config.dart';
 import 'package:aorb/services/auth_service.dart';
+import 'package:aorb/utils/ip_locator.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -17,6 +18,7 @@ class LoginPage extends StatefulWidget {
 class LoginPageState extends State<LoginPage> {
   final _usernameController = TextEditingController(); //控制输入框
   final _passwordController = TextEditingController();
+  String _ipaddress = "Loading...";
   final AuthService _authService = AuthService();
   final logger = getLogger();
 
@@ -32,13 +34,15 @@ class LoginPageState extends State<LoginPage> {
       logger.d('the username input is: ${_usernameController.text}');
       logger.d('the password input is: ${_passwordController.text}');
 
+      await _getProvinceInfo(); // 获取省份信息
+
       LoginRequest request = LoginRequest()
         ..username = _usernameController.text
         ..password = _passwordController.text
         ..deviceId = 'web'
         ..timestamp = Timestamp.create()
-        ..nonce = Random().nextInt(1000000).toString();
-
+        ..nonce = Random().nextInt(1000000).toString()
+        ..ipaddress = _ipaddress;
       //等待
       final loginResponse = await _authService.login(request);
 
@@ -58,6 +62,13 @@ class LoginPageState extends State<LoginPage> {
         SnackBar(content: Text('登录失败: $e')),
       );
     }
+  }
+
+  Future<void> _getProvinceInfo() async {
+    String province = await IPLocationUtil.getProvince();
+    setState(() {
+      _ipaddress = province;
+    });
   }
 
   @override

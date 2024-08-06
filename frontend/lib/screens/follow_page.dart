@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:aorb/generated/user.pb.dart';
 import 'package:aorb/services/user_service.dart';
-import 'package:aorb/conf/config.dart';
 
 // 页面查询并展示用户的关注列表和粉丝列表
 class FollowPage extends StatefulWidget {
@@ -28,7 +27,7 @@ class FollowPageState extends State<FollowPage>
     UserRequest request = UserRequest();
     request.username = widget.username;
     request.fields.addAll(['username','avatar', 'followed', 'follower']);
-    UserService(backendHost, backendPort).getUserInfo(request).then((response) {
+    UserService().getUserInfo(request).then((response) {
       setState(() {
         user = response.user;
         followList = user.followed;
@@ -48,7 +47,7 @@ class FollowPageState extends State<FollowPage>
     UserRequest request = UserRequest();
     request.username = username;
     final response =
-        await UserService(backendHost, backendPort).getUserInfo(request);
+        await UserService().getUserInfo(request);
     return response.user;
   }
 

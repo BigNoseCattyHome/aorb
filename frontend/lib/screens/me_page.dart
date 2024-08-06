@@ -1,6 +1,5 @@
 import 'package:aorb/screens/edit_profile_page.dart';
 import 'package:flutter/material.dart';
-import 'package:aorb/conf/config.dart';
 import 'package:aorb/screens/follow_page.dart';
 import 'package:aorb/services/user_service.dart';
 import 'package:aorb/generated/user.pbgrpc.dart';
@@ -24,10 +23,16 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
     _tabController = TabController(length: 3, vsync: this);
     // 根据 username 查询用户信息，并触发UI更新
     UserRequest request = UserRequest()..username = widget.username;
-    UserService(backendHost, backendPort).getUserInfo(request).then((response) {
+    UserService().getUserInfo(request).then((response) {
       setState(() {
         user = response.user;
       });
+    });
+  }
+
+  void updateUserInfo(User updatedUser) {
+    setState(() {
+      user = updatedUser;
     });
   }
 
@@ -207,13 +212,18 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
                               const SizedBox(height: 20),
                               // 编辑资料按钮
                               OutlinedButton(
-                                onPressed: () {
-                                  Navigator.push(
+                                onPressed: () async {
+                                  final updatedUser = await Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                        builder: (context) =>
-                                            EditProfilePage(user: user)),
+                                      builder: (context) => EditProfilePage(
+                                          user: user,
+                                          onUserUpdated: updateUserInfo),
+                                    ),
                                   );
+                                  if (updatedUser != null) {
+                                    updateUserInfo(updatedUser);
+                                  }
                                 },
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: Colors.white,
