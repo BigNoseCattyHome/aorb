@@ -22,7 +22,6 @@ class AppRouter {
         return MaterialPageRoute(
             builder: (_) => const MainPage(initialIndex: 2));
       case pollContentRoute:
-        // 假设你从 RouteSettings 中获取了 postUserID 和 userID
         final postUserId = settings.arguments as String;
         final userId = settings.arguments as String;
         return MaterialPageRoute(

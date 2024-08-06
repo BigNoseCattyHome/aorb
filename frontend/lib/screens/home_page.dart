@@ -1,5 +1,6 @@
 // home_page.dart
 import 'package:aorb/generated/google/protobuf/timestamp.pb.dart';
+import 'package:aorb/screens/content_publish_page.dart';
 import 'package:flutter/material.dart';
 import 'package:aorb/widgets/poll_card.dart'; // 引入未投票问题组件
 import 'dart:async';
@@ -40,6 +41,13 @@ class HomePageState extends State<HomePage>
       floatingActionButton: FloatingActionButton(
           onPressed: () {
             // 导航到发布界面
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    ContentPublishPage(),
+              ),
+            );
           },
           backgroundColor: Colors.blue[700],
           child: const Icon(
