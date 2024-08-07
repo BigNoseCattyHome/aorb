@@ -45,7 +45,7 @@ class HomePageState extends State<HomePage>
               context,
               MaterialPageRoute(
                 builder: (context) =>
-                    ContentPublishPage(),
+                    const ContentPublishPage(),
               ),
             );
           },

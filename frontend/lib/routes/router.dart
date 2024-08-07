@@ -1,7 +1,6 @@
 import 'package:aorb/screens/settings_page.dart';
 import 'package:flutter/material.dart';
 import 'package:aorb/screens/main_page.dart';
-import 'package:aorb/screens/poll_detail_page.dart';
 
 class AppRouter {
   static const String homeRoute = '/'; // 首页推荐页面
