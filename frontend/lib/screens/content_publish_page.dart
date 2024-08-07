@@ -32,7 +32,7 @@ class ContentPublishPageState extends State<ContentPublishPage>
   late List<Map<String, dynamic>> backgroundCircles;
 
   @override
-  void initState() async {
+  void initState() {
     super.initState();
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 500),
@@ -43,9 +43,7 @@ class ContentPublishPageState extends State<ContentPublishPage>
     _generateBackgroundCircles();
 
     // 初始化IP地址和用户名
-    ipaddress = await IPLocationUtil.getProvince();
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    username = prefs.getString('username') ?? '';
+    _initializeData();
   }
 
   // 生成背景圆圈的方法
@@ -59,6 +57,14 @@ class ContentPublishPageState extends State<ContentPublishPage>
         'color': random.nextBool() ? Colors.red : Colors.blue,
       };
     });
+  }
+
+  // 新增方法来处理异步初始化
+  Future<void> _initializeData() async {
+    ipaddress = await IPLocationUtil.getProvince();
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    username = prefs.getString('username') ?? '';
+    setState(() {}); // 更新状态以反映新的数据
   }
 
   @override
@@ -160,7 +166,7 @@ class ContentPublishPageState extends State<ContentPublishPage>
                 ..ipaddress = ipaddress
                 ..username = username;
               var request = CreatePollRequest()..poll = poll;
-              PollService().CreatePoll(request).then((response) {
+              PollService().createPoll(request).then((response) {
                 if (response.statusCode == 0) {
                   Navigator.pop(context);
                 } else {

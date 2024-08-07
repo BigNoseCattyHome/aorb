@@ -43,13 +43,27 @@ func RegisterUser(newUser *user.User) error {
 	}
 	coins := float64(0)
 	newUser.Coins = &coins
-	newUser.Blacklist = &user.BlackList{}
-	newUser.CoinsRecord = &user.CoinRecordList{}
-	newUser.Followed = &user.FollowedList{}
-	newUser.Follower = &user.FollowerList{}
-	newUser.PollAsk = &user.PollAskList{}
-	newUser.PollAns = &user.PollAnsList{}
-	newUser.PollCollect = &user.PollCollectList{}
+	newUser.Blacklist = &user.BlackList{
+		Usernames: []string{},
+	}
+	newUser.CoinsRecord = &user.CoinRecordList{
+		Records: []*user.CoinRecord{},
+	}
+	newUser.Followed = &user.FollowedList{
+		Usernames: []string{},
+	}
+	newUser.Follower = &user.FollowerList{
+		Usernames: []string{},
+	}
+	newUser.PollAsk = &user.PollAskList{
+		PollIds: []string{},
+	}
+	newUser.PollAns = &user.PollAnsList{
+		PollIds: []string{},
+	}
+	newUser.PollCollect = &user.PollCollectList{
+		PollIds: []string{},
+	}
 	newUser.CreateAt = timestamppb.Now()
 	newUser.UpdateAt = timestamppb.Now()
 	newUser.DeleteAt = timestamppb.New(time.Time{})
@@ -92,7 +106,7 @@ func storeUser(user *user.User) error {
 		}
 	} else {
 		log.Error("Failed to get_id of document inserted")
-		return errors.New("Failed to get_id of document inserted")
+		return errors.New("failed to get_id of document inserted")
 	}
 
 	return nil

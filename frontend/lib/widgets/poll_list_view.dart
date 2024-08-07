@@ -17,7 +17,7 @@ class PollListView extends StatelessWidget {
 
   Future<Map<String, dynamic>> _fetchPollData(String pollId) async {
     // 调用PollService获取投票信息
-    final pollResponse = await PollService().GetPoll(
+    final pollResponse = await PollService().getPoll(
       GetPollRequest()..pollUuid = pollId,
     );
     final poll = pollResponse.poll;

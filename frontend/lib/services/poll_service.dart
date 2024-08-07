@@ -21,7 +21,7 @@ class PollService {
   }
 
   // 创建投票
-  Future<CreatePollResponse> CreatePoll(CreatePollRequest request) async {
+  Future<CreatePollResponse> createPoll(CreatePollRequest request) async {
     try {
       final CreatePollResponse response = await _client.createPoll(request);
 
@@ -42,7 +42,7 @@ class PollService {
   }
 
   // 查询投票信息
-  Future<GetPollResponse> GetPoll(GetPollRequest requset) async {
+  Future<GetPollResponse> getPoll(GetPollRequest requset) async {
     final GetPollResponse response = await _client.getPoll(requset);
 
     if (response.statusCode == 0) {

@@ -48,7 +48,7 @@ class PollDetailPageState extends State<PollDetailPage>
 
     // 获取投票详情
     PollService()
-        .GetPoll(GetPollRequest()..pollUuid = widget.pollId)
+        .getPoll(GetPollRequest()..pollUuid = widget.pollId)
         .then((pollResponse) {
       setState(() {
         poll = pollResponse.poll;
