@@ -6,6 +6,8 @@ import 'package:aorb/screens/register_page.dart';
 import 'package:aorb/conf/config.dart';
 import 'package:aorb/services/auth_service.dart';
 import 'package:aorb/utils/ip_locator.dart';
+import 'package:aorb/utils/constant/err.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 // 登录页面
 class LoginPage extends StatefulWidget {
@@ -67,7 +69,13 @@ class LoginPageState extends State<LoginPage> {
         Navigator.pushReplacementNamed(context, '/me');
       } else {
         // 登录失败，显示错误信息
-        _showErrorSnackBar('登录失败: ${loginResponse.statusMsg}');
+        String errorMessage;
+        if (loginResponse.statusCode == authUserLoginFailedCode) {
+          errorMessage = authUserLoginFailed;
+        } else {
+          errorMessage = '登录失败: ${loginResponse.statusMsg}';
+        }
+        _showErrorSnackBar(errorMessage);
       }
     } catch (e) {
       _showErrorSnackBar('登录失败: $e');
@@ -84,11 +92,17 @@ class LoginPageState extends State<LoginPage> {
 
   // 显示错误提示
   void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      timeInSecForIosWeb: 1,
+      backgroundColor: Colors.red,
+      textColor: Colors.white,
+      fontSize: 16.0,
     );
   }
-
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(

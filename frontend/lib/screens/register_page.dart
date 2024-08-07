@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:aorb/conf/config.dart';
 import 'package:aorb/services/auth_service.dart';
 import 'package:aorb/utils/ip_locator.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:grpc/grpc.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -74,9 +75,7 @@ class RegisterPageState extends State<RegisterPage> {
     }
 
     if (_passwordController.text != _confirmPasswordController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('两次输入的密码不一致')),
-      );
+      _showErrorToast('两次输入的密码不一致');
       return;
     }
 
@@ -91,7 +90,6 @@ class RegisterPageState extends State<RegisterPage> {
       final startTime = DateTime.now();
       logger.d('Starting register call at $startTime');
 
-      
       final registerResponse = await _authService.register(
         _usernameController.text,
         _passwordController.text,
@@ -113,9 +111,7 @@ class RegisterPageState extends State<RegisterPage> {
       if (registerResponse.statusCode == 0) {
         Navigator.pop(context);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('注册失败，请检查输入或网络连接。')),
-        );
+        _showErrorToast('注册失败: ${registerResponse.statusMsg}');
       }
     } catch (e) {
       logger.e('Exception occurred during registration');
@@ -127,10 +123,21 @@ class RegisterPageState extends State<RegisterPage> {
         logger.e('gRPC error trailers: ${e.trailers}');
         logger.e('gRPC error message: ${e.message}');
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('注册失败: $e')),
-      );
+      _showErrorToast('注册失败: $e');
     }
+  }
+
+  // 显示错误提示
+  void _showErrorToast(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      timeInSecForIosWeb: 1,
+      backgroundColor: Colors.red,
+      textColor: Colors.white,
+      fontSize: 16.0,
+    );
   }
 
   @override

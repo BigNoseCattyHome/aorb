@@ -32,7 +32,7 @@ func RegisterUser(newUser *user.User) error {
 	log.Infof("Attempting to register user: %s", newUser.Username)
 
 	// 注册用户的逻辑
-	isExistUser, err := getUserByUsername(newUser.Username)
+	isExistUser, err := checkUsernameExists(newUser.Username)
 	if err != nil {
 		log.Errorf("while checking existing user: %v", err)
 		return fmt.Errorf("while checking existing user: %w", err)
@@ -116,7 +116,7 @@ func storeUser(user *user.User) error {
 func AuthenticateUser(ctx context.Context, user *auth.LoginRequest) (string, int64, string, *auth.SimpleUser, error) {
 	// 检查用户是否存在
 	log.Debug("user: ", user)
-	storedUser, err := getUserByID(user.Username)
+	storedUser, err := getUserByUsername(user.Username)
 	log.Info("storedUser: ", storedUser)
 	if err != nil {
 		log.Error("Failed to get user from database: ", err)
@@ -175,7 +175,7 @@ func AuthenticateUser(ctx context.Context, user *auth.LoginRequest) (string, int
 }
 
 // 从数据库获取用户
-func getUserByID(userName string) (*user.User, error) {
+func getUserByUsername(userName string) (*user.User, error) {
 	res := &user.User{} // 返回指针
 
 	// 使用 ObjectID 进行查询
@@ -185,7 +185,7 @@ func getUserByID(userName string) (*user.User, error) {
 	err := result.Decode(res)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			log.Println("No user found with ID: ", userName)
+			log.Println("No user found with username: ", userName)
 		} else {
 			log.Println("Failed to decode result: ", err)
 		}
@@ -197,7 +197,7 @@ func getUserByID(userName string) (*user.User, error) {
 
 // 查询是否username已经存在
 // 只有在数据库查询的时候遇到除了mongo.ErrNoDocuments之外的错误才会返回错误
-func getUserByUsername(username string) (bool, error) {
+func checkUsernameExists(username string) (bool, error) {
 	collection := database.MongoDbClient.Database("aorb").Collection("users")
 
 	// 查询用户

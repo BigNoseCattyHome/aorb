@@ -74,6 +74,15 @@ func (a AuthServiceImpl) Login(ctx context.Context, request *auth.LoginRequest) 
 	// 调用服务
 	token, exp_token, refresh_token, simple_user, err := services.AuthenticateUser(ctx, &login_request)
 	if err != nil {
+		// 当出现预期中的错误（用户帐号密码错误）的时候，返回错误信息
+		if err.Error() == "invalid password" || err.Error() == "failed to get user from database" {
+			return &auth.LoginResponse{
+				StatusCode: strings.AuthUserLoginFailedCode,
+				StatusMsg:  strings.AuthUserLoginFailed,
+			}, nil
+		}
+
+		// 出现预期外的错误，返回错误信息
 		return nil, status.Errorf(codes.Unauthenticated, "login failed: %v", err)
 	}
 	log.Debug("simple_user: ", simple_user)

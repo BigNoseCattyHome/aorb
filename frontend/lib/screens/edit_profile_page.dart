@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:aorb/generated/user.pb.dart';
 import 'package:aorb/services/user_service.dart';
 import 'package:aorb/utils/image_upload.dart';
 import 'dart:io';
+
+import 'package:shared_preferences/shared_preferences.dart';
 
 class EditProfilePage extends StatefulWidget {
   final User user;
@@ -189,6 +192,10 @@ class EditProfilePageState extends State<EditProfilePage> {
         onSave(result);
         _updateUser();
       });
+
+      // 更新shared_preferences
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      prefs.setString(type, initialValue);
     }
   }
 
@@ -216,11 +223,14 @@ class EditProfilePageState extends State<EditProfilePage> {
       final File file = File(image.path);
       final size = file.lengthSync();
       if (size > 5 * 1024 * 1024) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('图片大小不能超过 5MB'),
-            duration: Duration(seconds: 2),
-          ),
+        Fluttertoast.showToast(
+          msg: '图片大小不能超过 5MB',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.blue,
+          textColor: Colors.white,
+          fontSize: 16.0,
         );
         return;
       }
@@ -230,6 +240,11 @@ class EditProfilePageState extends State<EditProfilePage> {
       // 将图片上传到图床
       final imageUrl = await ImageUploadService()
           .uploadImage(File(image.path), '${field}_${_user.username}');
+
+      // 更新shared_preferences
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      prefs.setString(field, imageUrl);
+
       // 更新用户信息
       setState(() {
         switch (field) {
@@ -243,6 +258,7 @@ class EditProfilePageState extends State<EditProfilePage> {
             _user.bgpicPollcard = imageUrl;
             break;
         }
+        if (field == 'avatar') {}
         _updateUser();
       });
       // 构建UpdateUserRequest

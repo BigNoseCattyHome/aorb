@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:aorb/services/poll_service.dart';
 import 'package:aorb/generated/poll.pb.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ContentPublishPage extends StatefulWidget {
@@ -170,11 +171,14 @@ class ContentPublishPageState extends State<ContentPublishPage>
                 if (response.statusCode == 0) {
                   Navigator.pop(context);
                 } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(response.statusMsg),
-                      duration: const Duration(seconds: 2),
-                    ),
+                  Fluttertoast.showToast(
+                    msg: response.statusMsg,
+                    toastLength: Toast.LENGTH_SHORT,
+                    gravity: ToastGravity.BOTTOM,
+                    timeInSecForIosWeb: 1,
+                    backgroundColor: Colors.red,
+                    textColor: Colors.white,
+                    fontSize: 16.0,
                   );
                 }
               });
