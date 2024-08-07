@@ -7,7 +7,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	redisUtil "github.com/BigNoseCattyHome/aorb/backend/utils/storage/redis"
 	"github.com/redis/go-redis/v9"
 	"time"
@@ -44,10 +43,6 @@ func exitOnError(err error) {
 	if err != nil {
 		panic(err)
 	}
-}
-
-func actionCommentLimitKey(username string) string {
-	return fmt.Sprintf("%s-%s", actionCommentLimitKeyPrefix, username)
 }
 
 type CommentServiceImpl struct {
@@ -105,7 +100,7 @@ func (c CommentServiceImpl) ActionComment(ctx context.Context, request *commentP
 		"comment_uuid": request.GetCommentUuid(),
 	}).Debugf("Process start")
 
-	var pCommentId string
+	var pCommentUuid string
 	var pCommentText string
 
 	switch request.ActionType {
@@ -113,7 +108,7 @@ func (c CommentServiceImpl) ActionComment(ctx context.Context, request *commentP
 		pCommentText = request.GetCommentText()
 		break
 	case commentPb.ActionCommentType_ACTION_COMMENT_TYPE_DELETE:
-		pCommentId = request.GetCommentUuid()
+		pCommentUuid = request.GetCommentUuid()
 		break
 	case commentPb.ActionCommentType_ACTION_COMMENT_TYPE_UNSPECIFIED:
 		fallthrough
@@ -185,7 +180,7 @@ func (c CommentServiceImpl) ActionComment(ctx context.Context, request *commentP
 	case commentPb.ActionCommentType_ACTION_COMMENT_TYPE_ADD:
 		resp, err = addComment(ctx, logger, span, request.Username, request.PollUuid, pCommentText)
 	case commentPb.ActionCommentType_ACTION_COMMENT_TYPE_DELETE:
-		resp, err = deleteComment(ctx, logger, span, request.Username, request.PollUuid, pCommentId)
+		resp, err = deleteComment(ctx, logger, span, request.Username, request.PollUuid, pCommentUuid)
 	}
 
 	if err != nil {
@@ -222,7 +217,7 @@ func (c CommentServiceImpl) ListComment(ctx context.Context, request *commentPb.
 	key := request.PollUuid
 
 	// 从redis中获取数据
-	redisResult, err := redisUtil.RedisClient.Get(ctx, key).Result()
+	redisResult, err := redisUtil.RedisCommentClient.Get(ctx, key).Result()
 	if err != nil && !errors.Is(err, redis.Nil) {
 		logger.WithFields(logrus.Fields{
 			"err": err,
@@ -335,7 +330,7 @@ func (c CommentServiceImpl) ListComment(ctx context.Context, request *commentPb.
 		}
 		return
 	}
-	err = redisUtil.RedisClient.Set(ctx, key, string(jsonBytes), time.Hour).Err()
+	err = redisUtil.RedisCommentClient.Set(ctx, key, string(jsonBytes), time.Hour).Err()
 	if err != nil {
 		logger.WithFields(logrus.Fields{
 			"err": err,
