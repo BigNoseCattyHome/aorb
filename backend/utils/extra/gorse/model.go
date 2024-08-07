@@ -4,8 +4,8 @@ import "time"
 
 type Feedback struct {
 	FeedbackType string `json:"FeedbackType"`
-	UserId       string `json:"UserId"`
-	ItemId       string `json:"ItemId"`
+	Username     string `json:"Username"`
+	ItemUuid     string `json:"ItemUuid"`
 	Timestamp    string `json:"Timestamp"`
 }
 
@@ -48,7 +48,7 @@ type UserPatch struct {
 }
 
 type Item struct {
-	ItemId     string   `json:"ItemId"`
+	ItemUuid   string   `json:"ItemUuid"`
 	IsHidden   bool     `json:"IsHidden"`
 	Labels     []string `json:"Labels"`
 	Categories []string `json:"Categories"`

@@ -1,0 +1,53 @@
+syntax = "proto3";
+package rpc.message;
+
+option go_package = "github.com/BigNoseCattyHome/aorb/backend/rpc/message;message";
+
+import "google/protobuf/timestamp.proto";
+
+enum ActionMessageType{
+  ACTION_MESSAGE_TYPE_UNSPECIFIED = 0;
+  ACTION_MESSAGE_TYPE_ADD = 1;
+  ACTION_MESSAGE_TYPE_DELETE = 2;
+}
+
+message Message{
+  string message_uuid = 1;
+  string from_username = 2;
+  string to_username = 3;
+  string content = 4;
+  google.protobuf.Timestamp create_at = 5;
+}
+
+message MessageChatRequest {
+  string from_username = 1;
+  string to_username = 2;
+  // 这里可以根据上次更新的时间来获取
+}
+
+message MessageChatResponse {
+  int32 status_code = 1;  // 状态码，0-成功，其他值-失败
+  string status_msg = 2;  // 返回状态描述
+  repeated Message message_list = 3;
+}
+
+message MessageActionRequest {
+  string from_username = 1;
+  string to_username = 2;
+  ActionMessageType action_type = 3;
+  oneof action {
+    string message_uuid = 4;
+    string message_content = 5;
+  }
+}
+
+message MessageActionResponse {
+  int32 status_code = 1;  // 状态码，0-成功，其他值-失败
+  string status_msg = 2;  // 返回状态描述
+  Message message = 3;
+}
+
+service MessageService {
+  rpc MessageChat(MessageChatRequest) returns (MessageChatResponse);
+  rpc MessageAction(MessageActionRequest) returns (MessageActionResponse);
+}

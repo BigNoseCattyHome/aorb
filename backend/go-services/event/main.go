@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"strconv"
 	"sync"
 	"time"
 
@@ -123,11 +122,11 @@ func Consume(ch *amqp.Channel, queueName string) {
 				types = "read"
 			}
 			var feedbacks []gorse.Feedback
-			for _, id := range raw.PollId {
+			for _, uuid := range raw.PollUuid {
 				feedbacks = append(feedbacks, gorse.Feedback{
 					FeedbackType: types,
-					UserId:       strconv.Itoa(int(raw.ActorId)),
-					ItemId:       strconv.Itoa(int(id)),
+					Username:     raw.Username,
+					ItemUuid:     uuid,
 					Timestamp:    time.Now().UTC().Format(time.RFC3339),
 				})
 			}
@@ -139,7 +138,7 @@ func Consume(ch *amqp.Channel, queueName string) {
 				logging.SetSpanError(span, err)
 			}
 			logger.WithFields(logrus.Fields{
-				"ids": raw.PollId,
+				"uuids": raw.PollUuid,
 			}).Infof("Event dealt with type 1")
 			span.End()
 			err = d.Ack(false)
@@ -158,11 +157,11 @@ func Consume(ch *amqp.Channel, queueName string) {
 				//	types = "favorite"
 			}
 			var feedbacks []gorse.Feedback
-			for _, id := range raw.PollId {
+			for _, uuid := range raw.PollUuid {
 				feedbacks = append(feedbacks, gorse.Feedback{
 					FeedbackType: types,
-					UserId:       strconv.Itoa(int(raw.ActorId)),
-					ItemId:       strconv.Itoa(int(id)),
+					Username:     raw.Username,
+					ItemUuid:     uuid,
 					Timestamp:    time.Now().UTC().Format(time.RFC3339),
 				})
 			}
@@ -174,7 +173,7 @@ func Consume(ch *amqp.Channel, queueName string) {
 				logging.SetSpanError(span, err)
 			}
 			logger.WithFields(logrus.Fields{
-				"ids": raw.PollId,
+				"uuids": raw.PollUuid,
 			}).Infof("Event dealt with type 2")
 			span.End()
 			err = d.Ack(false)
@@ -186,9 +185,9 @@ func Consume(ch *amqp.Channel, queueName string) {
 			}
 		case 3:
 			var items []gorse.Item
-			for _, id := range raw.PollId {
+			for _, uuid := range raw.PollUuid {
 				items = append(items, gorse.Item{
-					ItemId:     strconv.Itoa(int(id)),
+					ItemUuid:   uuid,
 					IsHidden:   false,
 					Labels:     raw.Tag,
 					Categories: raw.Category,
@@ -204,7 +203,7 @@ func Consume(ch *amqp.Channel, queueName string) {
 				logging.SetSpanError(span, err)
 			}
 			logger.WithFields(logrus.Fields{
-				"ids":     raw.PollId,
+				"uuids":   raw.PollUuid,
 				"tag":     raw.Tag,
 				"comment": raw.Title,
 			}).Infof("Event dealt with type 3")

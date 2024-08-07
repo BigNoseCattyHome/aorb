@@ -51,7 +51,7 @@ func ScanGet(ctx context.Context, key string, obj interface{}, collectionName st
 		"key": key,
 	}).Infof("Missed local memory cached")
 
-	if err := redis.Client.HGetAll(ctx, key).Scan(obj); err != nil {
+	if err := redis.RedisCommentClient.HGetAll(ctx, key).Scan(obj); err != nil {
 		if err != redis2.Nil {
 			logger.WithFields(logrus.Fields{
 				"key": key,
@@ -85,7 +85,7 @@ func ScanGet(ctx context.Context, key string, obj interface{}, collectionName st
 		return false, errors.New("Missed DB obj, seems wrong key")
 	}
 
-	if result := redis.Client.HSet(ctx, key, obj); result.Err() != nil {
+	if result := redis.RedisCommentClient.HSet(ctx, key, obj); result.Err() != nil {
 		logger.WithFields(logrus.Fields{
 			"err": result.Err(),
 			"key": key,
@@ -105,7 +105,7 @@ func ScanTagDelete(ctx context.Context, key string, obj interface{}) {
 	logging.SetSpanWithHostname(span)
 	key = config.Conf.Redis.Prefix + key
 
-	redis.Client.HDel(ctx, key)
+	redis.RedisCommentClient.HDel(ctx, key)
 
 	c := getOrCreateCache(key)
 	wrappedObj := obj.(cachedItem)
@@ -127,7 +127,7 @@ func ScanWriteCache(ctx context.Context, key string, obj interface{}, state bool
 	c.Set(key, reflect.ValueOf(obj).Elem(), cache.DefaultExpiration)
 
 	if state {
-		if err = redis.Client.HGetAll(ctx, key).Scan(obj); err != nil {
+		if err = redis.RedisCommentClient.HGetAll(ctx, key).Scan(obj); err != nil {
 			logger.WithFields(logrus.Fields{
 				"err": err,
 				"key": key,
@@ -158,7 +158,7 @@ func Get(ctx context.Context, key string) (string, bool, error) {
 	}).Infof("Missed local memory cached")
 
 	var result *redis2.StringCmd
-	if result = redis.Client.Get(ctx, key); result.Err() != nil && result.Err() != redis2.Nil {
+	if result = redis.RedisCommentClient.Get(ctx, key); result.Err() != nil && result.Err() != redis2.Nil {
 		logger.WithFields(logrus.Fields{
 			"err":    result.Err(),
 			"string": key,
@@ -217,7 +217,7 @@ func Write(ctx context.Context, key string, value string, state bool) {
 	c.Set(key, value, cache.DefaultExpiration)
 
 	if state {
-		redis.Client.Set(ctx, key, value, 120*time.Hour+time.Duration(rand.Intn(redisRandomScope))*time.Second)
+		redis.RedisCommentClient.Set(ctx, key, value, 120*time.Hour+time.Duration(rand.Intn(redisRandomScope))*time.Second)
 	}
 }
 
@@ -232,7 +232,7 @@ func TagDelete(ctx context.Context, key string) {
 	c := getOrCreateCache("strings")
 	c.Delete(key)
 
-	redis.Client.Del(ctx, key)
+	redis.RedisCommentClient.Del(ctx, key)
 }
 
 // 从本地缓存中获取指定的键值对的值(一个缓存实例)，如果没有就新建一个
@@ -274,7 +274,7 @@ func CacheAndRedisGet(ctx context.Context, key string, obj interface{}) (bool, e
 		"key": key,
 	}).Infof("Missed local memory cached")
 
-	if err := redis.Client.HGetAll(ctx, key).Scan(obj); err != nil {
+	if err := redis.RedisCommentClient.HGetAll(ctx, key).Scan(obj); err != nil {
 		logger.WithFields(logrus.Fields{
 			"err": err,
 			"key": key,
