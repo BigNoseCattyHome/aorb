@@ -4,10 +4,10 @@ option go_package = "github.com/BigNoseCattyHome/aorb/backend/rpc/user;user";
 import "google/protobuf/timestamp.proto";
 
 message User {
-  string id = 1; // 用户ID,等于插入数据库后的_id中的$oid
-  string username = 2; // 用户登录名
+  string id = 1; // 用户ID,等于插入数据库后的_id中的$oid，用于表示用户进行查询等操作，不可修改
+  string username = 2; // 用户登录名，用于登录，可修改
   string avatar = 3; // 用户头像
-  string nickname = 4; // 用户昵称
+  string nickname = 4; // 用户昵称，用于在各个页面显示
   Gender gender = 5; // 用户性别
 
   optional string password = 6; // 用户密码

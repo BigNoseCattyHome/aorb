@@ -1,4 +1,5 @@
 import 'package:aorb/generated/google/protobuf/timestamp.pb.dart';
+import 'package:aorb/screens/poll_detail_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
@@ -276,10 +277,14 @@ class PollCardState extends State<PollCard> {
 
   // 点击跳转到内容详情页面
   void onTapContent() {
-    Navigator.pushNamed(
+    Navigator.push(
       context,
-      '/poll_content',
-      arguments: {'postId': widget.pollId, 'userId': widget.userId},
+      MaterialPageRoute(
+        builder: (context) => PollDetailPage(
+          userId: widget.userId,
+          pollId: widget.pollId,
+        ),
+      ),
     );
   }
 

@@ -1,6 +1,10 @@
 import 'dart:ui';
+import 'package:aorb/utils/ip_locator.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
+import 'package:aorb/services/poll_service.dart';
+import 'package:aorb/generated/poll.pb.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ContentPublishPage extends StatefulWidget {
   const ContentPublishPage({super.key});
@@ -11,19 +15,50 @@ class ContentPublishPage extends StatefulWidget {
 
 class ContentPublishPageState extends State<ContentPublishPage>
     with SingleTickerProviderStateMixin {
-  List<String> options = ['选项1', '选项2'];
+  // 使用Map来存储选项,包含id和文本
+  List<Map<String, String>> options = [
+    {'id': '1', 'text': '选项1'},
+    {'id': '2', 'text': '选项2'}
+  ];
   bool isPublic = true;
   TextEditingController titleController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
   late AnimationController _animationController;
 
+  String ipaddress = '';
+  String username = '';
+
+  // 存储背景圆圈的信息
+  late List<Map<String, dynamic>> backgroundCircles;
+
   @override
-  void initState() {
+  void initState() async {
     super.initState();
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 500),
       vsync: this,
     );
+
+    // 在初始化时生成背景圆圈
+    _generateBackgroundCircles();
+
+    // 初始化IP地址和用户名
+    ipaddress = await IPLocationUtil.getProvince();
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    username = prefs.getString('username') ?? '';
+  }
+
+  // 生成背景圆圈的方法
+  void _generateBackgroundCircles() {
+    final random = Random();
+    backgroundCircles = List.generate(3, (index) {
+      return {
+        'size': random.nextDouble() * 300 + 100,
+        'left': random.nextDouble(),
+        'top': random.nextDouble(),
+        'color': random.nextBool() ? Colors.red : Colors.blue,
+      };
+    });
   }
 
   @override
@@ -68,9 +103,21 @@ class ContentPublishPageState extends State<ContentPublishPage>
   }
 
   Widget _buildBackground(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
     return Stack(
       children: [
-        ..._buildBackgroundCircles(context),
+        ...backgroundCircles.map((circle) => Positioned(
+              left: circle['left'] * screenSize.width,
+              top: circle['top'] * screenSize.height,
+              child: Container(
+                width: circle['size'],
+                height: circle['size'],
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: (circle['color'] as Color).withOpacity(0.7),
+                ),
+              ),
+            )),
         BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
           child: Container(
@@ -93,32 +140,6 @@ class ContentPublishPageState extends State<ContentPublishPage>
     );
   }
 
-  List<Widget> _buildBackgroundCircles(BuildContext context) {
-    final screenSize = MediaQuery.of(context).size;
-    final random = Random();
-    return List.generate(3, (index) {
-      final size = random.nextDouble() * 300 + 100;
-      final left = random.nextDouble() * screenSize.width;
-      final top = random.nextDouble() * screenSize.height;
-      final color = random.nextBool()
-          ? Colors.red.withOpacity(0.7)
-          : Colors.blue.withOpacity(0.7);
-
-      return Positioned(
-        left: left,
-        top: top,
-        child: Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: color,
-          ),
-        ),
-      );
-    });
-  }
-
   Widget _buildAppBar() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -131,7 +152,26 @@ class ContentPublishPageState extends State<ContentPublishPage>
           ),
           TextButton(
             onPressed: () {
-              // 实现发布功能
+              var poll = Poll()
+                ..title = titleController.text
+                ..content = descriptionController.text
+                ..pollType = isPublic ? "public" : "private"
+                ..options.addAll(options.map((option) => option['text']!))
+                ..ipaddress = ipaddress
+                ..username = username;
+              var request = CreatePollRequest()..poll = poll;
+              PollService().CreatePoll(request).then((response) {
+                if (response.statusCode == 0) {
+                  Navigator.pop(context);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(response.statusMsg),
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                }
+              });
             },
             style: TextButton.styleFrom(
               backgroundColor: const Color(0xFF1967DD),
@@ -214,34 +254,36 @@ class ContentPublishPageState extends State<ContentPublishPage>
     );
   }
 
-  Widget _buildOptionButton(String option, int index) {
+  Widget _buildOptionButton(Map<String, String> option, int index) {
     return Dismissible(
-      key: Key(option),
+      key: Key(option['id']!),
       direction: DismissDirection.endToStart,
       onDismissed: (direction) {
         setState(() {
-          options.removeAt(index);
+          options.removeWhere((item) => item['id'] == option['id']);
         });
       },
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
         color: Colors.transparent,
-        child:
-            const Icon(Icons.delete_forever_rounded, color: Colors.white, size: 30),
+        child: const Icon(Icons.delete_forever_rounded,
+            color: Colors.white, size: 30),
       ),
       child: GestureDetector(
         onTap: () {
-          _editOption(index);
+          _editOption(option['id']!);
         },
         child: Container(
           decoration: BoxDecoration(
-            color: index % 2 == 0 ? const Color(0xCCBE2F2F) : const Color(0xCC4376DB),
+            color: index % 2 == 0
+                ? const Color(0xCCBE2F2F)
+                : const Color(0xCC4376DB),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Center(
             child: Text(
-              option,
+              option['text']!,
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 24,
@@ -255,18 +297,22 @@ class ContentPublishPageState extends State<ContentPublishPage>
     );
   }
 
-  void _editOption(int index) {
+  void _editOption(String id) {
+    final optionIndex = options.indexWhere((item) => item['id'] == id);
+    if (optionIndex == -1) return;
+
     showDialog(
       context: context,
       builder: (context) {
-        String newOption = options[index];
+        String newOptionText = options[optionIndex]['text']!;
         return AlertDialog(
           title: const Text('编辑选项'),
           content: TextField(
             onChanged: (value) {
-              newOption = value;
+              newOptionText = value;
             },
-            controller: TextEditingController(text: options[index]),
+            controller:
+                TextEditingController(text: options[optionIndex]['text']),
           ),
           actions: [
             TextButton(
@@ -277,7 +323,7 @@ class ContentPublishPageState extends State<ContentPublishPage>
               child: const Text('确定'),
               onPressed: () {
                 setState(() {
-                  options[index] = newOption;
+                  options[optionIndex]['text'] = newOptionText;
                 });
                 Navigator.pop(context);
               },
@@ -292,7 +338,10 @@ class ContentPublishPageState extends State<ContentPublishPage>
     return GestureDetector(
       onTap: () {
         setState(() {
-          options.add('新选项');
+          options.add({
+            'id': DateTime.now().millisecondsSinceEpoch.toString(),
+            'text': '新选项'
+          });
         });
       },
       child: Container(

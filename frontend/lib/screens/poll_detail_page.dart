@@ -9,10 +9,9 @@ import 'package:aorb/widgets/poll_detail.dart';
 import 'package:aorb/generated/user.pbgrpc.dart';
 
 class PollDetailPage extends StatefulWidget {
-  final String username; // 用户ID
-  final String postUserId; // 这篇帖子发布者ID
-  const PollDetailPage(
-      {super.key, required this.postUserId, required this.username});
+  final String userId; // 用户Id，用于获取和博主的关注状态和用户信息
+  final String pollId; // 这篇帖子的uuid，用于获取帖子详情
+  const PollDetailPage({super.key, required this.pollId, required this.userId});
 
   @override
   PollDetailPageState createState() => PollDetailPageState();
@@ -32,7 +31,7 @@ class PollDetailPageState extends State<PollDetailPage>
 
     // 获取关注状态
     IsUserFollowingRequest requestFollow = IsUserFollowingRequest()
-      ..username = widget.username;
+      ..username = widget.userId;
     UserService().isUserFollowing(requestFollow).then((isFollowed) {
       setState(() {
         this.isFollowed = isFollowed;
@@ -40,7 +39,7 @@ class PollDetailPageState extends State<PollDetailPage>
     });
 
     // 获取用户信息: nickname, avatar
-    UserRequest request = UserRequest()..username = widget.username;
+    UserRequest request = UserRequest()..username = widget.userId;
     UserService().getUserInfo(request).then((response) {
       setState(() {
         user = response.user;
@@ -49,7 +48,7 @@ class PollDetailPageState extends State<PollDetailPage>
 
     // 获取投票详情
     PollService()
-        .GetPoll(GetPollRequest()..pollUuid = widget.postUserId)
+        .GetPoll(GetPollRequest()..pollUuid = widget.pollId)
         .then((pollResponse) {
       setState(() {
         poll = pollResponse.poll;
