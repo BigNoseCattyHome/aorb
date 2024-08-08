@@ -48,6 +48,8 @@ class LoginPageState extends State<LoginPage> {
 
   // 登录方法
   void _login() async {
+    if (!mounted) return;
+
     try {
       logger.d('用户名输入: ${_usernameController.text}');
       logger.d('密码输入: ${_passwordController.text}');
@@ -61,6 +63,7 @@ class LoginPageState extends State<LoginPage> {
         ..ipaddress = _ipaddress;
 
       final loginResponse = await _authService.login(request);
+      if (!mounted) return;
 
       logger.i('登录响应: $loginResponse');
 
@@ -78,6 +81,7 @@ class LoginPageState extends State<LoginPage> {
         _showErrorSnackBar(errorMessage);
       }
     } catch (e) {
+      if (!mounted) return;
       _showErrorSnackBar('登录失败: $e');
     }
   }
@@ -102,7 +106,7 @@ class LoginPageState extends State<LoginPage> {
       fontSize: 16.0,
     );
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

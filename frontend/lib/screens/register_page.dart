@@ -120,7 +120,7 @@ class RegisterPageState extends State<RegisterPage> {
         ipaddress: _province,
         avatar: '',
       );
-
+      if (!mounted) return;
       logger.i('registerResponse: $registerResponse');
       final endTime = DateTime.now();
       final duration = endTime.difference(startTime);
@@ -141,6 +141,7 @@ class RegisterPageState extends State<RegisterPage> {
       logger.e('Exception occurred during registration');
       logger.e('Error type: ${e.runtimeType}');
 
+      if (!mounted) return;
       if (e is GrpcError) {
         logger.e('gRPC error code: ${e.code}');
         logger.e('gRPC error details: ${e.details}');

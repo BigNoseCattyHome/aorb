@@ -1,4 +1,3 @@
-import 'package:aorb/utils/constant/err.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
@@ -36,10 +35,13 @@ class EditProfilePageState extends State<EditProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) async {
+        if (didPop) {
+          return;
+        }
         Navigator.pop(context, _user);
-        return false;
       },
       child: Scaffold(
         appBar: AppBar(
@@ -308,6 +310,48 @@ class EditTextPageState extends State<EditTextPage> {
     _controller = TextEditingController(text: widget.initialValue);
   }
 
+  Future<void> _saveChanges() async {
+    var request = UpdateUserRequest()..userId = widget.userId;
+    switch (widget.type) {
+      case 'nickname':
+        request.nickname = _controller.text;
+        break;
+      case 'bio':
+        request.bio = _controller.text;
+        break;
+      case 'username':
+        request.username = _controller.text;
+        break;
+    }
+
+    try {
+      final response = await UserService().updateUser(request);
+
+      if (!mounted) return;
+
+      if (response.statusCode == 0) {
+        Navigator.pop(context, _controller.text);
+      } else {
+        _showErrorToast(response.statusMsg);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      _showErrorToast('保存失败：$e');
+    }
+  }
+
+  void _showErrorToast(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      timeInSecForIosWeb: 1,
+      backgroundColor: Colors.red,
+      textColor: Colors.white,
+      fontSize: 16.0,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -319,48 +363,7 @@ class EditTextPageState extends State<EditTextPage> {
         iconTheme: const IconThemeData(color: Colors.black),
         actions: [
           TextButton(
-            onPressed: () async {
-              var request = UpdateUserRequest()..userId = widget.userId;
-              switch (widget.type) {
-                case 'nickname':
-                  request.nickname = _controller.text;
-                  break;
-                case 'bio':
-                  request.bio = _controller.text;
-                  break;
-                case 'username':
-                  request.username = _controller.text;
-                  break;
-              }
-
-              final response = await UserService().updateUser(request);
-
-              if (response.statusCode == 0) {
-                Navigator.pop(context, _controller.text);
-              } else if (response.statusCode == authUserExistedCode) {
-                // 显示用户名已存在的错误消息
-                Fluttertoast.showToast(
-                  msg: response.statusMsg,
-                  toastLength: Toast.LENGTH_SHORT,
-                  gravity: ToastGravity.BOTTOM,
-                  timeInSecForIosWeb: 1,
-                  backgroundColor: Colors.red,
-                  textColor: Colors.white,
-                  fontSize: 16.0,
-                );
-              } else {
-                // 显示其他错误消息
-                Fluttertoast.showToast(
-                  msg: response.statusMsg,
-                  toastLength: Toast.LENGTH_SHORT,
-                  gravity: ToastGravity.BOTTOM,
-                  timeInSecForIosWeb: 1,
-                  backgroundColor: Colors.red,
-                  textColor: Colors.white,
-                  fontSize: 16.0,
-                );
-              }
-            },
+            onPressed: _saveChanges,
             child: const Text('保存', style: TextStyle(color: Colors.blue)),
           ),
         ],

@@ -93,6 +93,36 @@ class MainPageState extends State<MainPage>
     });
   }
 
+  void _logout() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    // 从本地获取token
+    final accessToken = prefs.getString('authToken');
+    final refreshToken = prefs.getString('refreshToken');
+
+    // 检查 token 是否为 null
+    if (accessToken != null && refreshToken != null) {
+      // 退出登录
+      await AuthService().logout(accessToken, refreshToken);
+      await prefs.remove('authToken');
+      await prefs.remove('refreshToken');
+      await prefs.remove('username');
+      await prefs.remove('avatar');
+      await prefs.remove('nickname');
+      logger.i('user\'s login info cleared.');
+
+      if (!mounted) return;
+      // 退出登录后，刷新页面
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const MainPage()),
+        (Route<dynamic> route) => false,
+      );
+    } else {
+      // 处理 token 为 null 的情况，例如显示错误信息
+      logger.e('Token is null');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -132,33 +162,7 @@ class MainPageState extends State<MainPage>
               ListTile(
                 leading: const Icon(Icons.logout),
                 title: const Text('退出登录'),
-                onTap: () async {
-                  final prefs = await SharedPreferences.getInstance();
-                  // 从本地获取token
-                  final accessToken = prefs.getString('authToken');
-                  final refreshToken = prefs.getString('refreshToken');
-
-                  // 检查 token 是否为 null
-                  if (accessToken != null && refreshToken != null) {
-                    // 退出登录
-                    await AuthService().logout(accessToken, refreshToken);
-                    await prefs.remove('authToken');
-                    await prefs.remove('refreshToken');
-                    await prefs.remove('username');
-                    await prefs.remove('avatar');
-                    await prefs.remove('nickname');
-                    logger.i('user\'s login info cleared.');
-
-                    // 退出登录后，刷新页面
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (context) => const MainPage()),
-                      (Route<dynamic> route) => false,
-                    );
-                  } else {
-                    // 处理 token 为 null 的情况，例如显示错误信息
-                    logger.e('Token is null');
-                  }
-                },
+                onTap: _logout,
               ),
           ],
         ),
