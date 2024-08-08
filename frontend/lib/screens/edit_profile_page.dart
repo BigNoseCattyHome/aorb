@@ -35,13 +35,10 @@ class EditProfilePageState extends State<EditProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      onPopInvoked: (didPop) async {
-        if (didPop) {
-          return;
-        }
+     return WillPopScope(
+      onWillPop: () async {
         Navigator.pop(context, _user);
+        return false;
       },
       child: Scaffold(
         appBar: AppBar(

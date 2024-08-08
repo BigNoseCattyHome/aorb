@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/BigNoseCattyHome/aorb/backend/go-services/user/conf"
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/user"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/strings"
@@ -141,9 +142,29 @@ func UpdateUserInService(ctx context.Context, userId string, updateFields map[st
 				log.Error("Failed to delete image: ", err)
 				return nil, err
 			}
+			result, err := collection.UpdateOne(ctx, bson.M{"id": userId}, bson.M{"$set": bson.M{field: updateFields[field].(*user.SmmsResponse).Url}})
+			if err != nil {
+				log.Error("Failed to update user: ", err)
+				return nil, err
+			}
+
+			// 检查是否有文档被更新
+			if result.ModifiedCount == 0 {
+				log.Warn("No user was updated")
+				return &user.UpdateUserResponse{
+					StatusCode: strings.NoUserUpdatedErrorCode,
+					StatusMsg:  strings.NoUserUpdatedError,
+				}, nil
+			}
+
+			return &user.UpdateUserResponse{
+				StatusCode: strings.ServiceOKCode,
+				StatusMsg:  strings.ServiceOK,
+			}, nil
 		}
 	}
 
+	// 非图片的使用这个更新语句
 	// 使用 userId 作为过滤条件, 这里只更新了用户信息
 	result, err := collection.UpdateOne(ctx, bson.M{"id": userId}, bson.M{"$set": updateFields})
 	if err != nil {
@@ -160,12 +181,10 @@ func UpdateUserInService(ctx context.Context, userId string, updateFields map[st
 		}, nil
 	}
 
-	resp = &user.UpdateUserResponse{
+	return &user.UpdateUserResponse{
 		StatusCode: strings.ServiceOKCode,
 		StatusMsg:  strings.ServiceOK,
-	}
-
-	return resp, nil
+	}, nil
 }
 
 // checkUserExistsbyUsername 检查用户名是否存在，内部方法
@@ -183,6 +202,11 @@ func checkUserExistsbyUsername(username string) (bool, error) {
 // deleteImage 删除 sm.ms 图床上的图片
 // 根据 userid 查询对应的文档，然后删除 $field 字段的图片
 func deleteImage(userId, field string, picdata *user.SmmsResponse) error {
+	// 如果是默认的图片，直接返回
+	if picdata.Url == conf.DefaultBgpicMe || picdata.Url == conf.DefaultBgpicPollcard {
+		return nil
+	}
+
 	// 根据userid和field进行查询旧的图片的信息
 	collection := database.MongoDbClient.Database("aorb").Collection("pictures")
 	filter := bson.M{"userid": userId, "type": field}
