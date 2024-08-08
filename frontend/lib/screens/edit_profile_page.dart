@@ -258,7 +258,6 @@ class EditProfilePageState extends State<EditProfilePage> {
             _user.bgpicPollcard = imageUrl;
             break;
         }
-        if (field == 'avatar') {}
         _updateUser();
       });
       // 构建UpdateUserRequest

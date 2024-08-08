@@ -43,7 +43,10 @@ class MainPageState extends State<MainPage>
           avatar = prefs.getString('avatar') ?? '';
           logger.d('username: $username');
           logger.d('avatar: $avatar');
-          _pages[2] = MePage(username: username);
+          _pages[2] = MePage(
+            username: username,
+            onAvatarUpdated: updateAvatar, // 传递更新头像的方法给 MePage
+          );
         });
       }
     } catch (e) {
@@ -71,6 +74,12 @@ class MainPageState extends State<MainPage>
 
     // 异步获取登录状态
     _initializeData();
+  }
+
+  void updateAvatar(String newAvatar) {
+    setState(() {
+      avatar = newAvatar;
+    });
   }
 
   // 底部导航栏切换

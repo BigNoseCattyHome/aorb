@@ -7,7 +7,10 @@ import 'package:aorb/generated/user.pbgrpc.dart';
 
 class MePage extends StatefulWidget {
   final String username;
-  const MePage({super.key, required this.username});
+  final Function(String) onAvatarUpdated; // 新增：用于通知 MainPage 头像已更新
+
+  const MePage(
+      {super.key, required this.username, required this.onAvatarUpdated});
 
   @override
   MePageState createState() => MePageState();
@@ -39,6 +42,10 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
     setState(() {
       user = updatedUser;
     });
+    // 如果头像更新了，通知 MainPage
+    if (user.avatar != widget.onAvatarUpdated.toString()) {
+      widget.onAvatarUpdated(user.avatar);
+    }
   }
 
   @override
