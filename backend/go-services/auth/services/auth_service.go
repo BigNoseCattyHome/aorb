@@ -41,6 +41,8 @@ func RegisterUser(newUser *user.User) error {
 		log.Warnf("User already exists: %s", newUser.Username)
 		return errors.New("username has been registered")
 	}
+
+	// 其他字段的初始化
 	coins := float64(0)
 	newUser.Coins = &coins
 	newUser.Blacklist = &user.BlackList{

@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/user"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
@@ -121,11 +122,11 @@ func UpdateUserInService(ctx context.Context, userId string, updateFields map[st
 			log.Error("Failed to check username existence: ", err)
 			return nil, err
 		}
+
+		// 如果存在同名用户，返回错误，到最顶层处理
 		if exists {
-			return &user.UpdateUserResponse{
-				StatusCode: strings.UserAlreadyExistsErrorCode,
-				StatusMsg:  strings.UserAlreadyExistsError,
-			}, nil
+			log.Warn("Username already exists: ", username)
+			return nil, errors.New("username already exists")
 		}
 	}
 

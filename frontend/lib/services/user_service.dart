@@ -1,4 +1,5 @@
 import 'package:aorb/conf/config.dart';
+import 'package:aorb/utils/constant/err.dart';
 import 'package:grpc/grpc.dart';
 import 'package:aorb/generated/user.pbgrpc.dart';
 
@@ -26,18 +27,23 @@ class UserService {
       final UserResponse response = await _client.getUserInfo(request);
 
       if (response.statusCode == 0) {
-        logger.i('成功获取用户 ${request.username} 的信息');
+        logger.i(
+            'Successfully retrieved information for user ${request.username}');
         return response;
       } else {
-        logger.w('获取用户 ${request.username} 信息失败: ${response.statusMsg}');
-        throw Exception('获取用户 ${request.username} 信息失败: ${response.statusMsg}');
+        logger.w(
+            'Failed to retrieve information for user ${request.username}: ${response.statusMsg}');
+        throw Exception(
+            'Failed to retrieve information for user ${request.username}: ${response.statusMsg}');
       }
     } on GrpcError catch (e) {
-      logger.e('获取用户信息时发生gRPC错误: ${e.message}');
-      throw Exception('获取用户信息失败: ${e.message}');
+      logger.e(
+          'gRPC error occurred while retrieving user information: ${e.message}');
+      throw Exception('Failed to retrieve user information: ${e.message}');
     } catch (e) {
-      logger.e('获取用户信息时发生意外错误: $e');
-      throw Exception('获取用户信息失败: $e');
+      logger
+          .e('Unexpected error occurred while retrieving user information: $e');
+      throw Exception('Failed to retrieve user information: $e');
     }
   }
 
@@ -47,19 +53,21 @@ class UserService {
       final UserExistResponse response = await _client.checkUserExists(request);
 
       if (response.statusCode == 0) {
-        logger.i('成功检查用户 ${request.username} 是否存在');
+        logger.i('Successfully checked if user ${request.username} exists');
         return response;
       } else {
-        logger.w('检查用户 ${request.username} 是否存在失败: ${response.statusMsg}');
+        logger.w(
+            'Failed to check if user ${request.username} exists: ${response.statusMsg}');
         throw Exception(
-            '检查用户 ${request.username} 是否存在失败: ${response.statusMsg}');
+            'Failed to check if user ${request.username} exists: ${response.statusMsg}');
       }
     } on GrpcError catch (e) {
-      logger.e('检查用户是否存在时发生gRPC错误: ${e.message}');
-      throw Exception('检查用户是否存在失败: ${e.message}');
+      logger
+          .e('gRPC error occurred while checking if user exists: ${e.message}');
+      throw Exception('Failed to check if user exists: ${e.message}');
     } catch (e) {
-      logger.e('检查用户是否存在时发生意外错误: $e');
-      throw Exception('检查用户是否存在失败: $e');
+      logger.e('Unexpected error occurred while checking if user exists: $e');
+      throw Exception('Failed to check if user exists: $e');
     }
   }
 
@@ -70,20 +78,23 @@ class UserService {
           await _client.isUserFollowing(request);
 
       if (response.statusCode == 0) {
-        logger.i('成功检查用户 ${request.username} 是否关注 ${request.targetUsername}');
+        logger.i(
+            'Successfully checked if user ${request.username} is following ${request.targetUsername}');
         return response.isFollowing;
       } else {
         logger.w(
-            '检查用户 ${request.username} 是否关注 ${request.targetUsername} 失败: ${response.statusMsg}');
+            'Failed to check if user ${request.username} is following ${request.targetUsername}: ${response.statusMsg}');
         throw Exception(
-            '检查用户 ${request.username} 是否关注 ${request.targetUsername} 失败: ${response.statusMsg}');
+            'Failed to check if user ${request.username} is following ${request.targetUsername}: ${response.statusMsg}');
       }
     } on GrpcError catch (e) {
-      logger.e('检查用户关注状态时发生gRPC错误: ${e.message}');
-      throw Exception('检查用户关注状态失败: ${e.message}');
+      logger.e(
+          'gRPC error occurred while checking user follow status: ${e.message}');
+      throw Exception('Failed to check user follow status: ${e.message}');
     } catch (e) {
-      logger.e('检查用户关注状态时发生意外错误: $e');
-      throw Exception('检查用户关注状态失败: $e');
+      logger
+          .e('Unexpected error occurred while checking user follow status: $e');
+      throw Exception('Failed to check user follow status: $e');
     }
   }
 
@@ -91,23 +102,27 @@ class UserService {
   // 图片在调用方法的时候上传图床，只用传递一个 UpdateUserRequest 对象
   Future<UpdateUserResponse> updateUser(UpdateUserRequest request) async {
     try {
-      // 调用gRPC接口更新用户信息
       final UpdateUserResponse response = await _client.updateUser(request);
-
-      // 根据返回的状态码判断是否成功
       if (response.statusCode == 0) {
-        logger.i('成功编辑用户 ${request.userId} 的信息');
-        return response;
+        logger.i('Successfully updated information for user ${request.userId}');
+      } else if (response.statusCode == authUserExistedCode) {
+        logger.w('Username ${request.username} already exists');
       } else {
-        logger.w('编辑用户 ${request.username} 信息失败: ${response.statusMsg}');
-        throw Exception('编辑用户 ${request.username} 信息失败: ${response.statusMsg}');
+        logger.w(
+            'Failed to update information for user ${request.username}: ${response.statusMsg}');
       }
+      return response;
     } on GrpcError catch (e) {
-      logger.e('更新用户信息时发生gRPC错误: ${e.message}');
-      throw Exception('编辑用户信息失败: ${e.message}');
+      logger.e(
+          'gRPC error occurred while updating user information: ${e.message}');
+      return UpdateUserResponse()
+        ..statusCode = -1
+        ..statusMsg = 'Failed to update user information: ${e.message}';
     } catch (e) {
-      logger.e('更新用户信息时发生意外错误: $e');
-      throw Exception('编辑用户信息失败: $e');
+      logger.e('Unexpected error occurred while updating user information: $e');
+      return UpdateUserResponse()
+        ..statusCode = -1
+        ..statusMsg = 'Failed to update user information: $e';
     }
   }
 }

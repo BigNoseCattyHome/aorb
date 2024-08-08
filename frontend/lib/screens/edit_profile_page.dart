@@ -1,3 +1,4 @@
+import 'package:aorb/utils/constant/err.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
@@ -318,9 +319,8 @@ class EditTextPageState extends State<EditTextPage> {
         iconTheme: const IconThemeData(color: Colors.black),
         actions: [
           TextButton(
-            onPressed: () {
-              var request = UpdateUserRequest();
-              request.userId = widget.userId;
+            onPressed: () async {
+              var request = UpdateUserRequest()..userId = widget.userId;
               switch (widget.type) {
                 case 'nickname':
                   request.nickname = _controller.text;
@@ -332,8 +332,34 @@ class EditTextPageState extends State<EditTextPage> {
                   request.username = _controller.text;
                   break;
               }
-              UserService().updateUser(request);
-              Navigator.pop(context, _controller.text);
+
+              final response = await UserService().updateUser(request);
+
+              if (response.statusCode == 0) {
+                Navigator.pop(context, _controller.text);
+              } else if (response.statusCode == authUserExistedCode) {
+                // 显示用户名已存在的错误消息
+                Fluttertoast.showToast(
+                  msg: response.statusMsg,
+                  toastLength: Toast.LENGTH_SHORT,
+                  gravity: ToastGravity.BOTTOM,
+                  timeInSecForIosWeb: 1,
+                  backgroundColor: Colors.red,
+                  textColor: Colors.white,
+                  fontSize: 16.0,
+                );
+              } else {
+                // 显示其他错误消息
+                Fluttertoast.showToast(
+                  msg: response.statusMsg,
+                  toastLength: Toast.LENGTH_SHORT,
+                  gravity: ToastGravity.BOTTOM,
+                  timeInSecForIosWeb: 1,
+                  backgroundColor: Colors.red,
+                  textColor: Colors.white,
+                  fontSize: 16.0,
+                );
+              }
             },
             child: const Text('保存', style: TextStyle(color: Colors.blue)),
           ),

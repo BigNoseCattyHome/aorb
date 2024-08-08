@@ -6,6 +6,7 @@ import (
 	"github.com/BigNoseCattyHome/aorb/backend/go-services/user/services"
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/user"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
+	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/strings"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/logging"
 )
 
@@ -109,6 +110,14 @@ func (a UserServiceImpl) UpdateUser(ctx context.Context, request *user.UpdateUse
 	resp, err = services.UpdateUserInService(ctx, userId, updateFields)
 	if err != nil {
 		log.Error("Failed to update user: ", err)
+
+		// 如果用户已经存在，返回错误信息
+		if err.Error() == "username already exists" {
+			return &user.UpdateUserResponse{
+				StatusCode: strings.AuthUserExistedCode,
+				StatusMsg:  strings.AuthUserExisted,
+			}, nil
+		}
 		return nil, err
 	}
 
