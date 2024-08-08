@@ -241,24 +241,24 @@ class EditProfilePageState extends State<EditProfilePage> {
 
     if (image != null) {
       // 将图片上传到图床
-      final imageUrl = await ImageUploadService()
-          .uploadImage(File(image.path), '${field}_${_user.username}');
+      final smmsResponse = await ImageUploadService()
+          .uploadImage(File(image.path), field, _user.id);
 
       // 更新shared_preferences
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      prefs.setString(field, imageUrl);
+      prefs.setString(field, smmsResponse.url);
 
       // 更新用户信息
       setState(() {
         switch (field) {
           case 'avatar':
-            _user.avatar = imageUrl;
+            _user.avatar = smmsResponse.url;
             break;
           case 'bgpicMe':
-            _user.bgpicMe = imageUrl;
+            _user.bgpicMe = smmsResponse.url;
             break;
           case 'bgpicPollcard':
-            _user.bgpicPollcard = imageUrl;
+            _user.bgpicPollcard = smmsResponse.url;
             break;
         }
         _updateUser();
@@ -268,13 +268,13 @@ class EditProfilePageState extends State<EditProfilePage> {
       request.userId = _user.id;
       switch (field) {
         case 'avatar':
-          request.avatar = imageUrl;
+          request.avatar = smmsResponse;
           break;
         case 'bgpicMe':
-          request.bgpicMe = imageUrl;
+          request.bgpicMe = smmsResponse;
           break;
         case 'bgpicPollcard':
-          request.bgpicPollcard = imageUrl;
+          request.bgpicPollcard = smmsResponse;
           break;
       }
       // 发送gRPC请求更新用户信息

@@ -95,9 +95,11 @@ func storeUser(user *user.User) error {
 		return err
 	}
 
-	// 获取插入文档的 _id 并赋值给 user.Id
+	// 获取插入文档的 _id 并赋值给 user.Id，更新pictures表中url为user.url的id字段
 	if oid, ok := insertResult.InsertedID.(primitive.ObjectID); ok {
 		user.Id = oid.Hex()
+
+		// 更新user表中的id字段
 		updateResult, err := collection.UpdateOne(context.TODO(), bson.M{"_id": oid}, bson.M{"$set": bson.M{"id": user.Id}})
 		if err != nil {
 			log.Error("Update user.id failed", err)
@@ -106,6 +108,18 @@ func storeUser(user *user.User) error {
 		if updateResult.ModifiedCount == 0 {
 			log.Warn("No user.id was updated")
 		}
+
+		// 更新pictures表中的id字段
+		picturesCollection := database.MongoDbClient.Database("aorb").Collection("pictures")
+		updateResult, err = picturesCollection.UpdateOne(context.TODO(), bson.M{"url": user.Avatar}, bson.M{"$set": bson.M{"userid": user.Id}})
+		if err != nil {
+			log.Error("Update pictures.id failed", err)
+			return err
+		}
+		if updateResult.ModifiedCount == 0 {
+			log.Warn("No pictures.id was updated")
+		}
+
 	} else {
 		log.Error("Failed to get_id of document inserted")
 		return errors.New("failed to get_id of document inserted")
@@ -319,9 +333,9 @@ func GenerateAvatar(ctx context.Context, imageURL, multiavatarToken, smmsToken, 
 		return nil, fmt.Errorf("failed to upload avatar: %s", smmsResp.Message)
 	}
 
-	// 将response中的storename,url,delete,hash保存到数据库
+	// 将response中的 url,delete,hash,userid(之后再更新，现在先用""占位),type保存到数据库
 	collection := database.MongoDbClient.Database("aorb").Collection("pictures")
-	_, err = collection.InsertOne(context.TODO(), bson.M{"storename": smmsResp.Data.Storename, "url": smmsResp.Data.URL, "delete": smmsResp.Data.Delete, "hash": smmsResp.Data.Hash})
+	_, err = collection.InsertOne(context.TODO(), bson.M{"userid": "", "type": "avatar", "url": smmsResp.Data.URL, "delete": smmsResp.Data.Delete, "hash": smmsResp.Data.Hash})
 	if err != nil {
 		return nil, fmt.Errorf("failed to insert picture to db: %w", err)
 	}

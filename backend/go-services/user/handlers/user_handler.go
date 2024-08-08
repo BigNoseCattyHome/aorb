@@ -97,13 +97,13 @@ func (a UserServiceImpl) UpdateUser(ctx context.Context, request *user.UpdateUse
 		updateFields["gender"] = *request.Gender
 	}
 	if request.BgpicMe != nil {
-		updateFields["bgpic_me"] = *request.BgpicMe
+		updateFields["bgpic_me"] = request.BgpicMe
 	}
 	if request.BgpicPollcard != nil {
-		updateFields["bgpic_pollcard"] = *request.BgpicPollcard
+		updateFields["bgpic_pollcard"] = request.BgpicPollcard
 	}
 	if request.Avatar != nil {
-		updateFields["avatar"] = *request.Avatar
+		updateFields["avatar"] = request.Avatar
 	}
 
 	// 调用服务层的 UpdateUser 方法

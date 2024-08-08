@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"net/http"
 
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/user"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
@@ -130,7 +131,20 @@ func UpdateUserInService(ctx context.Context, userId string, updateFields map[st
 		}
 	}
 
-	// 使用 userId 作为过滤条件
+	// 如果是对图片（avatar/bgic_me/bgpic_pollcard ）进行更新
+	// 需要先在数据库中根据url查找deletion，然后进行删除，然后再更新
+	fieldsToCheck := []string{"avatar", "bgpic_me", "bgpic_pollcard"}
+	for _, field := range fieldsToCheck {
+		if _, ok := updateFields[field]; ok {
+			err := deleteImage(userId, field, updateFields[field].(*user.SmmsResponse)) // 类型断言
+			if err != nil {
+				log.Error("Failed to delete image: ", err)
+				return nil, err
+			}
+		}
+	}
+
+	// 使用 userId 作为过滤条件, 这里只更新了用户信息
 	result, err := collection.UpdateOne(ctx, bson.M{"id": userId}, bson.M{"$set": updateFields})
 	if err != nil {
 		log.Error("Failed to update user: ", err)
@@ -164,4 +178,57 @@ func checkUserExistsbyUsername(username string) (bool, error) {
 		return false, err
 	}
 	return count > 0, nil
+}
+
+// deleteImage 删除 sm.ms 图床上的图片
+// 根据 userid 查询对应的文档，然后删除 $field 字段的图片
+func deleteImage(userId, field string, picdata *user.SmmsResponse) error {
+	// 根据userid和field进行查询旧的图片的信息
+	collection := database.MongoDbClient.Database("aorb").Collection("pictures")
+	filter := bson.M{"userid": userId, "type": field}
+	var result bson.M
+	err := collection.FindOne(context.TODO(), filter).Decode(&result)
+	if err != nil {
+		log.Error("Failed to delete image: ", err)
+		return err
+	}
+
+	// 获取 delete 字段的值
+	deleteLink, ok := result["delete"].(string)
+	if !ok {
+		log.Fatal("delete field is not a string or does not exist")
+	}
+
+	// 在 sm.ms 图床上删除图片
+	resp, err := http.Get(deleteLink)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	// 在pictures数据库中删除图片信息
+	deleteResult, err := collection.DeleteOne(context.TODO(), filter)
+	if err != nil {
+		log.Error("Failed to delete image: ", err)
+		return err
+	}
+	if deleteResult.DeletedCount == 0 {
+		log.Warn("No image was deleted")
+		return errors.New("no image was deleted")
+	}
+	log.Infof("Delete link response status: %s\n", resp.Status)
+
+	// 从 picdata 中获取新的图片信息并写入到数据库中
+	_, err = collection.InsertOne(context.TODO(), bson.M{
+		"userid": userId,
+		"type":   field,
+		"url":    picdata.Url,
+		"delete": picdata.Delete,
+		"hash":   picdata.Hash})
+	if err != nil {
+		log.Error("Failed to insert new image: ", err)
+		return err
+	}
+
+	return nil
 }
