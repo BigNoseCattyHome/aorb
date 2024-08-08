@@ -13,7 +13,7 @@ import (
 )
 
 func Connect(serviceName string) (conn *grpc.ClientConn) {
-	kacp := keepalive.ClientParameters{
+	keepAliveClientParameters := keepalive.ClientParameters{
 		Time:                10 * time.Second, // send pings every 10 seconds if there is no activity
 		Timeout:             1 * time.Second,  // wait 1 second for ping ack before considering the connection dead
 		PermitWithoutStream: false,            // send pings even without active streams
@@ -23,7 +23,7 @@ func Connect(serviceName string) (conn *grpc.ClientConn) {
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`),
 		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
-		grpc.WithKeepaliveParams(kacp),
+		grpc.WithKeepaliveParams(keepAliveClientParameters),
 	)
 	logger.Debugf("connect")
 	if err != nil {

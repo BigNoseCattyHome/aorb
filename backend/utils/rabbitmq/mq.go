@@ -3,7 +3,10 @@ package rabbitmq
 import (
 	"fmt"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
+
+var RabbitMQ *amqp.Connection
 
 func BuildMqConnAddr() string {
 	return fmt.Sprintf("amqp://%s:%s@%s:%s/%s",
@@ -12,4 +15,13 @@ func BuildMqConnAddr() string {
 		config.Conf.RabbitMQ.Host,
 		config.Conf.RabbitMQ.Port,
 		config.Conf.RabbitMQ.VhostPrefix)
+}
+
+func init() {
+	mqAddr := BuildMqConnAddr()
+	conn, err := amqp.Dial(mqAddr)
+	if err != nil {
+		panic(err)
+	}
+	RabbitMQ = conn
 }

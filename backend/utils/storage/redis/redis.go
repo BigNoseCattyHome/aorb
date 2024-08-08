@@ -7,8 +7,9 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-var RedisCommentClient *redis.Client
-var RedisMessageClient *redis.Client
+var RedisCommentClient *redis.Client // key: comment_uuid	value: comment
+var RedisMessageClient *redis.Client // key: chat-message:{fromUserName}:{toUserName}	value: message
+var RedisPollClient *redis.Client    // key: poll_uuid		value: poll
 
 func init() {
 	addrs := fmt.Sprintf("%s:%s", config.Conf.Redis.Host, config.Conf.Redis.Port)
@@ -25,11 +26,21 @@ func init() {
 		DB:       1,
 	})
 
+	RedisPollClient = redis.NewClient(&redis.Options{
+		Addr:     addrs,
+		Password: config.Conf.Redis.Password,
+		DB:       2,
+	})
+
 	if err := redisotel.InstrumentTracing(RedisCommentClient); err != nil {
 		panic(err)
 	}
 
 	if err := redisotel.InstrumentTracing(RedisMessageClient); err != nil {
+		panic(err)
+	}
+
+	if err := redisotel.InstrumentTracing(RedisPollClient); err != nil {
 		panic(err)
 	}
 }
