@@ -2,6 +2,11 @@ package services
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
+	redisUtil "github.com/BigNoseCattyHome/aorb/backend/utils/storage/redis"
+	"github.com/redis/go-redis/v9"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"sync"
 	"time"
 
@@ -353,6 +358,132 @@ func (s PollServiceImpl) PollExist(ctx context.Context, req *pollPb.PollExistReq
 		StatusCode: strings.ServiceOKCode,
 		StatusMsg:  strings.ServiceOK,
 		Exist:      true,
+	}
+	return
+}
+
+func (s PollServiceImpl) FeedPoll(ctx context.Context, req *pollPb.FeedPollRequest) (resp *pollPb.FeedPollResponse, err error) {
+	ctx, span := tracing.Tracer.Start(ctx, "FeedPollService")
+	defer span.End()
+	logging.SetSpanWithHostname(span)
+	logger := logging.LogService("PollService.FeedPoll").WithContext(ctx)
+
+	latestTime := time.Now()
+	latestTimestamp := timestamppb.New(latestTime)
+
+	// TODO 以后需要添加鉴权
+	//////////
+
+	redisKeys, err := redisUtil.RedisPollClient.Keys(ctx, "*").Result()
+	if err != nil && !errors.Is(err, redis.Nil) {
+		logger.WithFields(logrus.Fields{
+			"username": req.Username,
+		}).Errorf("Error when getting keys from redisPollClient")
+		logging.SetSpanError(span, err)
+		resp = &pollPb.FeedPollResponse{
+			StatusCode: strings.PollServiceFeedErrorCode,
+			StatusMsg:  strings.PollServiceFeedError,
+		}
+		return resp, err
+	}
+	if len(redisKeys) > 10 {
+		// 保留前10条提问
+		redisKeys = redisKeys[:10]
+	}
+
+	var rPollList []*pollPb.Poll
+	for _, redisKey := range redisKeys {
+		redisResult, err := redisUtil.RedisPollClient.Get(ctx, redisKey).Result()
+		if err != nil && !errors.Is(err, redis.Nil) {
+			logger.WithFields(logrus.Fields{
+				"username": req.Username,
+			}).Errorf("获取提问流失败,Error when getting data from redisPollClient with key %s", redisKey)
+			logging.SetSpanError(span, err)
+			resp = &pollPb.FeedPollResponse{
+				StatusCode: strings.PollServiceFeedErrorCode,
+				StatusMsg:  strings.PollServiceFeedError,
+			}
+			return resp, err
+		}
+		if redisResult != "" {
+			var rPoll pollPb.Poll
+			err = json.Unmarshal([]byte(redisResult), &rPoll)
+			if err != nil {
+				logger.WithFields(logrus.Fields{
+					"username": req.Username,
+				}).Errorf("获取提问流失败,Error when getting unmarshalling from redisPollClient with key %s", redisKey)
+				logging.SetSpanError(span, err)
+				resp = &pollPb.FeedPollResponse{
+					StatusCode: strings.PollServiceFeedErrorCode,
+					StatusMsg:  strings.PollServiceFeedError,
+				}
+				return resp, err
+			}
+			rPollList = append(rPollList, &rPoll)
+		}
+	}
+
+	if len(rPollList) == 10 {
+		// 一次拿10条数据，不够再从数据库拿
+		resp = &pollPb.FeedPollResponse{
+			StatusCode: strings.ServiceOKCode,
+			StatusMsg:  strings.ServiceOK,
+			PollList:   rPollList,
+			NextTime:   latestTimestamp,
+		}
+	}
+
+	// 从数据库获取剩余数据
+	pollCollection := database.MongoDbClient.Database("aorb").Collection("polls")
+
+	filter := bson.D{
+		{"createAt", bson.D{{"$lt", latestTime}}},
+		{"pollUuid", bson.D{{"$nin", redisKeys}}},
+	}
+	options := options.Find().SetSort(bson.D{{"createAt", 1}}).SetLimit(int64(10 - len(rPollList)))
+
+	cursor, err := pollCollection.Find(ctx, filter, options)
+	if err != nil {
+		logger.WithFields(logrus.Fields{
+			"username": req.Username,
+		}).Errorf("获取提问流失败, Error when getting poll from mongodb")
+		logging.SetSpanError(span, err)
+		resp = &pollPb.FeedPollResponse{
+			StatusCode: strings.PollServiceFeedErrorCode,
+			StatusMsg:  strings.PollServiceFeedError,
+		}
+		return resp, err
+	}
+	var pPollList []*pollModels.Poll
+	err = cursor.All(ctx, &pPollList)
+	if err != nil {
+		logger.WithFields(logrus.Fields{
+			"username": req.Username,
+		}).Errorf("获取提问流失败, Error when decoding poll from mongodb")
+		logging.SetSpanError(span, err)
+		resp = &pollPb.FeedPollResponse{
+			StatusCode: strings.PollServiceFeedErrorCode,
+			StatusMsg:  strings.PollServiceFeedError,
+		}
+		return resp, err
+	}
+	for _, pPoll := range pPollList {
+		rPollList = append(rPollList, BuildPollPbModel(pPoll))
+	}
+
+	var nextTime *timestamppb.Timestamp
+	if len(pPollList) > 0 {
+		nextTime = rPollList[len(rPollList)-1].CreateAt
+	}
+
+	// TODO 将rPollList中的内容存入消息队列，方便下一次执行的时候进行渲染
+	////
+
+	resp = &pollPb.FeedPollResponse{
+		StatusCode: strings.ServiceOKCode,
+		StatusMsg:  strings.ServiceOK,
+		PollList:   rPollList,
+		NextTime:   nextTime,
 	}
 	return
 }

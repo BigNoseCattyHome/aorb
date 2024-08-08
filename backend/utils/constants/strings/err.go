@@ -62,7 +62,9 @@ const (
 	UnableToCreateVoteError           = "无法创建投票"
 	UnableToGetVoteCountListErrorCode = 50026
 	UnableToGetVoteCountListError     = "无法查询到投票数"
-	NoUserUpdatedErrorCode            = 50027
+	PollServiceFeedErrorCode          = 50027
+	PollServiceFeedError              = "推送功能出错"
+	NoUserUpdatedErrorCode            = 50028
 	NoUserUpdatedError                = "没有用户被更新"
 )
 

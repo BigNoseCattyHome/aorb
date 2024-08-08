@@ -62,9 +62,23 @@ message PollExistResponse {
   bool exist = 3;
 }
 
+message FeedPollRequest {
+  google.protobuf.Timestamp latest_time = 1;  // 可选参数，限制返回视频的最新投稿时间戳，精确到秒，不填表示当前时间
+  string username = 2;
+//  string token = 2;
+}
+
+message FeedPollResponse {
+  int32 status_code = 1;  // 状态码，0-成功，其他值-失败
+  string status_msg = 2;  // 返回状态描述
+  repeated Poll poll_list = 3;
+  google.protobuf.Timestamp next_time = 4;  // 本次返回的视频中，发布最早的时间，作为下次请求时的latest_time
+}
+
 service PollService{
   rpc CreatePoll (CreatePollRequest) returns (CreatePollResponse);
   rpc GetPoll (GetPollRequest) returns (GetPollResponse);
   rpc ListPoll (ListPollRequest) returns (ListPollResponse);
   rpc PollExist (PollExistRequest) returns (PollExistResponse);
+  rpc FeedPoll (FeedPollRequest) returns (FeedPollResponse);
 }

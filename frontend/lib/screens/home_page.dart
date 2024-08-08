@@ -23,7 +23,7 @@ class HomePageState extends State<HomePage>
   void initState() {
     super.initState(); // 调用父类的 initState 方法
     _tabController = widget.tabController; // 初始化顶部导航栏控制器
-    _futureQuestions = _fetchQuestions(); // 初始化时调用 _fetchQuestions 获取数据
+    _futureQuestions = _fetchPolls(); // 初始化时调用 _fetchQuestions 获取数据
   }
 
   @override
@@ -44,8 +44,7 @@ class HomePageState extends State<HomePage>
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) =>
-                    const ContentPublishPage(),
+                builder: (context) => const ContentPublishPage(),
               ),
             );
           },
@@ -90,11 +89,7 @@ class HomePageState extends State<HomePage>
               return ListView.builder(
                 itemCount: snapshot.data!.length,
                 itemBuilder: (context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0, vertical: 8.0), // 设置外边距
-                    child: snapshot.data![index],
-                  );
+                  return snapshot.data![index];
                 },
               );
             }
@@ -104,7 +99,7 @@ class HomePageState extends State<HomePage>
     );
   }
 
-  Future<List<PollCard>> _fetchQuestions() async {
+  Future<List<PollCard>> _fetchPolls() async {
     // 模拟从服务器获取数据
     await Future.delayed(const Duration(seconds: 2));
     return [
