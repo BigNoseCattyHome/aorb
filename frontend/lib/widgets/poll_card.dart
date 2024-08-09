@@ -2,7 +2,7 @@ import 'package:aorb/generated/google/protobuf/timestamp.pb.dart';
 import 'package:aorb/screens/poll_detail_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:intl/intl.dart';
+import 'package:aorb/utils/time.dart';
 
 class PollCard extends StatefulWidget {
   final String title; // 投票的标题
@@ -17,9 +17,10 @@ class PollCard extends StatefulWidget {
   final String pollId; // 就是 poll_uuid
   final String userId; // 用户id，根据username查询
   final String backgroundImage; // 背景图片，可以是纯色、网络图片或渐变，根据username查询
-  final int selectedOption; // 用户选择的选项,-1代表没有投票
+  // TODO 查询selected_option，如果没有投票则为-1
+  int selectedOption = -1; // 用户选择的选项,-1代表没有投票
 
-  const PollCard({
+  PollCard({
     Key? key,
     required this.title,
     required this.content,
@@ -84,7 +85,7 @@ class PollCardState extends State<PollCard> {
                     ),
                     const Spacer(), // spacer占位部件
                     // time
-                    Text(_formatTimestamp(widget.time),
+                    Text(formatTimestamp(widget.time, "发布于"),
                         style: TextStyle(
                           color: _textColor,
                         )),
@@ -211,21 +212,31 @@ class PollCardState extends State<PollCard> {
                 ],
               ),
 
-              // 单次点击投票
+              // 点击跳转到内容详情页面
               onPressed: () {
-                setState(() {
-                  _selectedOption = i;
-                  // TODO 把选择的结果发送到服务端
-                });
+                // setState(() {
+                //   _selectedOption = i;
+                //   // 把选择的结果发送到服务端
+                // });
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PollDetailPage(
+                      userId: widget.userId,
+                      pollId: widget.pollId,
+                      username: widget.username,
+                    ),
+                  ),
+                );
               },
 
-              // 长按取消
-              onLongPress: () {
-                setState(() {
-                  _selectedOption = -1;
-                  // TODO 把选择的结果发送到服务端
-                });
-              },
+              // // 长按取消
+              // onLongPress: () {
+              //   setState(() {
+              //     _selectedOption = -1;
+              //     // 把选择的结果发送到服务端
+              //   });
+              // },
             );
           })
         ]));
@@ -291,30 +302,7 @@ class PollCardState extends State<PollCard> {
     );
   }
 
-  // 新增方法：格式化时间戳
-  String _formatTimestamp(Timestamp timestamp) {
-    final now = DateTime.now();
-    final dateTime = timestamp.toDateTime();
-    final difference = now.difference(dateTime);
-
-    if (difference.inMinutes < 60) {
-      return '发布于${difference.inMinutes}分钟前';
-    } else if (difference.inHours < 24) {
-      return '发布于${difference.inHours}小时前';
-    } else if (difference.inDays < 2) {
-      return '发布于昨天${DateFormat('HH:mm').format(dateTime)}';
-    } else if (difference.inDays < 7) {
-      return '发布于${difference.inDays}天前';
-    } else if (difference.inDays < 30) {
-      return '发布于${(difference.inDays / 7).floor()}周前';
-    } else if (difference.inDays < 365) {
-      return '发布于${(difference.inDays / 30).floor()}个月前';
-    } else {
-      return '发布于${DateFormat('yyyy年MM月dd日').format(dateTime)}';
-    }
-  }
-
-// 新增方法：根据背景决定文字颜色
+// 根据背景决定文字颜色
   Color _getTextColor(String backgroundImage) {
     if (backgroundImage.startsWith('0x')) {
       // 纯色背景
