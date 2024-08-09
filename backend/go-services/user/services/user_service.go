@@ -5,7 +5,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/BigNoseCattyHome/aorb/backend/go-services/user/conf"
+	"github.com/BigNoseCattyHome/aorb/backend/go-services/auth/conf"
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/user"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/strings"
@@ -135,6 +135,12 @@ func UpdateUserInService(ctx context.Context, userId string, updateFields map[st
 	// 如果是对图片（avatar/bgic_me/bgpic_pollcard ）进行更新
 	// 需要先在数据库中根据url查找deletion，然后进行删除，然后再更新
 	fieldsToCheck := []string{"avatar", "bgpic_me", "bgpic_pollcard"}
+	// 这里添加了一个 map 映射，在注册的时候mongodb中存的就是bgpicme，但是在proto中是bgpic_me，json映射也是写的bgpic_me
+	mongodb_fields := map[string]string{
+		"avatar":         "avatar",
+		"bgpic_me":       "bgpicme",
+		"bgpic_pollcard": "bgpicpollcard",
+	}
 	for _, field := range fieldsToCheck {
 		if _, ok := updateFields[field]; ok {
 			err := deleteImage(userId, field, updateFields[field].(*user.SmmsResponse)) // 类型断言
@@ -142,7 +148,7 @@ func UpdateUserInService(ctx context.Context, userId string, updateFields map[st
 				log.Error("Failed to delete image: ", err)
 				return nil, err
 			}
-			result, err := collection.UpdateOne(ctx, bson.M{"id": userId}, bson.M{"$set": bson.M{field: updateFields[field].(*user.SmmsResponse).Url}})
+			result, err := collection.UpdateOne(ctx, bson.M{"id": userId}, bson.M{"$set": bson.M{mongodb_fields[field]: updateFields[field].(*user.SmmsResponse).Url}})
 			if err != nil {
 				log.Error("Failed to update user: ", err)
 				return nil, err

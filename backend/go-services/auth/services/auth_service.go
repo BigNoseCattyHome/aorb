@@ -69,9 +69,13 @@ func RegisterUser(newUser *user.User) error {
 	newUser.CreateAt = timestamppb.Now()
 	newUser.UpdateAt = timestamppb.Now()
 	newUser.DeleteAt = timestamppb.New(time.Time{})
-	newUser.BgpicMe = &conf.DefaultUserBgpic
-	newUser.BgpicPollcard = &conf.DefaultUserPollcard
-	newUser.Bio = &conf.DefaultUserBio
+
+	bgpic_me := conf.DefaultBgpicMe
+	bgpic_pollcard := conf.DefaultBgpicPollcard
+	bio := conf.DefaultUserBio
+	newUser.BgpicMe = &bgpic_me
+	newUser.BgpicPollcard = &bgpic_pollcard
+	newUser.Bio = &bio
 
 	// 保存用户到数据库
 	if err := storeUser(newUser); err != nil {
