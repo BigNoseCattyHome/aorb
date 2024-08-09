@@ -11,7 +11,8 @@ class PollCard extends StatefulWidget {
   final List<double> votePercentage; // 用户投票的百分比，根据 options_count 计算
   final int voteCount; // 投票总数
   final Timestamp time; // 投票创建的时间
-  final String avatar; // 用户头像，根据username查询
+  final String username; // 用户名，传递给下一个组件
+  final String avatar; // 用户头像，根据username查询，在父组件完成的
   final String nickname; // 用户昵称，根据username查询
   final String pollId; // 就是 poll_uuid
   final String userId; // 用户id，根据username查询
@@ -25,6 +26,7 @@ class PollCard extends StatefulWidget {
     required this.options,
     required this.voteCount,
     required this.time,
+    required this.username,
     required this.avatar,
     required this.nickname,
     required this.userId,
@@ -283,6 +285,7 @@ class PollCardState extends State<PollCard> {
         builder: (context) => PollDetailPage(
           userId: widget.userId,
           pollId: widget.pollId,
+          username: widget.username,
         ),
       ),
     );
