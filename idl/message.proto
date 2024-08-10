@@ -5,6 +5,13 @@ option go_package = "github.com/BigNoseCattyHome/aorb/backend/rpc/message;messag
 
 import "google/protobuf/timestamp.proto";
 
+service MessageService {
+  rpc MessageChat(MessageChatRequest) returns (MessageChatResponse);  
+  rpc MessageAction(MessageActionRequest) returns (MessageActionResponse);  
+  rpc GetUserMessage(UserMessageRequest) returns (UserMessageResponse); // 根据 username 获取消息
+  rpc MarkMessageStatus (MarkMessageStatusRequest) returns (MarkMessageStatusResponse);  // 标记消息状态
+}
+
 enum ActionMessageType{
   ACTION_MESSAGE_TYPE_UNSPECIFIED = 0;
   ACTION_MESSAGE_TYPE_ADD = 1;
@@ -47,7 +54,58 @@ message MessageActionResponse {
   Message message = 3;
 }
 
-service MessageService {
-  rpc MessageChat(MessageChatRequest) returns (MessageChatResponse);
-  rpc MessageAction(MessageActionRequest) returns (MessageActionResponse);
+// 用户消息请求
+message UserMessageRequest {
+  string username = 1;
+}
+
+// 用户消息响应
+message UserMessageResponse {
+  repeated FollowMessage follow_messages = 1;         // 关注消息列表
+  repeated CommentReplyMessage comment_reply_messages = 2; // 评论回复消息列表
+  repeated VoteMessage like_messages = 3;             // 点赞消息列表
+}
+
+// 关注消息
+message FollowMessage {
+  string message_id = 1;
+  string username_follower = 2; // 关注者的ID
+  google.protobuf.Timestamp timestamp = 3;    // 关注时间戳
+}
+
+// 评论回复消息
+message CommentReplyMessage {
+  string message_id = 1;
+  string comment_id = 2;  // 评论的ID
+  string username = 3;    // 回复者的username
+  string poll_id = 4;     // 评论poll的id
+  string content = 5;     // 回复内容
+  google.protobuf.Timestamp timestamp = 6;    // 回复时间戳
+}
+
+// 投票消息
+message VoteMessage {
+  string message_id = 1;
+  string username_voter = 2;      // 投票者的用户名
+  string poll_id = 3;             // 被投票的poll的ID
+  string choice = 4;              // 投票的选项
+  google.protobuf.Timestamp timestamp = 5;    // 投票的时间戳
+}
+
+// 消息状态
+enum MessageStatus {
+  UNREAD = 0;  // 未读
+  READ = 1;    // 已读
+}
+
+// 标记消息状态请求
+message MarkMessageStatusRequest {
+  string message_id = 1;      // 消息ID
+  MessageStatus status = 2;    // 消息状态
+}
+
+// 标记消息状态响应
+message MarkMessageStatusResponse {
+  int32 status_code = 1;  // 状态码，0-成功，其他值-失败
+  string status_msg = 2;  // 返回状态描述
 }

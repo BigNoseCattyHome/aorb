@@ -73,6 +73,7 @@ class PollListView extends StatelessWidget {
                 options: poll.options,
                 voteCount: totalVotes,
                 time: poll.createAt,
+                username: userInfo.username,
                 avatar: userInfo.avatar,
                 nickname: userInfo.nickname,
                 userId: userInfo.id,

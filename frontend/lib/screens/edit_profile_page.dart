@@ -35,7 +35,7 @@ class EditProfilePageState extends State<EditProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
+     return WillPopScope(
       onWillPop: () async {
         Navigator.pop(context, _user);
         return false;
@@ -238,27 +238,26 @@ class EditProfilePageState extends State<EditProfilePage> {
 
     if (image != null) {
       // 将图片上传到图床
-      final imageUrl = await ImageUploadService()
-          .uploadImage(File(image.path), '${field}_${_user.username}');
+      final smmsResponse = await ImageUploadService()
+          .uploadImage(File(image.path), field, _user.id);
 
       // 更新shared_preferences
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      prefs.setString(field, imageUrl);
+      prefs.setString(field, smmsResponse.url);
 
       // 更新用户信息
       setState(() {
         switch (field) {
           case 'avatar':
-            _user.avatar = imageUrl;
+            _user.avatar = smmsResponse.url;
             break;
           case 'bgpicMe':
-            _user.bgpicMe = imageUrl;
+            _user.bgpicMe = smmsResponse.url;
             break;
           case 'bgpicPollcard':
-            _user.bgpicPollcard = imageUrl;
+            _user.bgpicPollcard = smmsResponse.url;
             break;
         }
-        if (field == 'avatar') {}
         _updateUser();
       });
       // 构建UpdateUserRequest
@@ -266,13 +265,13 @@ class EditProfilePageState extends State<EditProfilePage> {
       request.userId = _user.id;
       switch (field) {
         case 'avatar':
-          request.avatar = imageUrl;
+          request.avatar = smmsResponse;
           break;
         case 'bgpicMe':
-          request.bgpicMe = imageUrl;
+          request.bgpicMe = smmsResponse;
           break;
         case 'bgpicPollcard':
-          request.bgpicPollcard = imageUrl;
+          request.bgpicPollcard = smmsResponse;
           break;
       }
       // 发送gRPC请求更新用户信息
@@ -308,6 +307,48 @@ class EditTextPageState extends State<EditTextPage> {
     _controller = TextEditingController(text: widget.initialValue);
   }
 
+  Future<void> _saveChanges() async {
+    var request = UpdateUserRequest()..userId = widget.userId;
+    switch (widget.type) {
+      case 'nickname':
+        request.nickname = _controller.text;
+        break;
+      case 'bio':
+        request.bio = _controller.text;
+        break;
+      case 'username':
+        request.username = _controller.text;
+        break;
+    }
+
+    try {
+      final response = await UserService().updateUser(request);
+
+      if (!mounted) return;
+
+      if (response.statusCode == 0) {
+        Navigator.pop(context, _controller.text);
+      } else {
+        _showErrorToast(response.statusMsg);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      _showErrorToast('保存失败：$e');
+    }
+  }
+
+  void _showErrorToast(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      timeInSecForIosWeb: 1,
+      backgroundColor: Colors.red,
+      textColor: Colors.white,
+      fontSize: 16.0,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -319,23 +360,7 @@ class EditTextPageState extends State<EditTextPage> {
         iconTheme: const IconThemeData(color: Colors.black),
         actions: [
           TextButton(
-            onPressed: () {
-              var request = UpdateUserRequest();
-              request.userId = widget.userId;
-              switch (widget.type) {
-                case 'nickname':
-                  request.nickname = _controller.text;
-                  break;
-                case 'bio':
-                  request.bio = _controller.text;
-                  break;
-                case 'username':
-                  request.username = _controller.text;
-                  break;
-              }
-              UserService().updateUser(request);
-              Navigator.pop(context, _controller.text);
-            },
+            onPressed: _saveChanges,
             child: const Text('保存', style: TextStyle(color: Colors.blue)),
           ),
         ],

@@ -26,31 +26,36 @@ class PollService {
       final CreatePollResponse response = await _client.createPoll(request);
 
       if (response.statusCode == 0) {
-        logger.i('成功创建投票 ${request.poll.title}');
+        logger.i('Successfully created poll ${request.poll.title}');
         return response;
       } else {
-        logger.w('创建投票 ${request.poll.title} 失败: ${response.statusMsg}');
-        throw Exception('创建投票 ${request..poll.title} 失败: ${response.statusMsg}');
+        logger.w(
+            'Failed to create poll ${request.poll.title}: ${response.statusMsg}');
+        throw Exception(
+            'Failed to create poll ${request.poll.title}: ${response.statusMsg}');
       }
     } on GrpcError catch (e) {
-      logger.e('创建投票时发生gRPC错误: ${e.message}');
-      throw Exception('创建投票失败: ${e.message}');
+      logger.e('gRPC error occurred while creating poll: ${e.message}');
+      throw Exception('Failed to create poll: ${e.message}');
     } catch (e) {
-      logger.e('创建投票时发生意外错误: $e');
-      throw Exception('创建投票失败: $e');
+      logger.e('Unexpected error occurred while creating poll: $e');
+      throw Exception('Failed to create poll: $e');
     }
   }
 
   // 查询投票信息
-  Future<GetPollResponse> getPoll(GetPollRequest requset) async {
-    final GetPollResponse response = await _client.getPoll(requset);
+  Future<GetPollResponse> getPoll(GetPollRequest request) async {
+    final GetPollResponse response = await _client.getPoll(request);
 
     if (response.statusCode == 0) {
-      logger.i('成功获取投票 ${requset.pollUuid} 的信息');
+      logger
+          .i('Successfully retrieved information for poll ${request.pollUuid}');
       return response;
     } else {
-      logger.w('获取投票 ${requset.pollUuid} 信息失败: ${response.statusMsg}');
-      throw Exception('获取投票 ${requset.pollUuid} 信息失败: ${response.statusMsg}');
+      logger.w(
+          'Failed to retrieve information for poll ${request.pollUuid}: ${response.statusMsg}');
+      throw Exception(
+          'Failed to retrieve information for poll ${request.pollUuid}: ${response.statusMsg}');
     }
   }
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/BigNoseCattyHome/aorb/backend/go-services/user/services"
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/user"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
+	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/strings"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/logging"
 )
 
@@ -96,19 +97,27 @@ func (a UserServiceImpl) UpdateUser(ctx context.Context, request *user.UpdateUse
 		updateFields["gender"] = *request.Gender
 	}
 	if request.BgpicMe != nil {
-		updateFields["bgpic_me"] = *request.BgpicMe
+		updateFields["bgpic_me"] = request.BgpicMe
 	}
 	if request.BgpicPollcard != nil {
-		updateFields["bgpic_pollcard"] = *request.BgpicPollcard
+		updateFields["bgpic_pollcard"] = request.BgpicPollcard
 	}
 	if request.Avatar != nil {
-		updateFields["avatar"] = *request.Avatar
+		updateFields["avatar"] = request.Avatar
 	}
 
 	// 调用服务层的 UpdateUser 方法
 	resp, err = services.UpdateUserInService(ctx, userId, updateFields)
 	if err != nil {
 		log.Error("Failed to update user: ", err)
+
+		// 如果用户已经存在，返回错误信息
+		if err.Error() == "username already exists" {
+			return &user.UpdateUserResponse{
+				StatusCode: strings.AuthUserExistedCode,
+				StatusMsg:  strings.AuthUserExisted,
+			}, nil
+		}
 		return nil, err
 	}
 

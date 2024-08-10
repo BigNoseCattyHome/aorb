@@ -1,4 +1,5 @@
 import 'package:aorb/generated/user.pb.dart';
+import 'package:aorb/utils/constant/err.dart';
 import 'package:flutter/material.dart';
 import 'package:aorb/conf/config.dart';
 import 'package:aorb/services/auth_service.dart';
@@ -43,7 +44,28 @@ class RegisterPageState extends State<RegisterPage> {
     });
   }
 
+  bool _validateInputs() {
+    if (_usernameController.text.isEmpty) {
+      _showErrorToast('请输入用户名');
+      return false;
+    }
+    if (_passwordController.text.isEmpty) {
+      _showErrorToast('请输入密码');
+      return false;
+    }
+    if (_confirmPasswordController.text.isEmpty) {
+      _showErrorToast('请确认密码');
+      return false;
+    }
+    return true;
+  }
+
   void _register() async {
+    // 输入验证
+    if (!_validateInputs()) {
+      return;
+    }
+
     if (!_agreeToTerms) {
       showDialog(
         context: context,
@@ -98,7 +120,7 @@ class RegisterPageState extends State<RegisterPage> {
         ipaddress: _province,
         avatar: '',
       );
-
+      if (!mounted) return;
       logger.i('registerResponse: $registerResponse');
       final endTime = DateTime.now();
       final duration = endTime.difference(startTime);
@@ -110,6 +132,8 @@ class RegisterPageState extends State<RegisterPage> {
 
       if (registerResponse.statusCode == 0) {
         Navigator.pop(context);
+      } else if (registerResponse.statusCode == authUserExistedCode) {
+        _showErrorToast(authUserExisted);
       } else {
         _showErrorToast('注册失败: ${registerResponse.statusMsg}');
       }
@@ -117,6 +141,7 @@ class RegisterPageState extends State<RegisterPage> {
       logger.e('Exception occurred during registration');
       logger.e('Error type: ${e.runtimeType}');
 
+      if (!mounted) return;
       if (e is GrpcError) {
         logger.e('gRPC error code: ${e.code}');
         logger.e('gRPC error details: ${e.details}');

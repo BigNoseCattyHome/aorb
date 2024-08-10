@@ -3,11 +3,15 @@ import 'package:flutter/material.dart';
 class MessageReply extends StatelessWidget {
   final String message;
   final String time;
+  final String pollId;
+  final String content;
 
   const MessageReply({
     Key? key,
     required this.message,
     required this.time,
+    required this.pollId,
+    required this.content,
   }) : super(key: key);
 
   @override

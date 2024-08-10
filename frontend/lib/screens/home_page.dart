@@ -23,7 +23,7 @@ class HomePageState extends State<HomePage>
   void initState() {
     super.initState(); // 调用父类的 initState 方法
     _tabController = widget.tabController; // 初始化顶部导航栏控制器
-    _futureQuestions = _fetchQuestions(); // 初始化时调用 _fetchQuestions 获取数据
+    _futureQuestions = _fetchPolls(); // 初始化时调用 _fetchQuestions 获取数据
   }
 
   @override
@@ -44,8 +44,7 @@ class HomePageState extends State<HomePage>
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) =>
-                    const ContentPublishPage(),
+                builder: (context) => const ContentPublishPage(),
               ),
             );
           },
@@ -90,11 +89,7 @@ class HomePageState extends State<HomePage>
               return ListView.builder(
                 itemCount: snapshot.data!.length,
                 itemBuilder: (context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0, vertical: 8.0), // 设置外边距
-                    child: snapshot.data![index],
-                  );
+                  return snapshot.data![index];
                 },
               );
             }
@@ -104,12 +99,13 @@ class HomePageState extends State<HomePage>
     );
   }
 
-  Future<List<PollCard>> _fetchQuestions() async {
+  Future<List<PollCard>> _fetchPolls() async {
     // 模拟从服务器获取数据
     await Future.delayed(const Duration(seconds: 2));
     return [
       PollCard(
         title: "午饭吃什么呀?",
+        username: "",
         content: '想了半天没有想出来到底要吃什么，好纠结，真可恶！',
         options: const ['麻辣烫', '炸鸡汉堡'],
         votePercentage: const [0.4, 0.6],
@@ -124,6 +120,7 @@ class HomePageState extends State<HomePage>
       ),
       PollCard(
         title: '下午去哪里玩?',
+        username: "",
         content: '天气很好，感觉顾村公园和外滩都挺不错的，选哪个？',
         options: const ['顾村公园', '外滩'],
         votePercentage: const [0.16, 0.84],
@@ -137,6 +134,7 @@ class HomePageState extends State<HomePage>
         selectedOption: -1,
       ),
       PollCard(
+        username: "",
         title: '要不要去小美家玩啊？',
         content: '小美小美小美好香的小美，Bad 小新',
         options: const ['麻辣烫', '炸鸡汉堡'],
@@ -152,6 +150,7 @@ class HomePageState extends State<HomePage>
       ),
       PollCard(
         title: 'Exploring the Enigmatic World of Quantum Mechanics',
+        username: "",
         content:
             'Quantum mechanics is a fundamental theory in physics that provides a description of the physical properties of nature at the scale of atoms and subatomic particles. However, it\'s not as straightforward as classical physics. Can you help me understand some of the key concepts and phenomena of quantum mechanics?',
         options: const [

@@ -66,14 +66,14 @@ const (
 	NoUserUpdatedError                = "没有用户被更新"
 	UserAlreadyExistsErrorCode        = 50028
 	UserAlreadyExistsError            = "用户已存在"
-	PollServiceFeedErrorCode          = 50027
+	PollServiceFeedErrorCode          = 50029
 	PollServiceFeedError              = "推送功能出错"
 )
 
 // Expected Error
 const (
 	AuthUserExistedCode           = 10001
-	AuthUserExisted               = "用户已存在，请更换用户名或尝试登录！"
+	AuthUserExisted               = "用户名已存在！"
 	UserNotExistedCode            = 10002
 	UserNotExisted                = "用户不存在，请先注册或检查你的用户名是否正确！"
 	AuthUserLoginFailedCode       = 10003

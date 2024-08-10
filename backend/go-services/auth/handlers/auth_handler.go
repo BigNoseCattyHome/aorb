@@ -223,6 +223,14 @@ func (a AuthServiceImpl) Register(ctx context.Context, request *auth.RegisterReq
 	// 调用服务
 	err = services.RegisterUser(&user)
 	if err != nil {
+		// 如果用户已经存在，返回错误信息
+		if err.Error() == "user already exists" {
+			return &auth.RegisterResponse{
+				StatusCode: strings.AuthUserExistedCode,
+				StatusMsg:  strings.AuthUserExisted,
+			}, nil
+		}
+
 		return nil, status.Errorf(codes.Unauthenticated, "register failed: %v", err)
 	}
 
