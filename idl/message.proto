@@ -61,9 +61,9 @@ message UserMessageRequest {
 
 // 用户消息响应
 message UserMessageResponse {
-  repeated FollowMessage follow_messages = 1;         // 关注消息列表
-  repeated CommentReplyMessage comment_reply_messages = 2; // 评论回复消息列表
-  repeated VoteMessage like_messages = 3;             // 点赞消息列表
+  repeated FollowMessage messages_follow_list = 1;         // 关注消息列表
+  repeated CommentReplyMessage messages_comment_reply_list = 2; // 评论回复消息列表
+  repeated VoteMessage messages_vote_list = 3;             // 投票消息列表
 }
 
 // 关注消息

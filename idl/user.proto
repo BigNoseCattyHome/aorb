@@ -3,6 +3,15 @@ package rpc.user;
 option go_package = "github.com/BigNoseCattyHome/aorb/backend/rpc/user;user";
 import "google/protobuf/timestamp.proto";
 
+service UserService{
+  rpc GetUserInfo(UserRequest) returns (UserResponse);  // 获取用户信息方法
+  rpc CheckUserExists(UserExistRequest) returns (UserExistResponse);  // 检查用户是否存在
+  rpc IsUserFollowing(IsUserFollowingRequest) returns (IsUserFollowingResponse);  // 检查用户是否正在关注目标用户
+  rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse); // 更新用户信息方法
+  rpc FollowUser(FollowUserRequest) returns (FollowUserResponse); // 关注用户方法
+  rpc UnfollowUser(FollowUserRequest) returns (FollowUserResponse); // 取消关注用户方法
+}
+
 message User {
   string id = 1; // 用户ID,等于插入数据库后的_id中的$oid，用于表示用户进行查询等操作，不可修改
   string username = 2; // 用户登录名，用于登录，可修改
@@ -71,6 +80,7 @@ message PollCollectList {
 }
 message UserRequest{
   string username = 1;
+  // TODO 之后重构为枚举类型
   repeated string fields = 2;  // 可选字段列表，选择User中的字段进行查询
 }
 
@@ -125,9 +135,12 @@ message smmsResponse{
   string hash = 3;
 }
 
-service UserService{
-  rpc GetUserInfo(UserRequest) returns (UserResponse);
-  rpc CheckUserExists(UserExistRequest) returns (UserExistResponse);
-  rpc IsUserFollowing(IsUserFollowingRequest) returns (IsUserFollowingResponse);
-  rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse); // 新增的更新用户信息方法
+message FollowUserRequest {
+  string username = 1;       // 当前用户的用户名
+  string target_username = 2; // 目标用户的用户名
+}
+
+message FollowUserResponse{
+  int32 status_code = 1;  // 状态码，0-成功，其他值-失败
+  string status_msg = 2;  // 返回状态描述
 }

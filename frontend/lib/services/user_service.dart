@@ -125,4 +125,52 @@ class UserService {
         ..statusMsg = 'Failed to update user information: $e';
     }
   }
+
+  // 关注用户
+  Future<FollowUserResponse> followUser(FollowUserRequest request) async {
+    try {
+      final FollowUserResponse response = await _client.followUser(request);
+
+      if (response.statusCode == 0) {
+        logger.i(
+            'Successfully followed user ${request.targetUsername} as user ${request.username}');
+      } else {
+        logger.w(
+            'Failed to follow user ${request.targetUsername} as user ${request.username}: ${response.statusMsg}');
+        throw Exception(
+            'Failed to follow user ${request.targetUsername} as user ${request.username}: ${response.statusMsg}');
+      }
+      return response;
+    } on GrpcError catch (e) {
+      logger.e('gRPC error occurred while following user: ${e.message}');
+      throw Exception('Failed to follow user: ${e.message}');
+    } catch (e) {
+      logger.e('Unexpected error occurred while following user: $e');
+      throw Exception('Failed to follow user: $e');
+    }
+  }
+
+  // 取消关注用户
+  Future<FollowUserResponse> unfollowUser(FollowUserRequest request) async {
+    try {
+      final FollowUserResponse response = await _client.unfollowUser(request);
+
+      if (response.statusCode == 0) {
+        logger.i(
+            'Successfully unfollowed user ${request.targetUsername} as user ${request.username}');
+      } else {
+        logger.w(
+            'Failed to unfollow user ${request.targetUsername} as user ${request.username}: ${response.statusMsg}');
+        throw Exception(
+            'Failed to unfollow user ${request.targetUsername} as user ${request.username}: ${response.statusMsg}');
+      }
+      return response;
+    } on GrpcError catch (e) {
+      logger.e('gRPC error occurred while unfollowing user: ${e.message}');
+      throw Exception('Failed to unfollow user: ${e.message}');
+    } catch (e) {
+      logger.e('Unexpected error occurred while unfollowing user: $e');
+      throw Exception('Failed to unfollow user: $e');
+    }
+  }
 }

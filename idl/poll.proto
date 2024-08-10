@@ -7,6 +7,14 @@ import "comment.proto";
 import "vote.proto";
 import "google/protobuf/timestamp.proto";
 
+service PollService{
+  rpc CreatePoll (CreatePollRequest) returns (CreatePollResponse);  // 创建一个新的poll
+  rpc GetPoll (GetPollRequest) returns (GetPollResponse);           // 获取一个poll的详细信息
+  rpc ListPoll (ListPollRequest) returns (ListPollResponse);        // 分页获取多个poll
+  rpc PollExist (PollExistRequest) returns (PollExistResponse);     // 判断poll是否存在
+  rpc FeedPoll (FeedPollRequest) returns (FeedPollResponse);        // 获取用户关注的poll
+}
+
 message Poll{
   string poll_uuid = 1;  // 投票uuid
   string title = 2; // 投票标题
@@ -73,12 +81,4 @@ message FeedPollResponse {
   string status_msg = 2;  // 返回状态描述
   repeated Poll poll_list = 3;
   google.protobuf.Timestamp next_time = 4;  // 本次返回的视频中，发布最早的时间，作为下次请求时的latest_time
-}
-
-service PollService{
-  rpc CreatePoll (CreatePollRequest) returns (CreatePollResponse);
-  rpc GetPoll (GetPollRequest) returns (GetPollResponse);
-  rpc ListPoll (ListPollRequest) returns (ListPollResponse);
-  rpc PollExist (PollExistRequest) returns (PollExistResponse);
-  rpc FeedPoll (FeedPollRequest) returns (FeedPollResponse);
 }
