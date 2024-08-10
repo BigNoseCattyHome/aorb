@@ -1,10 +1,10 @@
+import 'package:aorb/generated/user.pb.dart';
 import 'package:flutter/material.dart';
 import 'package:aorb/conf/config.dart';
 import 'package:aorb/services/auth_service.dart';
 import 'package:aorb/utils/ip_locator.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:grpc/grpc.dart';
-import 'package:crypto/crypto.dart';
-import 'dart:convert';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -14,13 +14,14 @@ class RegisterPage extends StatefulWidget {
 }
 
 class RegisterPageState extends State<RegisterPage> {
-  final _usernameController = TextEditingController(); // 用于控制输入框的值
+  final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
+  Gender _selectedGender = Gender.UNKNOWN;
   final _confirmPasswordController = TextEditingController();
-  bool _agreeToTerms = false; // 是否同意用户隐私政策条款
-  bool _obscureText = true; // 是否隐藏密码
-  String _province = 'Loading...'; // 用户IP的归属地
-  final AuthService _authService = AuthService(); // 在页面构建的时候初始化AuthService
+  bool _agreeToTerms = false;
+  bool _obscureText = true;
+  String _province = 'Loading...';
+  final AuthService _authService = AuthService();
   final logger = getLogger();
 
   @override
@@ -29,7 +30,6 @@ class RegisterPageState extends State<RegisterPage> {
     _getProvinceInfo();
   }
 
-  // 调用utils/ip_locator.dart中的getProvince方法获取用户IP的归属地
   Future<void> _getProvinceInfo() async {
     String province = await IPLocationUtil.getProvince();
     setState(() {
@@ -37,24 +37,13 @@ class RegisterPageState extends State<RegisterPage> {
     });
   }
 
-  // 切换密码可见性
   void _toggleObscureText() {
     setState(() {
       _obscureText = !_obscureText;
     });
   }
 
-  // 对密码进行哈希处理
-  String hash(String password) {
-    List<int> bytes = utf8.encode(password); // Convert the string to bytes
-    Digest digest = sha256.convert(bytes); // Generate the SHA-256 hash
-    String hashString = digest.toString();
-    return hashString;
-  }
-
-  // 注册逻辑
   void _register() async {
-    // 检查是否同意用户隐私政策条款
     if (!_agreeToTerms) {
       showDialog(
         context: context,
@@ -66,7 +55,7 @@ class RegisterPageState extends State<RegisterPage> {
               TextButton(
                 child: const Text('取消'),
                 onPressed: () {
-                  Navigator.of(context).pop(); // 关闭对话框
+                  Navigator.of(context).pop();
                 },
               ),
               TextButton(
@@ -85,72 +74,70 @@ class RegisterPageState extends State<RegisterPage> {
       return;
     }
 
-    // 检查两次输入的密码是否一致
     if (_passwordController.text != _confirmPasswordController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('两次输入的密码不一致')),
-      );
+      _showErrorToast('两次输入的密码不一致');
       return;
     }
 
-    // 调用AuthService的register方法进行注册
     try {
-      // ~ 控制台输出后端的主机和端口号
       logger.d('Attempting to connect to backend at $backendHost:$backendPort');
       logger.d('Register request parameters:');
       logger.d('Username: ${_usernameController.text}');
-      logger.d('Password: [REDACTED]'); // 不输出实际密码
+      logger.d('Password: [REDACTED]');
       logger.d('Nickname: ${_usernameController.text}');
       logger.d('IP Address: $_province');
       logger.d('Avatar: [Empty]');
-      final startTime = DateTime.now(); // 记录开始调用 register 方法的时间
+      final startTime = DateTime.now();
       logger.d('Starting register call at $startTime');
 
-      // username和password是必填项，nickname, avatar, ipaddress是可选项
       final registerResponse = await _authService.register(
         _usernameController.text,
-        _passwordController.text, // 这里是密码的明文，传输到后端进行存储的时候再进行哈希处理
+        _passwordController.text,
+        _selectedGender,
         nickname: _usernameController.text,
         ipaddress: _province,
         avatar: '',
       );
 
-      // ~ 控制台输出注册结果
       logger.i('registerResponse: $registerResponse');
-      final endTime = DateTime.now(); // 记录结束调用的时间和耗时
+      final endTime = DateTime.now();
       final duration = endTime.difference(startTime);
       logger.i(
           'Register call completed at $endTime (Duration: ${duration.inMilliseconds}ms)');
-      // 输出注册响应
       logger.i('Register response:');
       logger.i('statusCode: ${registerResponse.statusCode}');
       logger.i('statusMsg: ${registerResponse.statusMsg}');
 
       if (registerResponse.statusCode == 0) {
-        // 注册成功后的处理逻辑
         Navigator.pop(context);
       } else {
-        // 注册失败后的处理逻辑，一般不会走到这里，弹出错误提示
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('注册失败，请检查输入或网络连接。')),
-        );
+        _showErrorToast('注册失败: ${registerResponse.statusMsg}');
       }
-    } catch (e, stackTrace) {
-      // 捕获并记录异常
+    } catch (e) {
       logger.e('Exception occurred during registration');
       logger.e('Error type: ${e.runtimeType}');
 
-      // 如果是 gRPC 特定的错误，可以添加更多详细信息
       if (e is GrpcError) {
         logger.e('gRPC error code: ${e.code}');
         logger.e('gRPC error details: ${e.details}');
         logger.e('gRPC error trailers: ${e.trailers}');
         logger.e('gRPC error message: ${e.message}');
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('注册失败: $e')),
-      );
+      _showErrorToast('注册失败: $e');
     }
+  }
+
+  // 显示错误提示
+  void _showErrorToast(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      timeInSecForIosWeb: 1,
+      backgroundColor: Colors.red,
+      textColor: Colors.white,
+      fontSize: 16.0,
+    );
   }
 
   @override
@@ -188,16 +175,35 @@ class RegisterPageState extends State<RegisterPage> {
               const SizedBox(height: 40),
               TextFormField(
                 controller: _usernameController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: '用户名',
-                  border: InputBorder.none,
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.blue),
+                  prefixIcon: const Icon(Icons.person),
+                ),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<Gender>(
+                value: _selectedGender,
+                onChanged: (Gender? newValue) {
+                  setState(() {
+                    _selectedGender = newValue ?? Gender.UNKNOWN;
+                  });
+                },
+                items:
+                    Gender.values.map<DropdownMenuItem<Gender>>((Gender value) {
+                  return DropdownMenuItem<Gender>(
+                    value: value,
+                    child: Text(_getGenderString(value)),
+                  );
+                }).toList(),
+                decoration: InputDecoration(
+                  labelText: '性别',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  prefixIcon: Icon(Icons.person),
+                  prefixIcon: const Icon(Icons.wc),
                 ),
               ),
               const SizedBox(height: 16),
@@ -206,14 +212,10 @@ class RegisterPageState extends State<RegisterPage> {
                 obscureText: _obscureText,
                 decoration: InputDecoration(
                   labelText: '密码',
-                  border: InputBorder.none,
-                  enabledBorder: const UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  focusedBorder: const UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.blue),
-                  ),
-                  prefixIcon: const Icon(Icons.key),
+                  prefixIcon: const Icon(Icons.lock),
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscureText ? Icons.visibility : Icons.visibility_off,
@@ -228,14 +230,10 @@ class RegisterPageState extends State<RegisterPage> {
                 obscureText: _obscureText,
                 decoration: InputDecoration(
                   labelText: '再次输入密码',
-                  border: InputBorder.none,
-                  enabledBorder: const UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  focusedBorder: const UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.blue),
-                  ),
-                  prefixIcon: const Icon(Icons.key),
+                  prefixIcon: const Icon(Icons.lock),
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscureText ? Icons.visibility : Icons.visibility_off,
@@ -244,6 +242,7 @@ class RegisterPageState extends State<RegisterPage> {
                   ),
                 ),
               ),
+              const SizedBox(height: 16),
               CheckboxListTile(
                 title: const Text('我同意用户隐私政策条款'),
                 value: _agreeToTerms,
@@ -256,12 +255,16 @@ class RegisterPageState extends State<RegisterPage> {
               ),
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: _register, // 点击按钮时触发注册的逻辑
+                onPressed: _register,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
                 child: const Text(
                   '注册',
+                  style: TextStyle(fontSize: 18),
                 ),
               ),
               const SizedBox(height: 16),
@@ -282,5 +285,19 @@ class RegisterPageState extends State<RegisterPage> {
         ),
       ),
     );
+  }
+
+  String _getGenderString(Gender gender) {
+    switch (gender) {
+      case Gender.MALE:
+        return '男性';
+      case Gender.FEMALE:
+        return '女性';
+      case Gender.OTHER:
+        return '其他';
+      case Gender.UNKNOWN:
+      default:
+        return '未知';
+    }
   }
 }

@@ -1,11 +1,18 @@
 package services
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"mime/multipart"
+	"net/http"
+	"net/url"
 	"time"
 
+	"github.com/BigNoseCattyHome/aorb/backend/go-services/auth/conf"
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/auth"
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/user"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
@@ -25,28 +32,44 @@ func RegisterUser(newUser *user.User) error {
 	log.Infof("Attempting to register user: %s", newUser.Username)
 
 	// 注册用户的逻辑
-	isExistUser, err := getUserByUsername(newUser.Username)
+	isExistUser, err := checkUsernameExists(newUser.Username)
 	if err != nil {
 		log.Errorf("while checking existing user: %v", err)
 		return fmt.Errorf("while checking existing user: %w", err)
 	}
 	if isExistUser {
 		log.Warnf("User already exists: %s", newUser.Username)
-		return errors.New("用户名已存在")
+		return errors.New("username has been registered")
 	}
 	coins := float64(0)
-	newUser.Id = primitive.NewObjectID().Hex()
 	newUser.Coins = &coins
-	newUser.Blacklist = &user.BlackList{}
-	newUser.CoinsRecord = &user.CoinRecordList{}
-	newUser.Followed = &user.FollowedList{}
-	newUser.Follower = &user.FollowerList{}
-	newUser.PollAsk = &user.PollAskList{}
-	newUser.PollAns = &user.PollAnsList{}
-	newUser.PollCollect = &user.PollCollectList{}
+	newUser.Blacklist = &user.BlackList{
+		Usernames: []string{},
+	}
+	newUser.CoinsRecord = &user.CoinRecordList{
+		Records: []*user.CoinRecord{},
+	}
+	newUser.Followed = &user.FollowedList{
+		Usernames: []string{},
+	}
+	newUser.Follower = &user.FollowerList{
+		Usernames: []string{},
+	}
+	newUser.PollAsk = &user.PollAskList{
+		PollIds: []string{},
+	}
+	newUser.PollAns = &user.PollAnsList{
+		PollIds: []string{},
+	}
+	newUser.PollCollect = &user.PollCollectList{
+		PollIds: []string{},
+	}
 	newUser.CreateAt = timestamppb.Now()
 	newUser.UpdateAt = timestamppb.Now()
 	newUser.DeleteAt = timestamppb.New(time.Time{})
+	newUser.BgpicMe = &conf.DefaultUserBgpic
+	newUser.BgpicPollcard = &conf.DefaultUserPollcard
+	newUser.Bio = &conf.DefaultUserBio
 
 	// 保存用户到数据库
 	if err := storeUser(newUser); err != nil {
@@ -64,59 +87,95 @@ func storeUser(user *user.User) error {
 	collection := database.MongoDbClient.Database("aorb").Collection("users")
 
 	// 将用户信息插入到数据库中
-	_, err := collection.InsertOne(context.TODO(), user)
+	insertResult, err := collection.InsertOne(context.TODO(), user)
 	if err != nil {
-		log.Error("插入失败", err)
+		log.Error("Failed to insert records to db: ", err)
 		return err
+	}
+
+	// 获取插入文档的 _id 并赋值给 user.Id
+	if oid, ok := insertResult.InsertedID.(primitive.ObjectID); ok {
+		user.Id = oid.Hex()
+		updateResult, err := collection.UpdateOne(context.TODO(), bson.M{"_id": oid}, bson.M{"$set": bson.M{"id": user.Id}})
+		if err != nil {
+			log.Error("Update user.id failed", err)
+			return err
+		}
+		if updateResult.ModifiedCount == 0 {
+			log.Warn("No user.id was updated")
+		}
+	} else {
+		log.Error("Failed to get_id of document inserted")
+		return errors.New("failed to get_id of document inserted")
 	}
 
 	return nil
 }
 
 // 验证用户密码是否正确，返回 JWT令牌，过期时间，刷新令牌，用户基本信息，错误信息
-func AuthenticateUser(user *auth.LoginRequest) (string, int64, string, auth.SimpleUser, error) {
+func AuthenticateUser(ctx context.Context, user *auth.LoginRequest) (string, int64, string, *auth.SimpleUser, error) {
 	// 检查用户是否存在
 	log.Debug("user: ", user)
-	storedUser, err := getUserByID(user.Username)
+	storedUser, err := getUserByUsername(user.Username)
 	log.Info("storedUser: ", storedUser)
 	if err != nil {
 		log.Error("Failed to get user from database: ", err)
-		return "", 0, "", auth.SimpleUser{}, errors.New("failed to get user from database")
+		return "", 0, "", nil, errors.New("failed to get user from database")
 	}
 
 	// 检查用户名对应的密码是否正确
 	if user.Password != *storedUser.Password {
 		log.Error("Invalid password")
-		return "", 0, "", auth.SimpleUser{}, errors.New("invalid password")
+		return "", 0, "", nil, errors.New("invalid password")
 	}
 
 	// 生成JWT令牌
 	tokenString, exp_token, err := GenerateAccessToken(storedUser)
 	if err != nil {
 		log.Error("Failed to generate JWT token: ", err)
-		return "", 0, "", auth.SimpleUser{}, errors.New("failed to generate JWT token")
+		return "", 0, "", nil, errors.New("failed to generate JWT token")
 	}
 
 	// 生成刷新令牌
 	fresh_token, err := GenerateRefreshToken(storedUser)
 	if err != nil {
 		log.Error("Failed to generate refresh token: ", err)
-		return "", 0, "", auth.SimpleUser{}, errors.New("failed to generate refresh token")
+		return "", 0, "", nil, errors.New("failed to generate refresh token")
 	}
 
-	// 全部顺利执行，返回用户的基本信息
-	simple_user := auth.SimpleUser{
+	// 更新用户的IP地址，根据username查询用户更新ipaddress信息
+	collection := database.MongoDbClient.Database("aorb").Collection("users")
+	// 构建更新过滤器和更新内容
+	filter := bson.M{"username": user.Username}
+	update := bson.M{"$set": bson.M{"ipaddress": user.Ipaddress}}
+	// 执行更新操作
+	result, err := collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		log.Debug("Failed to update user IP address: ", err)
+		return "", 0, "", nil, err
+	}
+
+	// 检查是否有文档被更新
+	if result.ModifiedCount == 0 {
+		log.Warn("No user was updated")
+	} else {
+		log.Debug("Updated user IP address: ", user.Ipaddress)
+	}
+
+	// 构建并返回用户的基本信息
+	simple_user := &auth.SimpleUser{
 		Username:  storedUser.Username,
 		Nickname:  storedUser.Nickname,
 		Avatar:    storedUser.Avatar,
-		Ipaddress: *storedUser.Ipaddress,
+		Ipaddress: user.Ipaddress, // 使用更新后的IP地址
+		Gender:    storedUser.Gender,
 	}
 
 	return tokenString, exp_token, fresh_token, simple_user, nil
 }
 
 // 从数据库获取用户
-func getUserByID(userName string) (*user.User, error) {
+func getUserByUsername(userName string) (*user.User, error) {
 	res := &user.User{} // 返回指针
 
 	// 使用 ObjectID 进行查询
@@ -126,7 +185,7 @@ func getUserByID(userName string) (*user.User, error) {
 	err := result.Decode(res)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			log.Println("No user found with ID: ", userName)
+			log.Println("No user found with username: ", userName)
 		} else {
 			log.Println("Failed to decode result: ", err)
 		}
@@ -138,7 +197,7 @@ func getUserByID(userName string) (*user.User, error) {
 
 // 查询是否username已经存在
 // 只有在数据库查询的时候遇到除了mongo.ErrNoDocuments之外的错误才会返回错误
-func getUserByUsername(username string) (bool, error) {
+func checkUsernameExists(username string) (bool, error) {
 	collection := database.MongoDbClient.Database("aorb").Collection("users")
 
 	// 查询用户
@@ -157,4 +216,113 @@ func getUserByUsername(username string) (bool, error) {
 
 	// 找到匹配的用户
 	return true, nil
+}
+
+// SmmsResponse represents the response structure from SM.MS API
+// SmmsResponse 定义一个结构体来表示整个响应
+type SmmsResponse struct {
+	Success   bool   `json:"success"`
+	Code      string `json:"code"`
+	Message   string `json:"message"`
+	Data      Data   `json:"data"`
+	RequestID string `json:"RequestId"`
+}
+
+// Data 定义一个结构体来表示 data 字段
+type Data struct {
+	FileID    int    `json:"file_id"`
+	Width     int    `json:"width"`
+	Height    int    `json:"height"`
+	Filename  string `json:"filename"`
+	Storename string `json:"storename"`
+	Size      int    `json:"size"`
+	Path      string `json:"path"`
+	Hash      string `json:"hash"`
+	URL       string `json:"url"`
+	Delete    string `json:"delete"`
+	Page      string `json:"page"`
+}
+
+// 生成用户头像并上传到 SM.MS 图床
+func GenerateAvatar(ctx context.Context, imageURL, multiavatarToken, smmsToken, fileName string) (*string, error) {
+	// 在长时间操作中定期检查 context
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
+	}
+
+	// 解析原始 URL
+	u, err := url.Parse(imageURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse image URL: %w", err)
+	}
+
+	// 创建查询参数
+	query := u.Query()
+	query.Set("apikey", multiavatarToken)
+
+	// 将查询参数添加回 URL
+	u.RawQuery = query.Encode()
+
+	// 下载头像
+	log.Debug("Downloading avatar from: ", u.String())
+	avatarResp, err := http.Get(u.String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to downloard the avator: %w", err)
+	}
+	defer avatarResp.Body.Close()
+
+	// 准备multipart表单
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, err := writer.CreateFormFile("smfile", fileName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create form file: %w", err)
+	}
+	_, err = io.Copy(part, avatarResp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to copy file: %w", err)
+	}
+	writer.Close()
+
+	// 在长时间操作中定期检查 context
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
+	}
+
+	// 创建上传请求
+	req, err := http.NewRequest("POST", "https://sm.ms/api/v2/upload", body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.Header.Set("Authorization", smmsToken)
+
+	// 发送请求
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// 解析响应
+	var smmsResp SmmsResponse
+	err = json.NewDecoder(resp.Body).Decode(&smmsResp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+	log.Debug("SM.MS response: ", smmsResp)
+
+	if !smmsResp.Success {
+		return nil, fmt.Errorf("failed to upload avatar: %s", smmsResp.Message)
+	}
+
+	// 将response中的storename,url,delete,hash保存到数据库
+	collection := database.MongoDbClient.Database("aorb").Collection("pictures")
+	_, err = collection.InsertOne(context.TODO(), bson.M{"storename": smmsResp.Data.Storename, "url": smmsResp.Data.URL, "delete": smmsResp.Data.Delete, "hash": smmsResp.Data.Hash})
+	if err != nil {
+		return nil, fmt.Errorf("failed to insert picture to db: %w", err)
+	}
+
+	return &smmsResp.Data.URL, nil
 }

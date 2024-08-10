@@ -2,6 +2,7 @@ syntax = "proto3";
 package rpc.auth;
 option go_package = "github.com/BigNoseCattyHome/aorb/backend/rpc/auth;auth";
 
+import "user.proto";
 // 导入必要的protobuf类型
 import "google/protobuf/timestamp.proto";
 
@@ -12,6 +13,7 @@ message LoginRequest {
   string device_id = 3; // 设备ID
   google.protobuf.Timestamp timestamp = 4; // 时间戳
   string nonce = 5; // 随机数
+  string ipaddress = 6; // IP地址
 }
 
 message LoginResponse {
@@ -29,6 +31,7 @@ message SimpleUser {
   string nickname = 2; // 昵称
   string avatar = 3; // 头像
   string ipaddress = 4; // IP归属地
+  user.Gender gender = 5; // 性别
 }
 
 message VerifyRequest {
@@ -70,6 +73,7 @@ message RegisterRequest {
   string nickname = 3; // 昵称
   string avatar = 4; // 头像
   string ipaddress = 5; // IP归属地
+  user.Gender gender = 6; // 性别
 }
 
 message RegisterResponse {

@@ -45,7 +45,13 @@ dependencies:
   logger: ^1.4.0
   dart_ipify: ^1.1.1
   crypto: ^3.0.1
-  
+  image_picker: ^0.8.4+4
+  fixnum: ^1.1.0
+  flutter_secure_storage: ^8.0.0
+  path: ^1.8.3
+  flutter_dotenv: ^5.0.2
+  fluttertoast: ^8.2.5
+    
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -58,7 +64,7 @@ dev_dependencies:
   flutter_lints: ^2.0.0
   mockito: ^5.0.16
   test: ^1.16.0
-
+  
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
@@ -71,6 +77,7 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
+    - .env
     - images/home_selected.svg
     - images/home_unselected.svg
     - images/me_selected.svg

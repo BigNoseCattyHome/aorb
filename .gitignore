@@ -112,3 +112,6 @@ backend/rpc
 # ouput文件夹
 output/
 backend/rpc/
+
+# 确保.env文件不会被提交
+.env

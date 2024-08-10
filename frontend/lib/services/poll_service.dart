@@ -1,23 +1,56 @@
 import 'package:aorb/conf/config.dart';
-import 'package:aorb/models/poll.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:grpc/grpc.dart';
+import 'package:aorb/generated/poll.pbgrpc.dart';
 
 class PollService {
-  
-  // 查询单个投票详情
-  Future<Poll> fetchPoll(String pollId) async {
-    // 通过 pollId 查询投票详情
-    final response =
-        await http.get(Uri.http(apiDomain, '/api/v1/poll/$pollId'));
+  late final PollServiceClient _client;
+  late final ClientChannel _channel;
+  var logger = getLogger();
 
-    if (response.statusCode == 200) {
-      // 如果服务器返回一个 200 OK 响应，那么解析 JSON。
-      final data = jsonDecode(response.body);
-      return Poll.fromJson(data);
+  PollService() {
+    const host = backendHost;
+    const port = backendPort;
+    logger.i('PollService attempting to connect to $backendHost:$backendPort');
+
+    _channel = ClientChannel(
+      host,
+      port: port,
+      options: const ChannelOptions(credentials: ChannelCredentials.insecure()),
+    );
+    _client = PollServiceClient(_channel);
+  }
+
+  // 创建投票
+  Future<CreatePollResponse> createPoll(CreatePollRequest request) async {
+    try {
+      final CreatePollResponse response = await _client.createPoll(request);
+
+      if (response.statusCode == 0) {
+        logger.i('成功创建投票 ${request.poll.title}');
+        return response;
+      } else {
+        logger.w('创建投票 ${request.poll.title} 失败: ${response.statusMsg}');
+        throw Exception('创建投票 ${request..poll.title} 失败: ${response.statusMsg}');
+      }
+    } on GrpcError catch (e) {
+      logger.e('创建投票时发生gRPC错误: ${e.message}');
+      throw Exception('创建投票失败: ${e.message}');
+    } catch (e) {
+      logger.e('创建投票时发生意外错误: $e');
+      throw Exception('创建投票失败: $e');
+    }
+  }
+
+  // 查询投票信息
+  Future<GetPollResponse> getPoll(GetPollRequest requset) async {
+    final GetPollResponse response = await _client.getPoll(requset);
+
+    if (response.statusCode == 0) {
+      logger.i('成功获取投票 ${requset.pollUuid} 的信息');
+      return response;
     } else {
-      // 如果服务器返回一个不是 200 OK 的响应，那么抛出一个异常。
-      throw Exception('Failed to load poll');
+      logger.w('获取投票 ${requset.pollUuid} 信息失败: ${response.statusMsg}');
+      throw Exception('获取投票 ${requset.pollUuid} 信息失败: ${response.statusMsg}');
     }
   }
 }

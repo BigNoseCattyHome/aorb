@@ -1,6 +1,5 @@
-import 'package:aorb/conf/config.dart';
+import 'package:aorb/generated/poll.pb.dart';
 import 'package:flutter/material.dart';
-import 'package:aorb/models/poll.dart';
 
 import 'package:aorb/services/user_service.dart';
 import 'package:aorb/services/poll_service.dart';
@@ -10,10 +9,9 @@ import 'package:aorb/widgets/poll_detail.dart';
 import 'package:aorb/generated/user.pbgrpc.dart';
 
 class PollDetailPage extends StatefulWidget {
-  final String username; // 用户ID
-  final String postUserId; // 这篇帖子发布者ID
-  const PollDetailPage(
-      {super.key, required this.postUserId, required this.username});
+  final String userId; // 用户Id，用于获取和博主的关注状态和用户信息
+  final String pollId; // 这篇帖子的uuid，用于获取帖子详情
+  const PollDetailPage({super.key, required this.pollId, required this.userId});
 
   @override
   PollDetailPageState createState() => PollDetailPageState();
@@ -32,29 +30,29 @@ class PollDetailPageState extends State<PollDetailPage>
     super.initState();
 
     // 获取关注状态
-    IsUserFollowingRequest request_follow = IsUserFollowingRequest()
-      ..username = widget.username;
-    UserService(backendHost, backendPort)
-        .isUserFollowing(request_follow)
-        .then((isFollowed) {
+    IsUserFollowingRequest requestFollow = IsUserFollowingRequest()
+      ..username = widget.userId;
+    UserService().isUserFollowing(requestFollow).then((isFollowed) {
       setState(() {
         this.isFollowed = isFollowed;
       });
     });
 
     // 获取用户信息: nickname, avatar
-    UserRequest request = UserRequest()..username = widget.username;
-    UserService(backendHost, backendPort).getUserInfo(request).then((response) {
+    UserRequest request = UserRequest()..username = widget.userId;
+    UserService().getUserInfo(request).then((response) {
       setState(() {
         user = response.user;
       });
     });
 
     // 获取投票详情
-    PollService().fetchPoll(widget.postUserId).then((poll) {
+    PollService()
+        .getPoll(GetPollRequest()..pollUuid = widget.pollId)
+        .then((pollResponse) {
       setState(() {
-        this.poll = poll;
-        cntComments = poll.comments.length;
+        poll = pollResponse.poll;
+        cntComments = pollResponse.poll.commentList.length;
       });
     });
 
@@ -134,10 +132,14 @@ class PollDetailPageState extends State<PollDetailPage>
         // 内容详情
         PollDetail(
             title: poll.title,
-            content: poll.description,
+            content: poll.content,
             options: poll.options,
-            votePercentage: poll.optionsRate,
-            time: poll.time,
+            votePercentage: poll.optionsCount.map((value) {
+              return poll.optionsCount.reduce((a, b) => a + b) > 0
+                  ? (value / poll.optionsCount.reduce((a, b) => a + b)) * 100
+                  : 0.0;
+            }).toList(),
+            time: poll.createAt.toDateTime(),
             ipaddress: poll.ipaddress),
 
         // 分割线

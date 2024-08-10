@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/auth"
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/comment"
@@ -77,7 +78,7 @@ var serviceNameMapping = map[string]string{
 	"rpc.user.UserService":           config.UserRpcServerName,
 	"rpc.comment.CommentService":     config.CommentRpcServerName,
 	"rpc.vote.VoteService":           config.VoteRpcServerName,
-	"rpc.poll.QuestionService":       config.PollRpcServerName,
+	"rpc.poll.PollService":           config.PollRpcServerName,
 	"rpc.recommend.RecommendService": config.RecommendRpcServerName,
 }
 
@@ -197,6 +198,8 @@ func getResponseType(method string) reflect.Type {
 		return reflect.TypeOf((*user.UserExistResponse)(nil))
 	case "/rpc.user.UserService/IsUserFollowing":
 		return reflect.TypeOf((*user.IsUserFollowingResponse)(nil))
+	case "/rpc.user.UserService/UpdateUser":
+		return reflect.TypeOf((*user.UpdateUserResponse)(nil))
 
 	case "/rpc.comment.CommentService/ActionComment":
 		return reflect.TypeOf((*comment.ActionCommentResponse)(nil))
@@ -211,6 +214,8 @@ func getResponseType(method string) reflect.Type {
 		return reflect.TypeOf((*poll.GetPollResponse)(nil))
 	case "/rpc.poll.PollService/ListPoll":
 		return reflect.TypeOf((*poll.ListPollResponse)(nil))
+	case "/rpc.poll.PollService/PollExist":
+		return reflect.TypeOf((*poll.PollExistResponse)(nil))
 
 	case "/rpc.vote.VoteService/CreateVote":
 		return reflect.TypeOf((*vote.CreateVoteResponse)(nil))
@@ -242,6 +247,29 @@ func extractServiceName(fullMethod string) (grpcServiceName, consulServiceName s
 	log.Infof("Mapped gRPC service %s to Consul service %s", grpcServiceName, consulServiceName)
 	return grpcServiceName, consulServiceName
 }
+
+// timeoutInterceptor 是一个 gRPC 拦截器，用于设置超时时间
+func timeoutInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	return handler(ctx, req)
+}
+
+// chainInterceptors 用于将多个拦截器串联起来
+func chainInterceptors(interceptors ...grpc.UnaryServerInterceptor) grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+		chain := handler
+		for i := len(interceptors) - 1; i >= 0; i-- {
+			chain = func(currentInter grpc.UnaryServerInterceptor, nextHandler grpc.UnaryHandler) grpc.UnaryHandler {
+				return func(currentCtx context.Context, currentReq interface{}) (interface{}, error) {
+					return currentInter(currentCtx, currentReq, info, nextHandler)
+				}
+			}(interceptors[i], chain)
+		}
+		return chain(ctx, req)
+	}
+}
+
 func main() {
 	// 创建 Consul 客户端
 	consulConfig := api.DefaultConfig()
@@ -260,7 +288,10 @@ func main() {
 
 	// 创建 gRPC 服务器，并注册拦截器
 	s := grpc.NewServer(
-		grpc.UnaryInterceptor(forwardInterceptor(consulClient)),
+		grpc.UnaryInterceptor(chainInterceptors(
+			forwardInterceptor(consulClient), // 转发请求到相应的服务
+			timeoutInterceptor,               // 设置超时时间
+		)),
 	)
 
 	// 注册服务

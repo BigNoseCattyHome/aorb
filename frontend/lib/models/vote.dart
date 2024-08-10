@@ -4,7 +4,7 @@ class Vote {
   final String id;
   final String type; // 这里我们使用 String 替代原 Type 枚举
   final String time;
-  final String user_id;
+  final String userId;
   final String title;
   final String description;
   final List<String> options;
@@ -12,7 +12,7 @@ class Vote {
   final List<Comment> comments;
   final int? fee; // 用 int? 表示可选的整数
   final List<String> inviteIDs;
-  final List<String> user_ids;
+  final List<String> userIds;
 
   Vote({
     required this.id,
@@ -20,13 +20,13 @@ class Vote {
     required this.comments,
     required this.description,
     this.fee,
-    required this.user_id,
+    required this.userId,
     required this.time,
     required this.title,
     required this.options,
     required this.inviteIDs,
     required this.type,
-    required this.user_ids,
+    required this.userIds,
   });
 
   // 从JSON数据创建Vote对象的工厂方法
@@ -37,13 +37,13 @@ class Vote {
       channel: json['channel'],
       comments: List<Comment>.from(json['comments'].map((x) => Comment.fromJson(x))),
       fee: json['fee'],
-      user_id: json['user_id'],
+      userId: json['user_id'],
       time: json['time'],
       title: json['title'],
       options: List<String>.from(json['options']),
       inviteIDs: List<String>.from(json['invite_ids'] ?? []),
       type: json['type'],
-      user_ids: List<String>.from(json['user_ids']),
+      userIds: List<String>.from(json['user_ids']),
     );
   }
 
@@ -54,14 +54,14 @@ class Vote {
       'channel': channel,
       'comments': List<dynamic>.from(comments.map((x) => x.toJson())),
       'fee': fee,
-      'user_id': user_id,
+      'user_id': userId,
       'time': time,
       'title': title,
       'description': description,
       'options': options,
       'invite_ids': inviteIDs,
       'type': type,
-      'user_ids': user_ids,
+      'user_ids': userIds,
     };
   }
 }

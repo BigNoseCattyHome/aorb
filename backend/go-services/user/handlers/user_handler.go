@@ -75,3 +75,42 @@ func (a UserServiceImpl) IsUserFollowing(ctx context.Context, request *user.IsUs
 
 	return resp, nil
 }
+
+// UpdateUser 方法用于更新用户信息
+func (a UserServiceImpl) UpdateUser(ctx context.Context, request *user.UpdateUserRequest) (resp *user.UpdateUserResponse, err error) {
+	userId := request.GetUserId()
+	log.Debug("Updating user: ", userId)
+
+	// 获取需要更新的字段
+	updateFields := make(map[string]interface{})
+	if request.Username != nil {
+		updateFields["username"] = *request.Username
+	}
+	if request.Nickname != nil {
+		updateFields["nickname"] = *request.Nickname
+	}
+	if request.Bio != nil {
+		updateFields["bio"] = *request.Bio
+	}
+	if request.Gender != nil {
+		updateFields["gender"] = *request.Gender
+	}
+	if request.BgpicMe != nil {
+		updateFields["bgpic_me"] = *request.BgpicMe
+	}
+	if request.BgpicPollcard != nil {
+		updateFields["bgpic_pollcard"] = *request.BgpicPollcard
+	}
+	if request.Avatar != nil {
+		updateFields["avatar"] = *request.Avatar
+	}
+
+	// 调用服务层的 UpdateUser 方法
+	resp, err = services.UpdateUserInService(ctx, userId, updateFields)
+	if err != nil {
+		log.Error("Failed to update user: ", err)
+		return nil, err
+	}
+
+	return resp, nil
+}

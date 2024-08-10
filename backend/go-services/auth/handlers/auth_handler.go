@@ -2,14 +2,17 @@ package handlers
 
 import (
 	"context"
+	"os"
+	"time"
 
-	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/strings"
-
+	"github.com/BigNoseCattyHome/aorb/backend/go-services/auth/conf"
 	"github.com/BigNoseCattyHome/aorb/backend/go-services/auth/services"
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/auth"
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/user"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
+	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/strings"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/logging"
+	"github.com/joho/godotenv"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"google.golang.org/grpc/codes"
 
@@ -65,13 +68,24 @@ func (a AuthServiceImpl) Login(ctx context.Context, request *auth.LoginRequest) 
 		DeviceId:  request.DeviceId,
 		Nonce:     request.Nonce,
 		Timestamp: request.Timestamp,
+		Ipaddress: request.Ipaddress,
 	}
 
 	// 调用服务
-	token, exp_token, refresh_token, simple_user, err := services.AuthenticateUser(&login_request)
+	token, exp_token, refresh_token, simple_user, err := services.AuthenticateUser(ctx, &login_request)
 	if err != nil {
+		// 当出现预期中的错误（用户帐号密码错误）的时候，返回错误信息
+		if err.Error() == "invalid password" || err.Error() == "failed to get user from database" {
+			return &auth.LoginResponse{
+				StatusCode: strings.AuthUserLoginFailedCode,
+				StatusMsg:  strings.AuthUserLoginFailed,
+			}, nil
+		}
+
+		// 出现预期外的错误，返回错误信息
 		return nil, status.Errorf(codes.Unauthenticated, "login failed: %v", err)
 	}
+	log.Debug("simple_user: ", simple_user)
 
 	// 返回响应
 	loginResponse := &auth.LoginResponse{
@@ -92,7 +106,7 @@ func (a AuthServiceImpl) Login(ctx context.Context, request *auth.LoginRequest) 
 }
 
 // Verify 验证
-func (a AuthServiceImpl) Verify(context context.Context, request *auth.VerifyRequest) (*auth.VerifyResponse, error) {
+func (a AuthServiceImpl) Verify(ctx context.Context, request *auth.VerifyRequest) (*auth.VerifyResponse, error) {
 
 	// 调用服务
 	claims, err := services.VerifyAccessToken(request.Token)
@@ -112,7 +126,7 @@ func (a AuthServiceImpl) Verify(context context.Context, request *auth.VerifyReq
 }
 
 // Refresh 刷新
-func (a AuthServiceImpl) Refresh(context context.Context, request *auth.RefreshRequest) (*auth.RefreshResponse, error) {
+func (a AuthServiceImpl) Refresh(ctx context.Context, request *auth.RefreshRequest) (*auth.RefreshResponse, error) {
 
 	// 调用服务
 	newToken, exp_token, err := services.RefreshAccessToken(request.RefreshToken)
@@ -131,7 +145,7 @@ func (a AuthServiceImpl) Refresh(context context.Context, request *auth.RefreshR
 }
 
 // Logout 登出
-func (a AuthServiceImpl) Logout(context context.Context, request *auth.LogoutRequest) (*auth.LogoutResponse, error) {
+func (a AuthServiceImpl) Logout(ctx context.Context, request *auth.LogoutRequest) (*auth.LogoutResponse, error) {
 	// 解析参数
 	accessToken := request.AccessToken
 	refreshToken := request.RefreshToken
@@ -158,20 +172,56 @@ func (a AuthServiceImpl) Logout(context context.Context, request *auth.LogoutReq
 }
 
 // Register 注册
-func (a AuthServiceImpl) Register(context context.Context, request *auth.RegisterRequest) (*auth.RegisterResponse, error) {
+func (a AuthServiceImpl) Register(ctx context.Context, request *auth.RegisterRequest) (*auth.RegisterResponse, error) {
 	log.Infof("Received Register request: %v", request)
+
+	// 创建一个带有超时的新上下文
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, 25*time.Second)
+	defer cancel()
+
+	// 生成随机头像并上传到图床
+	imageURL := "https://api.multiavatar.com/" + request.Username + ".png"
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+	smmsToken := os.Getenv("SMMS_TOKEN")
+	multiavatarToken := os.Getenv("MULTIAVATAR_KEY")
+
+	// 使用协程异步生成头像
+	avatarChan := make(chan string, 1)
+	errChan := make(chan error, 1)
+	go func() {
+		avatarUrl, err := services.GenerateAvatar(ctx, imageURL, multiavatarToken, smmsToken, "avatar_"+request.Username+".png")
+		if err != nil {
+			errChan <- err
+			return
+		}
+		avatarChan <- *avatarUrl
+	}()
 
 	// 解析参数
 	user := user.User{
 		Username:  request.Username,
 		Password:  &request.Password,
 		Nickname:  request.Nickname,
-		Avatar:    request.Avatar,
 		Ipaddress: &request.Ipaddress,
+		Gender:    request.Gender,
+	}
+
+	// 等待生成头像的结果
+	select {
+	case avatarUrl := <-avatarChan:
+		user.Avatar = avatarUrl
+	case err := <-errChan:
+		user.Avatar = conf.DefaultUserAvatar
+		log.Printf("generate avatar failed: %v", err)
+	case <-ctxWithTimeout.Done():
+		return nil, status.Errorf(codes.DeadlineExceeded, "context deadline exceeded")
 	}
 
 	// 调用服务
-	err := services.RegisterUser(&user)
+	err = services.RegisterUser(&user)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "register failed: %v", err)
 	}
@@ -181,5 +231,6 @@ func (a AuthServiceImpl) Register(context context.Context, request *auth.Registe
 		StatusCode: strings.ServiceOKCode,
 		StatusMsg:  strings.ServiceOK,
 	}
+
 	return registerResponse, nil
 }
