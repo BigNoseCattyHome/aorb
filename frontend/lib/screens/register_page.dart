@@ -15,6 +15,7 @@ class RegisterPage extends StatefulWidget {
 }
 
 class RegisterPageState extends State<RegisterPage> {
+  final RegExp usernameRegex = RegExp(r'^[a-zA-Z][a-zA-Z0-9_]{2,19}$');
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   Gender _selectedGender = Gender.UNKNOWN;
@@ -24,11 +25,18 @@ class RegisterPageState extends State<RegisterPage> {
   String _province = 'Loading...';
   final AuthService _authService = AuthService();
   final logger = getLogger();
+  bool _isUsernameValid = false;
 
   @override
   void initState() {
     super.initState();
     _getProvinceInfo();
+  }
+
+  void _validateUsername(String value) {
+    setState(() {
+      _isUsernameValid = usernameRegex.hasMatch(value);
+    });
   }
 
   Future<void> _getProvinceInfo() async {
@@ -49,6 +57,18 @@ class RegisterPageState extends State<RegisterPage> {
       _showErrorToast('请输入用户名');
       return false;
     }
+
+    if (!_isUsernameValid) {
+      _showErrorToast('用户名格式不正确：必须以字母开头，只能包含字母、数字和下划线，长度为 3-20 个字符');
+      return false;
+    }
+
+    // 添加用户名格式验证
+    if (!usernameRegex.hasMatch(_usernameController.text)) {
+      _showErrorToast('用户名格式不正确：必须以字母开头，只能包含字母、数字和下划线，长度为 3-20 个字符');
+      return false;
+    }
+
     if (_passwordController.text.isEmpty) {
       _showErrorToast('请输入密码');
       return false;
@@ -207,6 +227,17 @@ class RegisterPageState extends State<RegisterPage> {
                   ),
                   prefixIcon: const Icon(Icons.person),
                 ),
+                onChanged: _validateUsername,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return '请输入用户名';
+                  }
+                  if (!usernameRegex.hasMatch(value)) {
+                    return '用户名格式不正确';
+                  }
+                  return null;
+                },
+                autovalidateMode: AutovalidateMode.onUserInteraction,
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<Gender>(
@@ -280,7 +311,7 @@ class RegisterPageState extends State<RegisterPage> {
               ),
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: _register,
+                onPressed: _isUsernameValid && _agreeToTerms ? _register : null,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(

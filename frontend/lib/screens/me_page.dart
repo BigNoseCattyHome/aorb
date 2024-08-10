@@ -82,27 +82,41 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
     }
   }
 
+  Future<void> _onRefresh() async {
+    // 调用获取用户信息的方法
+    _fetchUserInfo();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          _buildBackgroundImage(),
-          SafeArea(
-            child: Column(
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: _buildUserInfoSection(),
+      body: RefreshIndicator(
+        onRefresh: _onRefresh,
+        child: Stack(
+          children: [
+            _buildBackgroundImage(),
+            SafeArea(
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height,
+                  child: Column(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: _buildUserInfoSection(),
+                      ),
+                      Expanded(
+                        flex: 5,
+                        child: _buildTabSection(),
+                      ),
+                    ],
+                  ),
                 ),
-                Expanded(
-                  flex: 5,
-                  child: _buildTabSection(),
-                ),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

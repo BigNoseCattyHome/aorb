@@ -1,8 +1,10 @@
+import 'package:aorb/conf/config.dart';
 import 'package:aorb/generated/google/protobuf/timestamp.pb.dart';
 import 'package:aorb/screens/poll_detail_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:aorb/utils/time.dart';
+import 'package:palette_generator/palette_generator.dart';
 
 class PollCard extends StatefulWidget {
   final String title; // 投票的标题
@@ -43,14 +45,21 @@ class PollCard extends StatefulWidget {
 
 class PollCardState extends State<PollCard> {
   int _selectedOption = -1;
-  late Color _textColor;
+  Color? _textColor;
+  var logger = getLogger();
 
   @override
   void initState() {
     super.initState();
-    // widget就是当前State对象关联的Widget对象
     _selectedOption = widget.selectedOption;
-    _textColor = _getTextColor(widget.backgroundImage);
+    _initializeTextColor();
+  }
+
+  Future<void> _initializeTextColor() async {
+    _textColor = await _getTextColor(widget.backgroundImage);
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
@@ -120,7 +129,8 @@ class PollCardState extends State<PollCard> {
                           Text(
                             widget.content,
                             style: TextStyle(
-                              color: _textColor.withOpacity(0.8),
+                              color:
+                                  (_textColor ?? Colors.black).withOpacity(0.8),
                               fontSize: 10,
                             ),
                           ),
@@ -302,8 +312,7 @@ class PollCardState extends State<PollCard> {
     );
   }
 
-// 根据背景决定文字颜色
-  Color _getTextColor(String backgroundImage) {
+  Future<Color> _getTextColor(String backgroundImage) async {
     if (backgroundImage.startsWith('0x')) {
       // 纯色背景
       int colorValue = int.parse(backgroundImage.substring(2), radix: 16);
@@ -317,16 +326,30 @@ class PollCardState extends State<PollCard> {
           Color(int.parse(colorStrings[0].substring(2), radix: 16));
       return _isLightColor(firstColor) ? Colors.black : Colors.white;
     } else {
-      // 对于图片背景，我们默认使用白色文字
-      return Colors.white;
+      // 图片背景
+      try {
+        PaletteGenerator paletteGenerator =
+            await PaletteGenerator.fromImageProvider(
+          NetworkImage(backgroundImage),
+          size: const Size(100, 100), // 可以调整大小以提高性能
+        );
+
+        // 获取主色调
+        Color? dominantColor = paletteGenerator.dominantColor?.color;
+        if (dominantColor != null) {
+          return _isLightColor(dominantColor) ? Colors.black : Colors.white;
+        }
+      } catch (e) {
+        logger.e('Error analyzing image color: $e');
+      }
+
+      // 如果无法分析图片颜色，默认使用白色文字
+      return Colors.black;
     }
   }
 
-  // 新增方法：判断颜色是否为浅色
+// 判断颜色是否为浅色
   bool _isLightColor(Color color) {
-    // 使用相对亮度公式
-    return (0.299 * color.red + 0.587 * color.green + 0.114 * color.blue) /
-            255 >
-        0.5;
+    return color.computeLuminance() > 0.5;
   }
 }
