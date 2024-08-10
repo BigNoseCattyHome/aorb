@@ -331,10 +331,10 @@ func (m MessageServiceImpl) MessageAction(ctx context.Context, request *messageP
 
 	switch request.ActionType {
 	case messagePb.ActionMessageType_ACTION_MESSAGE_TYPE_ADD:
-		pMessageUuid = request.GetMessageUuid()
+		pMessageContent = request.GetMessageContent()
 		break
 	case messagePb.ActionMessageType_ACTION_MESSAGE_TYPE_DELETE:
-		pMessageContent = request.GetMessageContent()
+		pMessageUuid = request.GetMessageUuid()
 		break
 	case messagePb.ActionMessageType_ACTION_MESSAGE_TYPE_UNSPECIFIED:
 		fallthrough

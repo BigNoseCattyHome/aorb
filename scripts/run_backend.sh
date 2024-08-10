@@ -24,6 +24,7 @@ start_service "Comment Service" "go run ./backend/go-services/comment/main.go" "
 start_service "Poll Service" "go run ./backend/go-services/poll/main.go" "./logs/poll.log"
 start_service "User Service" "go run ./backend/go-services/user/main.go" "./logs/user.log"
 start_service "Vote Service" "go run ./backend/go-services/vote/main.go" "./logs/vote.log"
+start_service "Message Service" "go run ./backend/go-services/message/main.go" "./logs/message.log"
 
 echo "All services started."
 echo "Check logs for more details."
