@@ -1,117 +1,173 @@
+import 'package:aorb/conf/config.dart';
+import 'package:aorb/generated/message.pb.dart';
+import 'package:aorb/screens/poll_detail_page.dart';
+import 'package:aorb/screens/user_profile_page.dart';
+import 'package:aorb/services/message_service.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-// 定义 MessagesPage 组件，它是一个有状态的组件（StatefulWidget）
 class MessagesPage extends StatefulWidget {
-  // 传入的 TabController，用于控制顶部导航栏的切换
   final TabController tabController;
 
-  // 构造函数
   const MessagesPage({super.key, required this.tabController});
 
-  // 创建状态类
   @override
   MessagesPageState createState() => MessagesPageState();
 }
 
-// 状态类，管理 MessagesPage 的状态
 class MessagesPageState extends State<MessagesPage> {
-  // 顶部导航栏控制器
   late TabController _tabController;
+  String username = '';
+  String userId = '';
+  UserMessageResponse messages = UserMessageResponse();
+  bool isLoading = true; // 是否正在加载数据
+  final logger = getLogger(); // 日志记录器
 
-  // 初始化状态
   @override
   void initState() {
     super.initState();
-    _tabController =
-        widget.tabController; // 将传入的 TabController 赋值给 _tabController
+    _tabController = widget.tabController;
+    _loadData();
   }
 
-  // 释放资源
+  void _loadData() async {
+    setState(() => isLoading = true);
+
+    final prefs = await SharedPreferences.getInstance();
+    username = prefs.getString('username') ?? '';
+    userId = prefs.getString('userId') ?? '';
+
+    try {
+      UserMessageResponse messagesFetch =
+          await MessageService().getUserMessage(username);
+      setState(() {
+        messages = messagesFetch;
+        isLoading = false;
+      });
+    } catch (e) {
+      logger.e('Error loading messages: $e');
+      setState(() => isLoading = false);
+    }
+  }
+
   @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
   }
 
-  // 构建页面 UI
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar 由 MainPage 管理
-
-      // body 部分通过 TabBarView 显示不同的页面
       body: TabBarView(
-        controller: _tabController, // 使用 _tabController 控制页面切换
-        children: [
-          // 第一个页面：提醒
-          _buildNoticeList(),
-          // 第二个页面：私信
-          _buildMessageList()
-        ],
+        controller: _tabController,
+        children: [_buildNoticeList(), _buildMessageList()],
       ),
     );
   }
 
-  // 构建消息列表
   Widget _buildNoticeList() {
-    // 示例消息数据
-    final messages = [];
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-    // 使用 ListView.builder 动态生成列表项
-    return ListView.builder(
-      itemCount: messages.length, // 列表项数量
-      itemBuilder: (context, index) {
-        final message = messages[index];
-        return ListTile(
-          title: Text(message['title'] as String), // 消息标题
-          subtitle: Text(message['content'] as String), // 消息内容
-          // 如果消息未读，则显示红点图标，否则不显示
-          trailing: message['isRead'] as bool
-              ? null
-              : const Icon(Icons.circle, color: Colors.red, size: 10),
-          // 点击消息项，显示消息详情
-          onTap: () {
-            _showMessageDetail(message as Map<String, String>);
-          },
-        );
-      },
+    return RefreshIndicator(
+      onRefresh: () async => _loadData(), // onRefresh 在下拉刷新时调用
+      child: ListView.builder(
+        itemCount: getTotalLength([
+          messages.messagesCommentReplyList,
+          messages.messagesFollowList,
+          messages.messagesVoteList,
+        ]),
+        itemBuilder: (context, index) {
+          // 根据index判断是那个类型的消息
+          final message = _getMessageAtIndex(index);
+          return _buildMessageTile(message);
+        },
+      ),
     );
+  }
+
+  Widget _buildMessageTile(dynamic message) {
+    return ListTile(
+      leading: _getLeadingIcon(message),
+      title: Text(message.title ?? ''),
+      subtitle: Text(message.content ?? ''),
+      trailing: message.isRead
+          ? null
+          : const Icon(Icons.circle, color: Colors.red, size: 10),
+      onTap: () => _handleMessageTap(message),
+    );
+  }
+
+  Icon _getLeadingIcon(dynamic message) {
+    if (message is CommentReplyMessage) {
+      return const Icon(Icons.comment);
+    } else if (message is FollowMessage) {
+      return const Icon(Icons.person_add);
+    } else if (message is VoteMessage) {
+      return const Icon(Icons.how_to_vote);
+    }
+    return const Icon(Icons.message);
+  }
+
+  void _handleMessageTap(dynamic message) async {
+    // 标记消息为已读，await 不会阻塞后续操作
+    await MessageService()
+        .markMessageStatus(message.message_id, MessageStatus.READ);
+    if (!mounted) return; // 防止页面已经被销毁
+
+    // 根据消息类型跳转到不同的页面
+    if (message is CommentReplyMessage) {
+      // 跳转到问题页面
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => PollDetailPage(
+                    pollId: message.pollId,
+                    username: username,
+                    userId: userId,
+                  )));
+    } else if (message is FollowMessage) {
+      // 跳转到用户详情页面
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) =>
+                  UserProfilePage(username: message.usernameFollower)));
+    } else if (message is VoteMessage) {
+      // 跳转到问题页面
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => PollDetailPage(
+                    pollId: message.pollId,
+                    username: username,
+                    userId: userId,
+                  )));
+    }
+  }
+
+  // 根据索引获取消息
+  dynamic _getMessageAtIndex(int index) {
+    int commentReplyCount = messages.messagesCommentReplyList.length;
+    int followCount = messages.messagesFollowList.length;
+
+    if (index < commentReplyCount) {
+      return messages.messagesCommentReplyList[index];
+    } else if (index < commentReplyCount + followCount) {
+      return messages.messagesFollowList[index - commentReplyCount];
+    } else {
+      return messages.messagesVoteList[index - commentReplyCount - followCount];
+    }
   }
 
   Widget _buildMessageList() {
-    return Container();
+    // TODO: 实现私信列表
+    return const Center(child: Text('私信功能尚未实现'));
   }
 
-  // 显示消息详情页面
-  void _showMessageDetail(Map<String, String> message) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => MessageDetailPage(message: message), // 创建消息详情页面
-      ),
-    );
-  }
-}
-
-// 消息详情页面
-class MessageDetailPage extends StatelessWidget {
-  // 传入的消息数据
-  final Map<String, String> message;
-
-  // 构造函数
-  const MessageDetailPage({super.key, required this.message});
-
-  // 构建消息详情页面 UI
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(message['title']!), // 标题栏，显示消息标题
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Text(message['content']!), // 显示消息内容
-      ),
-    );
+  int getTotalLength(List<List<dynamic>> lists) {
+    return lists.fold(0, (sum, list) => sum + list.length);
   }
 }

@@ -4,23 +4,28 @@ package rpc.vote;
 
 import "google/protobuf/timestamp.proto";
 
+service VoteService{
+  rpc CreateVote (CreateVoteRequest) returns (CreateVoteResponse);        // 创建一个新的投票
+  rpc GetVoteCount (GetVoteCountRequest) returns (GetVoteCountResponse);  // 返回一个poll的票数
+}
+
 message Vote{
-  string vote_uuid = 1;
-  string vote_username = 2;
-  string choice = 3;
-  google.protobuf.Timestamp create_at = 4;
+  string vote_uuid = 1;                     // 投票uuid
+  string vote_username = 2;                 // 投票人
+  string choice = 3;                        // 投票选项
+  google.protobuf.Timestamp create_at = 4;  // 创建时间
 }
 
 message CreateVoteRequest{
-  string poll_uuid = 1;
-  string username = 2;
-  string choice = 3;
+  string poll_uuid = 1;    
+  string username = 2;      // 投票人
+  string choice = 3;        // 投票选项
 }
 
 message CreateVoteResponse{
   int32 status_code = 1;  // 状态码，0-成功，其他值-失败
   string status_msg = 2;  // 返回状态描述
-  string vote_uuid = 3;
+  string vote_uuid = 3;   // 返回创建的投票uuid
 }
 
 message GetVoteCountRequest {
@@ -31,9 +36,4 @@ message GetVoteCountResponse {
   int32 status_code = 1;  // 状态码，0-成功，其他值-失败
   string status_msg = 2;  // 返回状态描述
   repeated uint32 vote_count_list = 3;
-}
-
-service VoteService{
-  rpc CreateVote (CreateVoteRequest) returns (CreateVoteResponse);
-  rpc GetVoteCount (GetVoteCountRequest) returns (GetVoteCountResponse);
 }

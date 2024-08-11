@@ -5,57 +5,56 @@ option go_package = "github.com/BigNoseCattyHome/aorb/backend/rpc/comment;commen
 
 import "google/protobuf/timestamp.proto";
 
+service CommentService{
+  rpc ActionComment(ActionCommentRequest) returns (ActionCommentResponse);  // 对评论进行操作，可以是添加评论，删除评论
+  rpc ListComment(ListCommentRequest) returns (ListCommentResponse);        // 列出评论,根据poll_uuid查询poll，返回poll下的评论列表
+  rpc CountComment(CountCommentRequest) returns (CountCommentResponse);     // 统计评论数，根据poll_uuid查询poll下的评论数
+}
 message Comment{
-  string comment_uuid = 1;
-  string comment_username = 2;
-  string content = 3; // 评论内容
+  string comment_uuid = 1;                  // 评论uuid
+  string comment_username = 2;              // 评论人
+  string content = 3;                       // 评论内容
   google.protobuf.Timestamp create_at = 4;  // 创建时间
 }
 
 enum ActionCommentType{
-  ACTION_COMMENT_TYPE_UNSPECIFIED = 0;
-  ACTION_COMMENT_TYPE_ADD = 1;
-  ACTION_COMMENT_TYPE_DELETE = 2;
+  ACTION_COMMENT_TYPE_UNSPECIFIED = 0;  // 未指定
+  ACTION_COMMENT_TYPE_ADD = 1;          // 添加评论
+  ACTION_COMMENT_TYPE_DELETE = 2;       // 删除评论
 }
 
 message ActionCommentRequest{
-  string username = 1;
-  string poll_uuid = 2;
-  ActionCommentType action_type = 3;
+  string username = 1;                  // 评论人
+  string poll_uuid = 2;                 // 投票uuid
+  ActionCommentType action_type = 3;    // 操作类型
   oneof action {
-    string comment_text = 4;
-    string comment_uuid = 5;
+    string comment_text = 4;            // 评论内容
+    string comment_uuid = 5;            // 评论uuid
   }
 }
 
 message ActionCommentResponse{
-  int32 status_code = 1;  // 状态码，0-成功，其他值-失败
-  string status_msg = 2;  // 返回状态描述
-  optional Comment comment = 3;
+  int32 status_code = 1;                // 状态码，0-成功，其他值-失败
+  string status_msg = 2;                // 返回状态描述
+  optional Comment comment = 3;         // 返回评论
 }
 
 message ListCommentRequest{
-  string poll_uuid = 1;
+  string poll_uuid = 1;                 // 投票uuid
 }
 
 message ListCommentResponse{
-  int32 status_code = 1;  // 状态码，0-成功，其他值-失败
-  string status_msg = 2;  // 返回状态描述
-  repeated Comment comment_list = 3;
+  int32 status_code = 1;                // 状态码，0-成功，其他值-失败
+  string status_msg = 2;                // 返回状态描述
+  repeated Comment comment_list = 3;    // 评论列表
 }
 
 message CountCommentRequest{
-  string poll_uuid = 1;
+  string poll_uuid = 1;                 // 投票uuid
 }
 
 message CountCommentResponse{
-  int32 status_code = 1;  // 状态码，0-成功，其他值-失败
-  string status_msg = 2;  // 返回状态描述
-  uint32 comment_count = 3;
-}
-
-service CommentService{
-  rpc ActionComment(ActionCommentRequest) returns (ActionCommentResponse);
-  rpc ListComment(ListCommentRequest) returns (ListCommentResponse);
-  rpc CountComment(CountCommentRequest) returns (CountCommentResponse);
+  int32 status_code = 1;                // 状态码，0-成功，其他值-失败
+  string status_msg = 2;                // 返回状态描述
+  uint32 comment_count = 3;             // 评论数
 }
