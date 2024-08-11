@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/BigNoseCattyHome/aorb/backend/rpc/message"
 	redisUtil "github.com/BigNoseCattyHome/aorb/backend/utils/storage/redis"
 	"github.com/redis/go-redis/v9"
 	"time"
@@ -35,9 +36,7 @@ import (
 
 var userClient user.UserServiceClient
 var pollClient poll.PollServiceClient
-var actionCommentLimitKeyPrefix = config.Conf.Redis.Prefix + "comment_freq_limit"
-
-const actionCommentMaxQPS = 3 // Maximum ActionComment query amount of an actor per second
+var messageClient message.MessageServiceClient
 
 func exitOnError(err error) {
 	if err != nil {
@@ -58,6 +57,9 @@ func (c CommentServiceImpl) New() {
 
 	pollRpcConn := grpc2.Connect(config.PollRpcServerName)
 	pollClient = poll.NewPollServiceClient(pollRpcConn)
+
+	messageRpcConn := grpc2.Connect(config.MessageRpcServerName)
+	messageClient = message.NewMessageServiceClient(messageRpcConn)
 
 	var err error
 	conn, err = amqp.Dial(rabbitmq.BuildMqConnAddr())
@@ -483,7 +485,7 @@ func deleteComment(ctx context.Context, logger *logrus.Entry, span trace.Span, u
 
 func addComment(ctx context.Context, logger *logrus.Entry, span trace.Span, username string, pPollUuId string, pCommentText string) (resp *commentPb.ActionCommentResponse, err error) {
 
-	collections := database.MongoDbClient.Database("aorb").Collection("polls")
+	pollCollection := database.MongoDbClient.Database("aorb").Collection("polls")
 
 	pComment := commentModels.Comment{
 		CommentUuid:     uuid.GenerateUuid(),
@@ -509,7 +511,7 @@ func addComment(ctx context.Context, logger *logrus.Entry, span trace.Span, user
 		{"pollUuid", pPollUuId},
 	}
 
-	_, err = collections.UpdateOne(ctx, filter, update)
+	_, err = pollCollection.UpdateOne(ctx, filter, update)
 	if err != nil {
 		logger.WithFields(logrus.Fields{
 			"err":       err,
@@ -562,6 +564,38 @@ func addComment(ctx context.Context, logger *logrus.Entry, span trace.Span, user
 	//	}
 	//	return
 	//}
+
+	// 生成一条message
+	filter = bson.D{
+		{"pollUuid", pPollUuId},
+	}
+	cursor := pollCollection.FindOne(ctx, filter)
+	var pPoll pollModels.Poll
+	cursor.Decode(&pPoll)
+
+	messageActionResponse, err := messageClient.MessageAction(ctx, &message.MessageActionRequest{
+		FromUsername: username,
+		ToUsername:   pPoll.UserName,
+		ActionType:   message.ActionMessageType_ACTION_MESSAGE_TYPE_ADD,
+		MessageType:  message.MessageType_MESSAGE_TYPE_COMMENT,
+		Action: &message.MessageActionRequest_MessageContent{
+			MessageContent: pComment.CommentUuid,
+		},
+	})
+
+	if err != nil && messageActionResponse.StatusCode != 0 {
+		logger.WithFields(logrus.Fields{
+			"err":       err,
+			"poll_uuid": pPollUuId,
+			"username":  username,
+		}).Errorf("创建评论失败，Error when calling rpc MessageAction")
+		logging.SetSpanError(span, err)
+		resp = &commentPb.ActionCommentResponse{
+			StatusCode: strings.UnableToCreateCommentErrorCode,
+			StatusMsg:  strings.UnableToCreateCommentError,
+		}
+		return
+	}
 
 	resp = &commentPb.ActionCommentResponse{
 		StatusCode: strings.ServiceOKCode,

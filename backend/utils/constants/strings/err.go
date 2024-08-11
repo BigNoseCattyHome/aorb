@@ -68,6 +68,10 @@ const (
 	UserAlreadyExistsError            = "用户已存在"
 	PollServiceFeedErrorCode          = 50029
 	PollServiceFeedError              = "推送功能出错"
+	UnableToGetChoiceCode             = 50030
+	UnableToGetChoice                 = "无法获取选择结果"
+	UnableToMarkMessageStatusCode     = 50031
+	UnableToMarkMessageStatus         = "无法修改消息阅读状态"
 )
 
 // Expected Error

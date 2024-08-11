@@ -5,6 +5,8 @@ import (
 	"fmt"
 	pollModels "github.com/BigNoseCattyHome/aorb/backend/go-services/poll/models"
 	voteModels "github.com/BigNoseCattyHome/aorb/backend/go-services/vote/models"
+	"github.com/BigNoseCattyHome/aorb/backend/rpc/message"
+	messagePb "github.com/BigNoseCattyHome/aorb/backend/rpc/message"
 	pollPb "github.com/BigNoseCattyHome/aorb/backend/rpc/poll"
 	userPb "github.com/BigNoseCattyHome/aorb/backend/rpc/user"
 	votePb "github.com/BigNoseCattyHome/aorb/backend/rpc/vote"
@@ -28,6 +30,7 @@ type VoteServiceImpl struct {
 
 var userClient userPb.UserServiceClient
 var pollClient pollPb.PollServiceClient
+var messageClient messagePb.MessageServiceClient
 
 var conn *amqp.Connection
 
@@ -44,6 +47,8 @@ func (s VoteServiceImpl) New() {
 	userClient = userPb.NewUserServiceClient(userRpcConn)
 	pollRpcConn := grpc2.Connect(config.PollRpcServerName)
 	pollClient = pollPb.NewPollServiceClient(pollRpcConn)
+	messageRpcConn := grpc2.Connect(config.MessageRpcServerName)
+	messageClient = messagePb.NewMessageServiceClient(messageRpcConn)
 
 	var err error
 	conn, err = amqp.Dial(rabbitmq.BuildMqConnAddr())
@@ -134,14 +139,14 @@ func (s VoteServiceImpl) CreateVote(ctx context.Context, request *votePb.CreateV
 		return
 	}
 
-	collection := database.MongoDbClient.Database("aorb").Collection("polls")
+	pollCollection := database.MongoDbClient.Database("aorb").Collection("polls")
 
 	// Whether user had already voted or not
 	filter4Check := bson.D{
 		{"pollUuid", request.PollUuid},
 	}
 	var pPoll pollModels.Poll
-	collection.FindOne(ctx, filter4Check).Decode(&pPoll)
+	pollCollection.FindOne(ctx, filter4Check).Decode(&pPoll)
 
 	for _, vote := range pPoll.VoteList {
 		if vote.VoteUserName == request.Username {
@@ -205,7 +210,7 @@ func (s VoteServiceImpl) CreateVote(ctx context.Context, request *votePb.CreateV
 		}},
 	}
 
-	_, err = collection.UpdateOne(ctx, filter, update)
+	_, err = pollCollection.UpdateOne(ctx, filter, update)
 
 	if err != nil {
 		logger.WithFields(logrus.Fields{
@@ -238,6 +243,37 @@ func (s VoteServiceImpl) CreateVote(ctx context.Context, request *votePb.CreateV
 			"poll_uuid": request.PollUuid,
 			"username":  pVote.VoteUserName,
 		}).Errorf("Error when inserting poll_uuid into user %s's pollans_list", pVote.VoteUserName)
+		logging.SetSpanError(span, err)
+		response = &votePb.CreateVoteResponse{
+			StatusCode: strings.UnableToQueryPollErrorCode,
+			StatusMsg:  strings.UnableToQueryPollError,
+		}
+		return
+	}
+
+	// 创建一条message
+	filter = bson.D{
+		{"pollUuid", request.PollUuid},
+	}
+	cursor := pollCollection.FindOne(ctx, filter)
+	cursor.Decode(&pPoll)
+
+	messageActionResponse, err := messageClient.MessageAction(ctx, &message.MessageActionRequest{
+		FromUsername: request.Username,
+		ToUsername:   pPoll.UserName,
+		ActionType:   message.ActionMessageType_ACTION_MESSAGE_TYPE_ADD,
+		MessageType:  message.MessageType_MESSAGE_TYPE_VOTE,
+		Action: &message.MessageActionRequest_MessageContent{
+			MessageContent: pVote.VoteUuid,
+		},
+	})
+
+	if err != nil && messageActionResponse.StatusCode != 0 {
+		logger.WithFields(logrus.Fields{
+			"err":       err,
+			"poll_uuid": request.PollUuid,
+			"username":  request.Username,
+		}).Errorf("创建投票失败，Error when calling rpc MessageAction")
 		logging.SetSpanError(span, err)
 		response = &votePb.CreateVoteResponse{
 			StatusCode: strings.UnableToQueryPollErrorCode,

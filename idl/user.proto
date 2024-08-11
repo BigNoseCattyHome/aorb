@@ -24,7 +24,7 @@ message User {
   optional PollAnsList poll_ans = 17; // 回答过的问题id列表
   optional PollCollectList poll_collect = 18; // 收藏的问题id列表
   google.protobuf.Timestamp create_at = 19;  // 创建时间
-  google.protobuf.Timestamp update_at = 20;  // 删除时间
+  google.protobuf.Timestamp update_at = 20;  // 更新时间
   google.protobuf.Timestamp delete_at = 21;  // 删除时间
 }
 

@@ -75,10 +75,24 @@ message FeedPollResponse {
   google.protobuf.Timestamp next_time = 4;  // 本次返回的视频中，发布最早的时间，作为下次请求时的latest_time
 }
 
+message GetChoiceWithPollUuidAndUsernameRequest {
+  string poll_uuid = 1;
+  string username = 2;
+}
+
+message GetChoiceWithPollUuidAndUsernameResponse {
+  int32 status_code = 1;  // 状态码，0-成功，其他值-失败
+  string status_msg = 2;  // 返回状态描述
+  string vote_uuid = 3;
+  string choice = 4;
+}
+
 service PollService{
-  rpc CreatePoll (CreatePollRequest) returns (CreatePollResponse);
-  rpc GetPoll (GetPollRequest) returns (GetPollResponse);
-  rpc ListPoll (ListPollRequest) returns (ListPollResponse);
-  rpc PollExist (PollExistRequest) returns (PollExistResponse);
-  rpc FeedPoll (FeedPollRequest) returns (FeedPollResponse);
+  rpc CreatePoll (CreatePollRequest) returns (CreatePollResponse);  // 创建poll
+  rpc GetPoll (GetPollRequest) returns (GetPollResponse); // 根据uuid获取poll
+  rpc ListPoll (ListPollRequest) returns (ListPollResponse);  // 分页查询所有的poll
+  rpc PollExist (PollExistRequest) returns (PollExistResponse); // 查询制定poll_uuid的poll是否存在
+  rpc FeedPoll (FeedPollRequest) returns (FeedPollResponse);  // 推送最新的十条poll
+  // 根据poll_uuid和username直接获取该用户在这条poll中的choice以及该vote的uuid
+  rpc GetChoiceWithPollUuidAndUsername(GetChoiceWithPollUuidAndUsernameRequest) returns (GetChoiceWithPollUuidAndUsernameResponse);
 }

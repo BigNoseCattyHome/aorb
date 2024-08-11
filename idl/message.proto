@@ -6,9 +6,9 @@ option go_package = "github.com/BigNoseCattyHome/aorb/backend/rpc/message;messag
 import "google/protobuf/timestamp.proto";
 
 service MessageService {
-  rpc MessageChat(MessageChatRequest) returns (MessageChatResponse);  
-  rpc MessageAction(MessageActionRequest) returns (MessageActionResponse);  
-  rpc GetUserMessage(UserMessageRequest) returns (UserMessageResponse); // 根据 username 获取消息
+  rpc MessageChat(MessageChatRequest) returns (MessageChatResponse);  // 根据from_username和to_username获取message
+  rpc MessageAction(MessageActionRequest) returns (MessageActionResponse);  // 发送或者撤回消息
+  rpc GetUserMessage(GetUserMessageRequest) returns (GetUserMessageResponse); // 根据 username 获取消息
   rpc MarkMessageStatus (MarkMessageStatusRequest) returns (MarkMessageStatusResponse);  // 标记消息状态
 }
 
@@ -18,12 +18,21 @@ enum ActionMessageType{
   ACTION_MESSAGE_TYPE_DELETE = 2;
 }
 
+enum MessageType {
+  MESSAGE_TYPE_FOLLOW = 0;
+  MESSAGE_TYPE_COMMENT = 1;
+  MESSAGE_TYPE_VOTE = 2;
+  MESSAGE_TYPE_CHAT = 3;
+}
+
 message Message{
   string message_uuid = 1;
   string from_username = 2;
   string to_username = 3;
   string content = 4;
-  google.protobuf.Timestamp create_at = 5;
+  MessageType message_type = 5; // 消息类型
+  bool hasBeenRead = 6; // 是否已读
+  google.protobuf.Timestamp create_at = 7;
 }
 
 message MessageChatRequest {
@@ -41,10 +50,11 @@ message MessageChatResponse {
 message MessageActionRequest {
   string from_username = 1;
   string to_username = 2;
-  ActionMessageType action_type = 3;
+  ActionMessageType action_type = 3;  // 添加或者删除
+  MessageType message_type = 4;       // 4种message类型
   oneof action {
-    string message_uuid = 4;
-    string message_content = 5;
+    string message_uuid = 5;
+    string message_content = 6;
   }
 }
 
@@ -55,52 +65,55 @@ message MessageActionResponse {
 }
 
 // 用户消息请求
-message UserMessageRequest {
+message GetUserMessageRequest {
   string username = 1;
 }
 
 // 用户消息响应
-message UserMessageResponse {
-  repeated FollowMessage follow_messages = 1;         // 关注消息列表
-  repeated CommentReplyMessage comment_reply_messages = 2; // 评论回复消息列表
-  repeated VoteMessage like_messages = 3;             // 点赞消息列表
+message GetUserMessageResponse {
+  int32 status_code = 1;  // 状态码，0-成功，其他值-失败
+  string status_msg = 2;  // 返回状态描述
+  repeated FollowMessage follow_messages = 3;         // 关注消息列表
+  repeated CommentReplyMessage comment_reply_messages = 4; // 评论回复消息列表
+  repeated VoteMessage vote_messages = 5;             // 投票消息列表
 }
 
 // 关注消息
 message FollowMessage {
-  string message_id = 1;
-  string username_follower = 2; // 关注者的ID
+  string message_uuid = 1;
+  string username_follower = 2; // 关注者的用户名
   google.protobuf.Timestamp timestamp = 3;    // 关注时间戳
 }
 
 // 评论回复消息
 message CommentReplyMessage {
-  string message_id = 1;
-  string comment_id = 2;  // 评论的ID
+  string message_uuid = 1;
+  string comment_uuid = 2;  // 评论的ID
   string username = 3;    // 回复者的username
-  string poll_id = 4;     // 评论poll的id
+  string poll_uuid = 4;     // 评论poll的id
   string content = 5;     // 回复内容
   google.protobuf.Timestamp timestamp = 6;    // 回复时间戳
 }
 
 // 投票消息
 message VoteMessage {
-  string message_id = 1;
-  string username_voter = 2;      // 投票者的用户名
-  string poll_id = 3;             // 被投票的poll的ID
-  string choice = 4;              // 投票的选项
-  google.protobuf.Timestamp timestamp = 5;    // 投票的时间戳
+  string message_uuid = 1;
+  string vote_username = 2;      // 投票者的用户名
+  string poll_uuid = 3;             // 被投票的poll的ID
+  string vote_uuid = 4;         // vote的uuid
+  string choice = 5;              // 投票的选项
+  google.protobuf.Timestamp timestamp = 6;    // 投票的时间戳
 }
 
 // 消息状态
 enum MessageStatus {
-  UNREAD = 0;  // 未读
-  READ = 1;    // 已读
+  MESSAGE_STATUS_UNREAD = 0;  // 未读
+  MESSAGE_STATUS_READ = 1;    // 已读
 }
 
 // 标记消息状态请求
 message MarkMessageStatusRequest {
-  string message_id = 1;      // 消息ID
+  string message_uuid = 1;      // 消息ID
   MessageStatus status = 2;    // 消息状态
 }
 
