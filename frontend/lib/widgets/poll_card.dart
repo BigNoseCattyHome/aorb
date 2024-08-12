@@ -162,92 +162,73 @@ class PollCardState extends State<PollCard> {
       const Color(0xFF6DB6EB),
     ];
 
+    bool hasUserSelected = selectedOption.isNotEmpty;
+
     return Row(
-      mainAxisAlignment: MainAxisAlignment.center, // 设置主轴对齐方式为居中
+      mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(text.length, (i) {
-        // Expanded是一个占满剩余空间的部件
+        bool isSelected = selectedOption == text[i];
         return Expanded(
-            child: Stack(children: [
-          // 获取ElevatedButton部件的宽度
-          LayoutBuilder(
-              builder: (BuildContext context, BoxConstraints constraints) {
-            // 获取Container的最大宽度
-            double containerWidth = constraints.maxWidth;
-            // ^ 获取Container的最大高度
-            // double containerHeight = constraints.maxHeight;
-            return ElevatedButton(
-              // style是按钮的样式，这里设置了背景颜色、圆角等
-              style: ElevatedButton.styleFrom(
-                // 设置按钮颜色
-                backgroundColor: selectedOption == ""
-                    ? colorBackground[i + 1]
-                    : (selectedOption == ""
-                        ? colorBackground[i + 1]
-                        : colorBackground[0]),
-                // 设置按钮上文本颜色
-                foregroundColor: Colors.white,
-                // 设置按钮圆角
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                minimumSize: const Size(130, 50),
-                padding: EdgeInsets.zero, // 设置内边距为0
-              ),
-
-              child: Stack(
-                alignment: Alignment.center, // 设置Stack的对齐方式为居中
-                children: [
-                  if (_selectedOption != "")
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Container(
-                        height: 40, // ! 好像containerHeight的数值有问题，所以先用50测试
-                        // 宽度等于父组件的长度*这个option所占的百分比
-                        width: votePercentage[i] * containerWidth,
-                        decoration: BoxDecoration(
-                          color: _selectedOption == ""
-                              ? colorPercents[i + 1] // 使用正确的颜色
-                              : colorPercents[0], // 使用默认颜色
-                          borderRadius: BorderRadius.circular(10), // 设置圆角半径
-                        ),
+          child: Stack(
+            children: [
+              LayoutBuilder(
+                builder: (BuildContext context, BoxConstraints constraints) {
+                  double containerWidth = constraints.maxWidth;
+                  return ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: hasUserSelected
+                          ? (isSelected
+                              ? colorBackground[i + 1]
+                              : colorBackground[0])
+                          : colorBackground[i + 1],
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
                       ),
+                      minimumSize: const Size(130, 50),
+                      padding: EdgeInsets.zero,
                     ),
-                  // 使用Align小部件来居中对齐Container
-                  Align(
-                    alignment: Alignment.center,
-                    child: Text(text[i]),
-                  ),
-                ],
-              ),
-
-              // 点击跳转到内容详情页面
-              onPressed: () {
-                // setState(() {
-                //   _selectedOption = i;
-                //   // 把选择的结果发送到服务端
-                // });
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => PollDetailPage(
-                      userId: widget.userId,
-                      pollId: widget.pollId,
-                      username: widget.username,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        if (hasUserSelected)
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Container(
+                              height: 50,
+                              width: votePercentage[i] * containerWidth,
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? colorPercents[i + 1]
+                                    : colorPercents[0],
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                        Align(
+                          alignment: Alignment.center,
+                          child: Text(text[i]),
+                        ),
+                      ],
                     ),
-                  ),
-                );
-              },
-
-              // // 长按取消
-              // onLongPress: () {
-              //   setState(() {
-              //     _selectedOption = -1;
-              //     // 把选择的结果发送到服务端
-              //   });
-              // },
-            );
-          })
-        ]));
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => PollDetailPage(
+                            userId: widget.userId,
+                            pollId: widget.pollId,
+                            username: widget.username,
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              )
+            ],
+          ),
+        );
       }),
     );
   }
