@@ -223,6 +223,10 @@ func getResponseType(method string) reflect.Type {
 		return reflect.TypeOf((*poll.ListPollResponse)(nil))
 	case "/rpc.poll.PollService/PollExist":
 		return reflect.TypeOf((*poll.PollExistResponse)(nil))
+	case "/rpc.poll.PollService/GetChoiceWithPollUuidAndUsername":
+		return reflect.TypeOf((*poll.GetChoiceWithPollUuidAndUsernameResponse)(nil))
+	case "/rpc.poll.PollService/FeedPoll":
+		return reflect.TypeOf((*poll.FeedPollResponse)(nil))
 
 	case "/rpc.vote.VoteService/CreateVote":
 		return reflect.TypeOf((*vote.CreateVoteResponse)(nil))

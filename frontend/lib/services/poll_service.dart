@@ -1,4 +1,5 @@
 import 'package:aorb/conf/config.dart';
+import 'package:aorb/utils/constant/err.dart';
 import 'package:grpc/grpc.dart';
 import 'package:aorb/generated/poll.pbgrpc.dart';
 
@@ -56,6 +57,40 @@ class PollService {
           'Failed to retrieve information for poll ${request.pollUuid}: ${response.statusMsg}');
       throw Exception(
           'Failed to retrieve information for poll ${request.pollUuid}: ${response.statusMsg}');
+    }
+  }
+
+  // feedPoll 推送最新的十条poll
+  Future<FeedPollResponse> feedPoll(FeedPollRequest request) async {
+    final FeedPollResponse response = await _client.feedPoll(request);
+
+    if (response.statusCode == 0) {
+      logger.i('Successfully retrieved feed');
+      return response;
+    } else {
+      logger.w('Failed to retrieve feed: ${response.statusMsg}');
+      throw Exception('Failed to retrieve feed: ${response.statusMsg}');
+    }
+  }
+
+  // GetChoiceWithPollUuidAndUsername 获取用户的投票信息
+  Future<GetChoiceWithPollUuidAndUsernameResponse>
+      getChoiceWithPollUuidAndUsername(
+          GetChoiceWithPollUuidAndUsernameRequest request) async {
+    final GetChoiceWithPollUuidAndUsernameResponse response =
+        await _client.getChoiceWithPollUuidAndUsername(request);
+
+    if (response.statusCode == 0) {
+      logger.i('Successfully retrieved choice for poll ${request.pollUuid}');
+      return response;
+    } else if (response.statusCode == unableToGetChoiceCode) {
+      logger.i('User has not voted for poll ${request.pollUuid}');
+      return response;
+    } else {
+      logger.w(
+          'Failed to retrieve choice for poll ${request.pollUuid}: ${response.statusMsg}');
+      throw Exception(
+          'Failed to retrieve choice for poll ${request.pollUuid}: ${response.statusMsg}');
     }
   }
 }

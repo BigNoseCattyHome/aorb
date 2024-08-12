@@ -52,7 +52,7 @@ dependencies:
   flutter_dotenv: ^5.0.2
   fluttertoast: ^8.2.5
   palette_generator: ^0.3.3
-
+  timezone: ^0.8.0
     
 dev_dependencies:
   flutter_test:

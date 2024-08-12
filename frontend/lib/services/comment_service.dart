@@ -2,12 +2,12 @@ import 'package:aorb/conf/config.dart';
 import 'package:aorb/generated/comment.pbgrpc.dart';
 import 'package:grpc/grpc.dart';
 
-class VoteService {
+class CommentService {
   late final CommentServiceClient _client;
   late final ClientChannel _channel;
   var logger = getLogger();
 
-  VoteService() {
+  CommentService() {
     const host = backendHost;
     const port = backendPort;
     logger.i(
@@ -23,12 +23,13 @@ class VoteService {
 
   // ActionCoemment 操作评论（新增/删除）
   Future<ActionCommentResponse> actionComment(
-      String username, String pollId, ActionCommentType actionType) async {
+      String username, String pollId, ActionCommentType actionType, String commentText) async {
     logger.i('Comment Service actionComment called');
     final request = ActionCommentRequest()
       ..username = username
       ..pollUuid = pollId
-      ..actionType = actionType;
+      ..actionType = actionType
+      ..commentText = commentText;
     try {
       final response = await _client.actionComment(request);
       return response;

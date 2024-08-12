@@ -116,7 +116,7 @@ class HomePageState extends State<HomePage>
         userId: '1',
         pollId: '1',
         backgroundImage: 'gradient:0xFF8DB3EB,0xFFF895CA',
-        selectedOption: -1,
+        selectedOption: "",
       ),
       PollCard(
         title: '下午去哪里玩?',
@@ -131,7 +131,7 @@ class HomePageState extends State<HomePage>
         userId: '2',
         pollId: '2',
         backgroundImage: '0xFF354967',
-        selectedOption: -1,
+        selectedOption: "",
       ),
       PollCard(
         username: "",
@@ -146,7 +146,7 @@ class HomePageState extends State<HomePage>
         userId: '3',
         pollId: '3',
         backgroundImage: 'https://s2.loli.net/2024/05/25/HqJM8dTuSRbUNBO.jpg',
-        selectedOption: -1,
+        selectedOption: "",
       ),
       PollCard(
         title: 'Exploring the Enigmatic World of Quantum Mechanics',
@@ -165,7 +165,7 @@ class HomePageState extends State<HomePage>
         userId: '4',
         pollId: '4',
         backgroundImage: 'gradient:0x7FFCE300,0xFFFF5065,0xFF1F9AC1',
-        selectedOption: -1,
+        selectedOption: "",
       ),
     ];
   }

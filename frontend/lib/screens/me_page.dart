@@ -454,14 +454,17 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
         PollListView(
           pollIds: user.pollAsk.pollIds,
           emptyMessage: '您还没有发起任何投票',
+          currentUsername: widget.username,
         ),
         PollListView(
           pollIds: user.pollAns.pollIds,
           emptyMessage: '您还没有回答任何投票',
+          currentUsername: widget.username,
         ),
         PollListView(
           pollIds: user.pollCollect.pollIds,
           emptyMessage: '您还没有收藏任何投票',
+          currentUsername: widget.username,
         ),
       ],
     );

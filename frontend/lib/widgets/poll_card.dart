@@ -4,7 +4,6 @@ import 'package:aorb/screens/poll_detail_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:aorb/utils/time.dart';
-import 'package:palette_generator/palette_generator.dart';
 
 class PollCard extends StatefulWidget {
   final String title; // 投票的标题
@@ -19,10 +18,9 @@ class PollCard extends StatefulWidget {
   final String pollId; // 就是 poll_uuid
   final String userId; // 用户id，根据username查询
   final String backgroundImage; // 背景图片，可以是纯色、网络图片或渐变，根据username查询
-  // TODO 查询selected_option，如果没有投票则为-1
-  int selectedOption = -1; // 用户选择的选项,-1代表没有投票
+  final String selectedOption; // 用户选择的选项,-1代表没有投票
 
-  PollCard({
+  const PollCard({
     Key? key,
     required this.title,
     required this.content,
@@ -36,7 +34,7 @@ class PollCard extends StatefulWidget {
     required this.pollId,
     required this.backgroundImage,
     required this.votePercentage,
-    this.selectedOption = -1,
+    required this.selectedOption,
   }) : super(key: key);
 
   @override
@@ -44,14 +42,14 @@ class PollCard extends StatefulWidget {
 }
 
 class PollCardState extends State<PollCard> {
-  int _selectedOption = -1;
+  String _selectedOption = "";
   Color? _textColor;
   var logger = getLogger();
 
   @override
   void initState() {
     super.initState();
-    _selectedOption = widget.selectedOption;
+    _selectedOption = widget.selectedOption; // 目前是从父组件传递过来的
     _initializeTextColor();
   }
 
@@ -151,7 +149,7 @@ class PollCardState extends State<PollCard> {
   }
 
   Widget _buildOptionButtons(
-      List<String> text, List<double> votePercentage, int selectedOption) {
+      List<String> text, List<double> votePercentage, String selectedOption) {
     // 颜色数组
     List<Color> colorBackground = [
       const Color(0xFF9D9D9D),
@@ -181,9 +179,9 @@ class PollCardState extends State<PollCard> {
               // style是按钮的样式，这里设置了背景颜色、圆角等
               style: ElevatedButton.styleFrom(
                 // 设置按钮颜色
-                backgroundColor: selectedOption == -1
+                backgroundColor: selectedOption == ""
                     ? colorBackground[i + 1]
-                    : (selectedOption == i
+                    : (selectedOption == ""
                         ? colorBackground[i + 1]
                         : colorBackground[0]),
                 // 设置按钮上文本颜色
@@ -199,7 +197,7 @@ class PollCardState extends State<PollCard> {
               child: Stack(
                 alignment: Alignment.center, // 设置Stack的对齐方式为居中
                 children: [
-                  if (_selectedOption != -1)
+                  if (_selectedOption != "")
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Container(
@@ -207,7 +205,7 @@ class PollCardState extends State<PollCard> {
                         // 宽度等于父组件的长度*这个option所占的百分比
                         width: votePercentage[i] * containerWidth,
                         decoration: BoxDecoration(
-                          color: _selectedOption == i
+                          color: _selectedOption == ""
                               ? colorPercents[i + 1] // 使用正确的颜色
                               : colorPercents[0], // 使用默认颜色
                           borderRadius: BorderRadius.circular(10), // 设置圆角半径

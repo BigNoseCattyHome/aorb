@@ -1,3 +1,4 @@
+import 'package:aorb/conf/config.dart';
 import 'package:aorb/generated/poll.pb.dart';
 import 'package:aorb/generated/user.pb.dart';
 import 'package:aorb/services/poll_service.dart';
@@ -5,15 +6,42 @@ import 'package:aorb/services/user_service.dart';
 import 'package:aorb/widgets/poll_card.dart';
 import 'package:flutter/material.dart';
 
-class PollListView extends StatelessWidget {
+class PollListView extends StatefulWidget {
   final List<String> pollIds;
+  final String currentUsername;
   final String emptyMessage;
 
   const PollListView({
     Key? key,
     required this.pollIds,
+    required this.currentUsername,
     this.emptyMessage = 'No data',
   }) : super(key: key);
+
+  @override
+  _PollListViewState createState() => _PollListViewState();
+}
+
+class _PollListViewState extends State<PollListView> {
+  final ScrollController _scrollController = ScrollController();
+  final logger = getLogger();
+
+  @override
+  void initState() {
+    super.initState();
+    // 确保在构建完成后滚动到顶部
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(0);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   Future<Map<String, dynamic>> _fetchPollData(String pollId) async {
     // 调用PollService获取投票信息
@@ -22,11 +50,20 @@ class PollListView extends StatelessWidget {
     );
     final poll = pollResponse.poll;
 
-    // 调用UserService获取用户信息
+    // 调用UserService获取用户信息（poll的发起人）
     final userInfoResponse = await UserService().getUserInfo(
       UserRequest()..username = poll.username,
     );
     final userInfo = userInfoResponse.user;
+
+    // 查询用户是否已经投票
+    final selectedOptionResponse =
+        await PollService().getChoiceWithPollUuidAndUsername(
+      GetChoiceWithPollUuidAndUsernameRequest()
+        ..pollUuid = pollId
+        ..username = widget.currentUsername,
+    );
+    final selectedOption = selectedOptionResponse.choice;
 
     // 计算投票百分比
     final totalVotes = poll.optionsCount.reduce((a, b) => a + b);
@@ -39,17 +76,22 @@ class PollListView extends StatelessWidget {
       'userInfo': userInfo,
       'totalVotes': totalVotes,
       'percentages': percentages,
+      'selectedOption': selectedOption,
     };
   }
 
   @override
   Widget build(BuildContext context) {
-    return pollIds.isEmpty
-        ? Center(child: Text(emptyMessage))
+    // 反转pollIds列表，确保最新的在前面
+    final reversedPollIds = widget.pollIds.reversed.toList();
+
+    return reversedPollIds.isEmpty
+        ? Center(child: Text(widget.emptyMessage))
         : ListView.builder(
-            itemCount: pollIds.length,
+            controller: _scrollController,
+            itemCount: reversedPollIds.length,
             itemBuilder: (context, index) {
-              final pollId = pollIds[index];
+              final pollId = reversedPollIds[index];
               return FutureBuilder<Map<String, dynamic>>(
                 future: _fetchPollData(pollId),
                 builder: (context, snapshot) {
@@ -63,6 +105,7 @@ class PollListView extends StatelessWidget {
                     final userInfo = data['userInfo'] as User;
                     final totalVotes = data['totalVotes'] as int;
                     final percentages = data['percentages'] as List<double>;
+                    final selectedOption = data['selectedOption'] as String;
 
                     return PollCard(
                       pollId: poll.pollUuid,
@@ -77,6 +120,7 @@ class PollListView extends StatelessWidget {
                       userId: userInfo.id,
                       backgroundImage: userInfo.bgpicPollcard,
                       votePercentage: percentages,
+                      selectedOption: selectedOption,
                     );
                   } else {
                     return const Center(child: Text('No data'));

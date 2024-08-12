@@ -406,14 +406,17 @@ class UserProfilePageState extends State<UserProfilePage>
         PollListView(
           pollIds: user.pollAsk.pollIds,
           emptyMessage: '该用户还没有发起任何投票',
+          currentUsername: currentUsername,
         ),
         PollListView(
           pollIds: user.pollAns.pollIds,
           emptyMessage: '该用户还没有回答任何投票',
+          currentUsername: currentUsername,
         ),
         PollListView(
           pollIds: user.pollCollect.pollIds,
           emptyMessage: '该用户还没有收藏任何投票',
+          currentUsername: currentUsername,
         ),
       ],
     );
