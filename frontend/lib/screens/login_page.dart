@@ -89,9 +89,11 @@ class LoginPageState extends State<LoginPage> {
   // 获取省份信息
   Future<void> _getProvinceInfo() async {
     String province = await IPLocationUtil.getProvince();
-    setState(() {
-      _ipaddress = province;
-    });
+    if (mounted) {
+      setState(() {
+        _ipaddress = province;
+      });
+    }
   }
 
   // 显示错误提示

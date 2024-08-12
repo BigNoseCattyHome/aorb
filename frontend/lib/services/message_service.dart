@@ -22,9 +22,9 @@ class MessageService {
   }
 
   // GetUserMessage 获取用户的未读信息
-  Future<UserMessageResponse> getUserMessage(String username) async {
+  Future<GetUserMessageResponse> getUserMessage(String username) async {
     logger.i('Message Service getUserMessage called');
-    final request = UserMessageRequest()..username = username;
+    final request = GetUserMessageRequest()..username = username;
     try {
       final response = await _client.getUserMessage(request);
       return response;
@@ -39,7 +39,7 @@ class MessageService {
       String messageId, MessageStatus status) async {
     logger.i('Message Service markMessageStatus called');
     final request = MarkMessageStatusRequest()
-      ..messageId = messageId
+      ..messageUuid = messageId
       ..status = status;
     try {
       final response = await _client.markMessageStatus(request);

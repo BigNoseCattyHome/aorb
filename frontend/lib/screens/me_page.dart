@@ -107,7 +107,7 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
                         child: _buildUserInfoSection(),
                       ),
                       Expanded(
-                        flex: 5,
+                        flex: 6,
                         child: _buildTabSection(),
                       ),
                     ],

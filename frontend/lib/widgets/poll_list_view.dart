@@ -44,48 +44,46 @@ class PollListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (pollIds.isEmpty) {
-      return Center(child: Text(emptyMessage));
-    }
+    return pollIds.isEmpty
+        ? Center(child: Text(emptyMessage))
+        : ListView.builder(
+            itemCount: pollIds.length,
+            itemBuilder: (context, index) {
+              final pollId = pollIds[index];
+              return FutureBuilder<Map<String, dynamic>>(
+                future: _fetchPollData(pollId),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  } else if (snapshot.hasData) {
+                    final data = snapshot.data!;
+                    final poll = data['poll'] as Poll;
+                    final userInfo = data['userInfo'] as User;
+                    final totalVotes = data['totalVotes'] as int;
+                    final percentages = data['percentages'] as List<double>;
 
-    return ListView.builder(
-      itemCount: pollIds.length,
-      itemBuilder: (context, index) {
-        final pollId = pollIds[index];
-        return FutureBuilder<Map<String, dynamic>>(
-          future: _fetchPollData(pollId),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (snapshot.hasError) {
-              return Center(child: Text('Error: ${snapshot.error}'));
-            } else if (snapshot.hasData) {
-              final data = snapshot.data!;
-              final poll = data['poll'] as Poll;
-              final userInfo = data['userInfo'] as User;
-              final totalVotes = data['totalVotes'] as int;
-              final percentages = data['percentages'] as List<double>;
-
-              return PollCard(
-                pollId: poll.pollUuid,
-                title: poll.title,
-                content: poll.content,
-                options: poll.options,
-                voteCount: totalVotes,
-                time: poll.createAt,
-                username: userInfo.username,
-                avatar: userInfo.avatar,
-                nickname: userInfo.nickname,
-                userId: userInfo.id,
-                backgroundImage: userInfo.bgpicPollcard,
-                votePercentage: percentages,
+                    return PollCard(
+                      pollId: poll.pollUuid,
+                      title: poll.title,
+                      content: poll.content,
+                      options: poll.options,
+                      voteCount: totalVotes,
+                      time: poll.createAt,
+                      username: userInfo.username,
+                      avatar: userInfo.avatar,
+                      nickname: userInfo.nickname,
+                      userId: userInfo.id,
+                      backgroundImage: userInfo.bgpicPollcard,
+                      votePercentage: percentages,
+                    );
+                  } else {
+                    return const Center(child: Text('No data'));
+                  }
+                },
               );
-            } else {
-              return const Center(child: Text('No data'));
-            }
-          },
-        );
-      },
-    );
+            },
+          );
   }
 }

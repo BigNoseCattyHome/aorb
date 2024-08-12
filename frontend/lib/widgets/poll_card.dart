@@ -326,22 +326,22 @@ class PollCardState extends State<PollCard> {
           Color(int.parse(colorStrings[0].substring(2), radix: 16));
       return _isLightColor(firstColor) ? Colors.black : Colors.white;
     } else {
-      // 图片背景
-      try {
-        PaletteGenerator paletteGenerator =
-            await PaletteGenerator.fromImageProvider(
-          NetworkImage(backgroundImage),
-          size: const Size(100, 100), // 可以调整大小以提高性能
-        );
+      // // 图片背景
+      // try {
+      //   PaletteGenerator paletteGenerator =
+      //       await PaletteGenerator.fromImageProvider(
+      //     NetworkImage(backgroundImage),
+      //     size: const Size(100, 100), // 可以调整大小以提高性能
+      //   );
 
-        // 获取主色调
-        Color? dominantColor = paletteGenerator.dominantColor?.color;
-        if (dominantColor != null) {
-          return _isLightColor(dominantColor) ? Colors.black : Colors.white;
-        }
-      } catch (e) {
-        logger.e('Error analyzing image color: $e');
-      }
+      //   // 获取主色调
+      //   Color? dominantColor = paletteGenerator.dominantColor?.color;
+      //   if (dominantColor != null) {
+      //     return _isLightColor(dominantColor) ? Colors.black : Colors.white;
+      //   }
+      // } catch (e) {
+      //   logger.e('Error analyzing image color: $e');
+      // }
 
       // 如果无法分析图片颜色，默认使用白色文字
       return Colors.black;
