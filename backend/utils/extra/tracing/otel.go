@@ -1,28 +1,26 @@
 package tracing
 
 import (
-	"context"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/logging"
 	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
-	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.20.0"
-	trace2 "go.opentelemetry.io/otel/trace"
 )
 
-var Tracer trace2.Tracer
+var Tracer = otel.Tracer("aorb")
 
 func SetTraceProvider(name string) (*trace.TracerProvider, error) {
-	client := otlptracehttp.NewClient(
-		otlptracehttp.WithEndpoint(config.Conf.Tracing.EndPoint),
-		otlptracehttp.WithInsecure(),
-	)
-	exporter, err := otlptrace.New(context.Background(), client)
+	//client := otlptracehttp.NewClient(
+	//	otlptracehttp.WithEndpoint(config.Conf.Tracing.EndPoint),
+	//	otlptracehttp.WithInsecure(),
+	//)
+	//exporter, err := otlptrace.New(context.Background(), client)
+	exporter, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(config.Conf.Tracing.EndPoint)))
 	if err != nil {
 		logging.Logger.WithFields(logrus.Fields{
 			"err": err,

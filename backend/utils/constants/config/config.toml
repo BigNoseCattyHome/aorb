@@ -10,9 +10,10 @@
     LogPath = "logs"
 
 [Tracing]
-    endPoint = "http://localhost:14268/api/traces"
-    state = "disable"       # disable / enable
-    sampler = 0.01
+    endPoint = "http://127.0.0.1:14268/api/traces"
+#    endPoint = "http://127.0.0.1:14250"
+    state = "enable"       # disable / enable
+    sampler = 0.1
 
 [Gorse]
     gorseAddr = ""
