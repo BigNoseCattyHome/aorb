@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"os"
-	"time"
 
 	"github.com/BigNoseCattyHome/aorb/backend/go-services/auth/conf"
 	"github.com/BigNoseCattyHome/aorb/backend/go-services/auth/services"
@@ -176,8 +175,8 @@ func (a AuthServiceImpl) Register(ctx context.Context, request *auth.RegisterReq
 	log.Infof("Received Register request: %v", request)
 
 	// 创建一个带有超时的新上下文
-	ctxWithTimeout, cancel := context.WithTimeout(ctx, 25*time.Second)
-	defer cancel()
+	// ctxWithTimeout, cancel := context.WithTimeout(ctx, 60*time.Second)
+	// defer cancel()
 
 	// 生成随机头像并上传到图床
 	imageURL := "https://api.multiavatar.com/" + request.Username + ".png"
@@ -216,8 +215,8 @@ func (a AuthServiceImpl) Register(ctx context.Context, request *auth.RegisterReq
 	case err := <-errChan:
 		user.Avatar = conf.DefaultUserAvatar
 		log.Printf("generate avatar failed: %v", err)
-	case <-ctxWithTimeout.Done():
-		return nil, status.Errorf(codes.DeadlineExceeded, "context deadline exceeded")
+		// case <-ctxWithTimeout.Done():
+		// 	return nil, status.Errorf(codes.DeadlineExceeded, "context deadline exceeded")
 	}
 
 	// 调用服务

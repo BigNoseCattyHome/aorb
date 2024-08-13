@@ -18,6 +18,7 @@ import (
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/logging"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/storage/database"
+	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -41,6 +42,14 @@ func RegisterUser(newUser *user.User) error {
 		log.Warnf("User already exists: %s", newUser.Username)
 		return errors.New("username has been registered")
 	}
+
+	// 对密码进行哈希加密
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(*newUser.Password), bcrypt.DefaultCost)
+	if err != nil {
+		log.Errorf("Failed to hash password: %v", err)
+		return errors.New("注册失败")
+	}
+	*newUser.Password = string(hashedPassword)
 
 	// 其他字段的初始化
 	coins := float64(0)
@@ -144,11 +153,12 @@ func AuthenticateUser(ctx context.Context, user *auth.LoginRequest) (string, int
 	}
 
 	// 检查用户名对应的密码是否正确
-	if user.Password != *storedUser.Password {
+	err = bcrypt.CompareHashAndPassword([]byte(*storedUser.Password), []byte(user.Password))
+	if err != nil {
 		log.Error("Invalid password")
 		return "", 0, "", nil, errors.New("invalid password")
 	}
-
+	
 	// 生成JWT令牌
 	tokenString, exp_token, err := GenerateAccessToken(storedUser)
 	if err != nil {
