@@ -1,9 +1,11 @@
 import 'package:aorb/conf/config.dart';
 import 'package:aorb/generated/google/protobuf/timestamp.pb.dart';
+import 'package:aorb/screens/login_prompt_page.dart';
 import 'package:aorb/screens/poll_detail_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:aorb/utils/time.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PollCard extends StatefulWidget {
   final String title; // 投票的标题
@@ -44,6 +46,7 @@ class PollCard extends StatefulWidget {
 class PollCardState extends State<PollCard> {
   String _selectedOption = "";
   Color? _textColor;
+  String? currentUser; // 从本地存储中获取，用于验证用户是否登录
   var logger = getLogger();
 
   @override
@@ -51,6 +54,15 @@ class PollCardState extends State<PollCard> {
     super.initState();
     _selectedOption = widget.selectedOption; // 目前是从父组件传递过来的
     _initializeTextColor();
+    _checkLoginStatus();
+  }
+
+  Future<void> _checkLoginStatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    currentUser = prefs.getString('username') ?? '';
+    setState(() {
+      currentUser = currentUser;
+    });
   }
 
   Future<void> _initializeTextColor() async {
@@ -212,16 +224,18 @@ class PollCardState extends State<PollCard> {
                       ],
                     ),
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => PollDetailPage(
-                            userId: widget.userId,
-                            pollId: widget.pollId,
-                            username: widget.username,
-                          ),
-                        ),
-                      );
+                      currentUser == ""
+                          ? const LoginPromptPage()
+                          : Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => PollDetailPage(
+                                  userId: widget.userId,
+                                  pollId: widget.pollId,
+                                  username: widget.username,
+                                ),
+                              ),
+                            );
                     },
                   );
                 },
@@ -279,16 +293,18 @@ class PollCardState extends State<PollCard> {
 
   // 点击跳转到内容详情页面
   void onTapContent() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PollDetailPage(
-          userId: widget.userId,
-          pollId: widget.pollId,
-          username: widget.username,
-        ),
-      ),
-    );
+    currentUser == ""
+        ? const LoginPromptPage()
+        : Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PollDetailPage(
+                userId: widget.userId,
+                pollId: widget.pollId,
+                username: widget.username,
+              ),
+            ),
+          );
   }
 
   Future<Color> _getTextColor(String backgroundImage) async {

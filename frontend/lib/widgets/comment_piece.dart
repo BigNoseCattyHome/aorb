@@ -21,7 +21,7 @@ class CommentPiece extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

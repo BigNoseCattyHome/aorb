@@ -136,7 +136,7 @@ class LoginPageState extends State<LoginPage> {
     return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(height: 120),
+        SizedBox(height: 100),
         Text(
           '欢迎来到Aorb',
           style: TextStyle(
@@ -153,20 +153,23 @@ class LoginPageState extends State<LoginPage> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        SizedBox(height: 80),
+        SizedBox(height: 30),
       ],
     );
   }
 
   // 构建头像
   Widget _buildAvatar() {
-    return CircleAvatar(
-      radius: 50,
-      backgroundColor: Colors.grey[300],
-      child: Icon(
-        Icons.person,
-        size: 50,
-        color: Colors.grey[600],
+    return const SizedBox(
+      width: 200,
+      height: 200,
+      child: FittedBox(
+        fit: BoxFit.contain,
+        child: CircleAvatar(
+          radius: 30,
+          backgroundImage: AssetImage('images/logo.png'),
+          backgroundColor: Colors.transparent,
+        ),
       ),
     );
   }

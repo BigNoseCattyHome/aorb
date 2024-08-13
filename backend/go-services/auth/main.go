@@ -72,7 +72,7 @@ func main() {
 		grpc.ChainUnaryInterceptor(
 			srvMetrics.UnaryServerInterceptor(grpcprom.WithExemplarFromContext(prom.ExtractContext)),
 			func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-				ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+				ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 				defer cancel()
 				return handler(ctx, req)
 			},

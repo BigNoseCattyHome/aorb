@@ -1,5 +1,6 @@
 import 'package:aorb/conf/config.dart';
 import 'package:aorb/generated/message.pb.dart';
+import 'package:aorb/screens/login_prompt_page.dart';
 import 'package:aorb/screens/poll_detail_page.dart';
 import 'package:aorb/screens/user_profile_page.dart';
 import 'package:aorb/services/message_service.dart';
@@ -62,7 +63,10 @@ class MessagesPageState extends State<MessagesPage> {
     return Scaffold(
       body: TabBarView(
         controller: _tabController,
-        children: [_buildNoticeList(), _buildMessageList()],
+        children: [
+          username == '' ? const LoginPromptPage() : _buildNoticeList(),
+          username == '' ? const LoginPromptPage() : _buildMessageList()
+        ],
       ),
     );
   }

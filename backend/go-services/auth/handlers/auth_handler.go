@@ -175,29 +175,8 @@ func (a AuthServiceImpl) Register(ctx context.Context, request *auth.RegisterReq
 	log.Infof("Received Register request: %v", request)
 
 	// 创建一个带有超时的新上下文
-	// ctxWithTimeout, cancel := context.WithTimeout(ctx, 60*time.Second)
+	// ctxWithTimeout, cancel := context.WithTimeout(ctx, 30*time.Second)
 	// defer cancel()
-
-	// 生成随机头像并上传到图床
-	imageURL := "https://api.multiavatar.com/" + request.Username + ".png"
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-	smmsToken := os.Getenv("SMMS_TOKEN")
-	multiavatarToken := os.Getenv("MULTIAVATAR_KEY")
-
-	// 使用协程异步生成头像
-	avatarChan := make(chan string, 1)
-	errChan := make(chan error, 1)
-	go func() {
-		avatarUrl, err := services.GenerateAvatar(ctx, imageURL, multiavatarToken, smmsToken, "avatar_"+request.Username+".png")
-		if err != nil {
-			errChan <- err
-			return
-		}
-		avatarChan <- *avatarUrl
-	}()
 
 	// 解析参数
 	user := user.User{
@@ -206,38 +185,53 @@ func (a AuthServiceImpl) Register(ctx context.Context, request *auth.RegisterReq
 		Nickname:  request.Nickname,
 		Ipaddress: &request.Ipaddress,
 		Gender:    request.Gender,
+		Avatar:    conf.DefaultUserAvatar, // 使用默认头像,之后会异步生成头像更换
 	}
 
-	// 等待生成头像的结果
-	select {
-	case avatarUrl := <-avatarChan:
-		user.Avatar = avatarUrl
-	case err := <-errChan:
-		user.Avatar = conf.DefaultUserAvatar
-		log.Printf("generate avatar failed: %v", err)
-		// case <-ctxWithTimeout.Done():
-		// 	return nil, status.Errorf(codes.DeadlineExceeded, "context deadline exceeded")
+	// 检查用户是否已存在
+	isExist, err := services.CheckUsernameExists(user.Username)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to check username: %v", err)
+	}
+	if isExist {
+		return &auth.RegisterResponse{
+			StatusCode: strings.AuthUserExistedCode,
+			StatusMsg:  strings.AuthUserExisted,
+		}, nil
 	}
 
-	// 调用服务
+	// 注册用户,不涉及pictures的操作，头像采用默认头像
 	err = services.RegisterUser(&user)
 	if err != nil {
-		// 如果用户已经存在，返回错误信息
-		if err.Error() == "user already exists" {
-			return &auth.RegisterResponse{
-				StatusCode: strings.AuthUserExistedCode,
-				StatusMsg:  strings.AuthUserExisted,
-			}, nil
+		return nil, status.Errorf(codes.Internal, "register failed: %v", err)
+	}
+
+	// 异步生成头像，创建pictures记录，更新user的avatar字段
+	go func() {
+		imageURL := "https://api.multiavatar.com/" + request.Username + ".png"
+		err := godotenv.Load()
+		if err != nil {
+			log.Fatal("Error loading .env file")
+		}
+		smmsToken := os.Getenv("SMMS_TOKEN")
+		multiavatarToken := os.Getenv("MULTIAVATAR_KEY")
+
+		avatarUrl, err := services.GenerateAvatar(context.TODO(), imageURL, multiavatarToken, smmsToken, "avatar_"+request.Username+".png", user.Id)
+		if err != nil {
+			log.Errorf("Failed to generate avatar: %v", err)
+			return
 		}
 
-		return nil, status.Errorf(codes.Unauthenticated, "register failed: %v", err)
-	}
+		// 更新user的avatar字段
+		err = services.UpdateUserAvatar(user.Username, *avatarUrl)
+		if err != nil {
+			log.Errorf("Failed to update user avatar: %v", err)
+		}
+	}()
 
 	// 返回响应
-	registerResponse := &auth.RegisterResponse{
+	return &auth.RegisterResponse{
 		StatusCode: strings.ServiceOKCode,
 		StatusMsg:  strings.ServiceOK,
-	}
-
-	return registerResponse, nil
+	}, nil
 }

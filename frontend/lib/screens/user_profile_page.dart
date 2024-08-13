@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:aorb/widgets/poll_list_view.dart';
 import 'package:aorb/screens/follow_page.dart';
 import 'package:aorb/services/user_service.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class UserProfilePage extends StatefulWidget {
@@ -23,27 +22,42 @@ class UserProfilePageState extends State<UserProfilePage>
   User user = User();
   final logger = getLogger();
   String currentUsername = "";
-
+  bool isFollowed = false;
+  
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _fetchUserInfo();
-    // 从shared_preferences中获取当前用户的用户名
     SharedPreferences.getInstance().then((prefs) {
-      currentUsername = prefs.getString('username') ?? '';
+      setState(() {
+        currentUsername = prefs.getString('username') ?? '';
+      });
+      _checkFollowStatus();
     });
   }
 
   void _fetchUserInfo() {
-    UserRequest request = UserRequest()
-      ..username = widget.username
-      ..fields.addAll(
-          ["avatar", "bgpicMe", "nickname", "username", "bio", "ipaddress"]);
+    UserRequest request = UserRequest()..username = widget.username;
     UserService().getUserInfo(request).then((response) {
       setState(() {
         user = response.user;
       });
+    });
+  }
+
+  Future<void> _checkFollowStatus() async {
+    if (currentUsername.isEmpty) {
+      // 如果 currentUsername 还没有加载，等待它加载
+      final prefs = await SharedPreferences.getInstance();
+      currentUsername = prefs.getString('username') ?? '';
+    }
+    var request = IsUserFollowingRequest()
+      ..username = currentUsername
+      ..targetUsername = widget.username;
+    final isFollowing = await UserService().isUserFollowing(request);
+    setState(() {
+      isFollowed = isFollowing;
     });
   }
 
@@ -255,71 +269,54 @@ class UserProfilePageState extends State<UserProfilePage>
   }
 
   Widget _buildFollowButton() {
-    bool isFollowing = user.follower.usernames.contains(currentUsername);
-
-    return ElevatedButton(
-      onPressed: _toggleFollow,
-      style: ElevatedButton.styleFrom(
-        foregroundColor: isFollowing ? Colors.grey[800] : Colors.white,
-        backgroundColor: isFollowing ? Colors.grey[300] : Colors.blue,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+    return Visibility(
+      visible: user.username != currentUsername,
+      child: TextButton(
+        onPressed: _toggleFollow,
+        style: TextButton.styleFrom(
+          backgroundColor: isFollowed ? Colors.white : Colors.red,
+          foregroundColor: isFollowed ? Colors.blue : Colors.white,
+          side:
+              BorderSide(color: isFollowed ? Colors.grey : Colors.transparent),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          minimumSize: const Size(80, 30),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      ),
-      child: Text(
-        isFollowing ? '取消关注' : '关注',
-        style: const TextStyle(fontSize: 14),
+        child: Text(
+          isFollowed ? '已关注' : '关注',
+          style: const TextStyle(
+            fontSize: 12,
+          ),
+        ),
       ),
     );
   }
 
-  void _toggleFollow() async {
-    setState(() {
-      // 立即更新UI以提供即时反馈
-      if (user.follower.usernames.contains(currentUsername)) {
-        user.follower.usernames.remove(currentUsername);
-      } else {
-        user.follower.usernames.add(currentUsername);
-      }
-    });
-
+  Future<void> _toggleFollow() async {
     try {
-      // 发送关注/取消关注请求到服务器
-      final request = FollowUserRequest()
-        ..username = currentUsername
-        ..targetUsername = user.username;
-
-      final response = await UserService().followUser(request);
-
-      if (response.statusCode == 0) {
-        // 如果服务器操作成功,不需要做任何事,因为我们已经更新了UI
+      if (isFollowed) {
+        var request = FollowUserRequest()
+          ..username = currentUsername
+          ..targetUsername = widget.username;
+        await UserService().unfollowUser(request);
       } else {
-        // 如果服务器操作失败,恢复原来的状态
-        setState(() {
-          if (user.follower.usernames.contains(currentUsername)) {
-            user.follower.usernames.remove(currentUsername);
-          } else {
-            user.follower.usernames.add(currentUsername);
-          }
-        });
-
-        // 显示错误消息
-        Fluttertoast.showToast(msg: '操作失败: ${response.statusMsg}');
+        var request = FollowUserRequest()
+          ..username = currentUsername
+          ..targetUsername = user.username;
+        await UserService().followUser(request);
       }
-    } catch (e) {
-      // 处理网络错误等异常情况
-      logger.e('Error toggling follow: $e');
-      // 恢复原来的状态
       setState(() {
-        if (user.follower.usernames.contains(currentUsername)) {
-          user.follower.usernames.remove(currentUsername);
-        } else {
+        isFollowed = !isFollowed;
+        if (isFollowed) {
           user.follower.usernames.add(currentUsername);
+        } else {
+          user.follower.usernames.remove(currentUsername);
         }
       });
-      // 显示错误消息
-      Fluttertoast.showToast(msg: '网络错误,请稍后再试');
+    } catch (e) {
+      logger.e('Failed to follow: $e');
     }
   }
 

@@ -119,7 +119,7 @@ class PollDetailPageState extends State<PollDetailPage>
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => UserProfilePage(username: user.nickname),
+                builder: (context) => UserProfilePage(username: user.username),
               ),
             );
           },
