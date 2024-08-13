@@ -702,7 +702,7 @@ func BuildVoteMessagePbWithMessageModel(rMessage *messageModels.Message) *messag
 	// 先找到poll和vote
 	pollCollection := database.MongoDbClient.Database("aorb").Collection("polls")
 	filter := bson.D{
-		{"commentList.voteUuid", rMessage.Content},
+		{"voteList.voteUuid", rMessage.Content},
 	}
 	cursor := pollCollection.FindOne(context.TODO(), filter)
 	var pPoll pollModels.Poll
@@ -809,6 +809,7 @@ func addMessage(ctx context.Context, logger *logrus.Entry, span trace.Span, from
 		FromUserName: fromUserName,
 		ToUserName:   toUserName,
 		Content:      content,
+		HasBeenRead:  false,
 		MessageType:  messageType,
 		CreateAt:     time.Now(),
 	}
