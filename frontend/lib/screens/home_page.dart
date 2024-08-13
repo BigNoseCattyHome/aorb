@@ -1,14 +1,20 @@
 // home_page.dart
-import 'package:aorb/generated/google/protobuf/timestamp.pb.dart';
+import 'package:aorb/conf/config.dart';
+import 'package:aorb/generated/poll.pbgrpc.dart';
+import 'package:aorb/generated/user.pb.dart';
 import 'package:aorb/screens/content_publish_page.dart';
+import 'package:aorb/services/poll_service.dart';
+import 'package:aorb/services/user_service.dart';
 import 'package:flutter/material.dart';
-import 'package:aorb/widgets/poll_card.dart'; // 引入未投票问题组件
+import 'package:aorb/widgets/poll_card.dart';
 import 'dart:async';
 
 class HomePage extends StatefulWidget {
   final TabController tabController;
+  final String username;
 
-  const HomePage({super.key, required this.tabController});
+  const HomePage(
+      {super.key, required this.tabController, required this.username});
 
   @override
   HomePageState createState() => HomePageState();
@@ -17,13 +23,13 @@ class HomePage extends StatefulWidget {
 class HomePageState extends State<HomePage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController; // 顶部导航栏控制器
-  late Future<List<PollCard>> _futureQuestions;
-
+  late Future<List<PollCard>> _futurePolls;
+  final logger = getLogger();
   @override
   void initState() {
-    super.initState(); // 调用父类的 initState 方法
+    super.initState();
     _tabController = widget.tabController; // 初始化顶部导航栏控制器
-    _futureQuestions = _fetchPolls(); // 初始化时调用 _fetchQuestions 获取数据
+    _futurePolls = _fetchPolls(); // 初始化时调用 _fetchQuestions 获取数据
   }
 
   @override
@@ -58,7 +64,7 @@ class HomePageState extends State<HomePage>
       // 中间的投票卡片
       body: TabBarView(controller: _tabController, children: [
         FutureBuilder<List<PollCard>>(
-          future: _futureQuestions,
+          future: _futurePolls,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
@@ -77,7 +83,7 @@ class HomePageState extends State<HomePage>
           },
         ),
         FutureBuilder<List<PollCard>>(
-          future: _futureQuestions,
+          future: _futurePolls,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
@@ -100,73 +106,79 @@ class HomePageState extends State<HomePage>
   }
 
   Future<List<PollCard>> _fetchPolls() async {
-    // 模拟从服务器获取数据
-    await Future.delayed(const Duration(seconds: 2));
-    return [
-      PollCard(
-        title: "午饭吃什么呀?",
-        username: "",
-        content: '想了半天没有想出来到底要吃什么，好纠结，真可恶！',
-        options: const ['麻辣烫', '炸鸡汉堡'],
-        votePercentage: const [0.4, 0.6],
-        voteCount: 20,
-        time: Timestamp.fromDateTime(DateTime.parse("2024-07-01 12:05:00")),
-        avatar: 'https://s2.loli.net/2024/05/27/2MgJcvLtOVKmAdn.jpg',
-        nickname: '爱吃饭的小袁同学',
-        userId: '1',
-        pollId: '1',
-        backgroundImage: 'gradient:0xFF8DB3EB,0xFFF895CA',
-        selectedOption: "",
-      ),
-      PollCard(
-        title: '下午去哪里玩?',
-        username: "",
-        content: '天气很好，感觉顾村公园和外滩都挺不错的，选哪个？',
-        options: const ['顾村公园', '外滩'],
-        votePercentage: const [0.16, 0.84],
-        voteCount: 76,
-        time: Timestamp.fromDateTime(DateTime.parse("2024-07-01 12:05:00")),
-        avatar: 'https://s2.loli.net/2024/05/25/icuYCOP9HB1JbIx.png',
-        nickname: '花枝鼠gogo来帮忙',
-        userId: '2',
-        pollId: '2',
-        backgroundImage: '0xFF354967',
-        selectedOption: "",
-      ),
-      PollCard(
-        username: "",
-        title: '要不要去小美家玩啊？',
-        content: '小美小美小美好香的小美，Bad 小新',
-        options: const ['麻辣烫', '炸鸡汉堡'],
-        votePercentage: const [0.4, 0.6],
-        voteCount: 20,
-        time: Timestamp.fromDateTime(DateTime.parse("2024-07-01 12:05:00")),
-        avatar: 'https://s2.loli.net/2024/05/27/QzKM41C3Vs5FeHW.jpg',
-        nickname: '风见澈Siri',
-        userId: '3',
-        pollId: '3',
-        backgroundImage: 'https://s2.loli.net/2024/05/25/HqJM8dTuSRbUNBO.jpg',
-        selectedOption: "",
-      ),
-      PollCard(
-        title: 'Exploring the Enigmatic World of Quantum Mechanics',
-        username: "",
-        content:
-            'Quantum mechanics is a fundamental theory in physics that provides a description of the physical properties of nature at the scale of atoms and subatomic particles. However, it\'s not as straightforward as classical physics. Can you help me understand some of the key concepts and phenomena of quantum mechanics?',
-        options: const [
-          'Yes, I\'d love to.',
-          'I\'m familiar with quantum mechanics.',
-        ],
-        votePercentage: const [0.4, 0.6],
-        voteCount: 20,
-        time: Timestamp.fromDateTime(DateTime.parse("2024-07-01 12:05:00")),
-        avatar: 'https://s2.loli.net/2024/05/27/alt3BKPYhzmV4E7.jpg',
-        nickname: 'Anti Cris',
-        userId: '4',
-        pollId: '4',
-        backgroundImage: 'gradient:0x7FFCE300,0xFFFF5065,0xFF1F9AC1',
-        selectedOption: "",
-      ),
-    ];
+    try {
+      final response = await PollService()
+          .feedPoll(FeedPollRequest()..username = widget.username);
+
+      if (response.statusCode != 0) {
+        throw Exception('Failed to fetch polls: ${response.statusMsg}');
+      }
+
+      List<PollCard> pollCards = [];
+
+      for (Poll poll in response.pollList) {
+        final pollData = await _fetchAdditionalPollData(poll);
+        final userInfo = pollData['userInfo'] as User;
+        final totalVotes = pollData['totalVotes'] as int;
+        final percentages = pollData['percentages'] as List<double>;
+        final selectedOption = pollData['selectedOption'] as String;
+
+        pollCards.add(PollCard(
+          pollId: poll.pollUuid,
+          title: poll.title,
+          content: poll.content,
+          options: poll.options,
+          voteCount: totalVotes,
+          time: poll.createAt,
+          username: userInfo.username,
+          avatar: userInfo.avatar,
+          nickname: userInfo.nickname,
+          userId: userInfo.id,
+          backgroundImage: userInfo.bgpicPollcard,
+          votePercentage: percentages,
+          selectedOption: selectedOption,
+        ));
+      }
+
+      // 如果需要，可以在这里保存 nextTime 以便后续使用
+      // final nextTime = response.nextTime;
+
+      return pollCards;
+    } catch (e) {
+      logger.e('Error fetching polls: $e');
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> _fetchAdditionalPollData(Poll poll) async {
+    try {
+      final userInfoResponse = await UserService().getUserInfo(
+        UserRequest()..username = poll.username,
+      );
+      final userInfo = userInfoResponse.user;
+
+      final selectedOptionResponse =
+          await PollService().getChoiceWithPollUuidAndUsername(
+        GetChoiceWithPollUuidAndUsernameRequest()
+          ..pollUuid = poll.pollUuid
+          ..username = widget.username,
+      );
+      final selectedOption = selectedOptionResponse.choice;
+
+      final totalVotes = poll.optionsCount.reduce((a, b) => a + b);
+      final percentages = poll.optionsCount.map((value) {
+        return totalVotes > 0 ? (value / totalVotes) * 100 : 0.0;
+      }).toList();
+
+      return {
+        'userInfo': userInfo,
+        'totalVotes': totalVotes,
+        'percentages': percentages,
+        'selectedOption': selectedOption,
+      };
+    } catch (e) {
+      print('Error fetching additional poll data: $e');
+      rethrow;
+    }
   }
 }

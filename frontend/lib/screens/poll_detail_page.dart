@@ -1,3 +1,5 @@
+import 'package:aorb/conf/config.dart';
+import 'package:aorb/screens/user_profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:aorb/generated/poll.pb.dart';
 import 'package:aorb/services/user_service.dart';
@@ -9,9 +11,9 @@ import 'package:aorb/generated/user.pbgrpc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PollDetailPage extends StatefulWidget {
-  final String userId;
+  final String userId; // 暂时不用
   final String pollId;
-  final String username;
+  final String username; // 问题发布者的用户名
 
   const PollDetailPage({
     super.key,
@@ -32,8 +34,10 @@ class PollDetailPageState extends State<PollDetailPage>
   Poll poll = Poll();
   User user = User();
   String currentUser = '';
+  String currentUserAvatar = '';
   late SharedPreferences prefs;
   String selectedOption = "";
+  final logger = getLogger();
 
   @override
   void initState() {
@@ -44,21 +48,28 @@ class PollDetailPageState extends State<PollDetailPage>
 
   // 加载数据的方法
   Future<void> _loadData() async {
+    // 获取当前用户名，从本地存储中获取
+    prefs = await SharedPreferences.getInstance();
+    currentUser = prefs.getString('username') ?? '';
+
     // 加载关注状态
-    final requestFollow = IsUserFollowingRequest()..username = widget.username;
-    final isFollowed = await UserService().isUserFollowing(requestFollow);
+    final requestFollow = IsUserFollowingRequest()
+      ..username = currentUser
+      ..targetUsername = widget.username;
+    isFollowed = await UserService().isUserFollowing(requestFollow);
 
     // 加载用户信息
     final userRequest = UserRequest()..username = widget.username;
     final userResponse = await UserService().getUserInfo(userRequest);
+    final currentUserRequest = UserRequest()
+      ..username = currentUser
+      ..fields.addAll(['username', 'avatar']);
+    final currentUserResponse =
+        await UserService().getUserInfo(currentUserRequest);
 
     // 加载投票详情
     final pollResponse =
         await PollService().getPoll(GetPollRequest()..pollUuid = widget.pollId);
-
-    // 获取当前用户名，从本地存储中获取
-    prefs = await SharedPreferences.getInstance();
-    currentUser = prefs.getString('username') ?? '';
 
     // 查询用户是否已经投票
     final selectedOptionResponse =
@@ -70,12 +81,15 @@ class PollDetailPageState extends State<PollDetailPage>
 
     if (mounted) {
       setState(() {
-        this.isFollowed = isFollowed;
+        isFollowed = isFollowed;
         user = userResponse.user;
         poll = pollResponse.poll;
         cntComments = poll.commentList.length;
         selectedOption = selectedOptionResponse.choice;
+        currentUserAvatar = currentUserResponse.user.avatar;
       });
+    } else {
+      logger.e('Error loading poll detail when PollDetailPage is not mounted');
     }
   }
 
@@ -99,22 +113,40 @@ class PollDetailPageState extends State<PollDetailPage>
           color: Colors.black,
           onPressed: () => Navigator.pop(context),
         ),
-        title: Row(
-          children: [
-            CircleAvatar(
-              backgroundImage: NetworkImage(user.avatar),
-              radius: 15,
-            ),
-            const SizedBox(width: 5),
-            Text(
-              user.nickname,
-              style: const TextStyle(color: Colors.black),
-            ),
-          ],
+        title: GestureDetector(
+          onTap: () {
+            // 跳转到用户详情页面
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => UserProfilePage(username: user.nickname),
+              ),
+            );
+          },
+          child: Row(
+            children: [
+              CircleAvatar(
+                backgroundImage: NetworkImage(user.avatar),
+                radius: 15,
+              ),
+              const SizedBox(width: 5),
+              Text(
+                user.nickname,
+                style: const TextStyle(color: Colors.black),
+              ),
+            ],
+          ),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
-        actions: _buildFollowButton(),
+        actions: [
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: _buildFollowButton(),
+            ),
+          ),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: _refreshData,
@@ -146,8 +178,8 @@ class PollDetailPageState extends State<PollDetailPage>
 
                     // 评论区
                     SaySomething(
-                      avatar: user.avatar,
-                      username: currentUser,
+                      currentUserAvatar: currentUserAvatar,
+                      currentUsername: currentUser,
                       pollId: poll.pollUuid,
                       onCommentPosted: _refreshData, // 添加评论后刷新
                     ),
@@ -208,46 +240,44 @@ class PollDetailPageState extends State<PollDetailPage>
     );
   }
 
-  List<Widget> _buildFollowButton() {
-    return [
-      Visibility(
-        visible: user.id != currentUser, // TODO 只有不是当前用户的时候才展示按钮
-        child: TextButton(
-          style: TextButton.styleFrom(
-            backgroundColor: isFollowed ? null : Colors.red, // 关注前
-            side: BorderSide(
-                color: isFollowed ? Colors.grey : Colors.transparent), // 关注后
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            // TODO 调整button的样式
-            minimumSize: const Size(50, 5),
+  Widget _buildFollowButton() {
+    return Visibility(
+      visible: user.username != currentUser,
+      child: TextButton(
+        style: TextButton.styleFrom(
+          backgroundColor: isFollowed ? Colors.transparent : Colors.red,
+          side:
+              BorderSide(color: isFollowed ? Colors.grey : Colors.transparent),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
           ),
-          onPressed: () {
-            if (isFollowed) {
-              var request = FollowUserRequest()
-                ..username = currentUser
-                ..targetUsername = widget.username;
-              UserService().unfollowUser(request);
-            } else {
-              var request = FollowUserRequest()
-                ..username = widget.username
-                ..targetUsername = user.username;
-              UserService().followUser(request);
-            }
-            setState(() {
-              isFollowed = !isFollowed;
-            });
-          },
-          child: Text(
-            isFollowed ? '已关注' : '关注',
-            style: TextStyle(
-                color: isFollowed
-                    ? Colors.grey
-                    : Colors.white), // 关注后文字颜色为灰色，关注前文字颜色为白色
+          minimumSize: const Size(60, 30),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        ),
+        onPressed: () {
+          if (isFollowed) {
+            var request = FollowUserRequest()
+              ..username = currentUser
+              ..targetUsername = widget.username;
+            UserService().unfollowUser(request);
+          } else {
+            var request = FollowUserRequest()
+              ..username = currentUser
+              ..targetUsername = user.username;
+            UserService().followUser(request);
+          }
+          setState(() {
+            isFollowed = !isFollowed;
+          });
+        },
+        child: Text(
+          isFollowed ? '已关注' : '关注',
+          style: TextStyle(
+            color: isFollowed ? Colors.grey : Colors.white,
+            fontSize: 12,
           ),
         ),
       ),
-    ];
+    );
   }
 }

@@ -83,8 +83,16 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
   }
 
   Future<void> _onRefresh() async {
-    // 调用获取用户信息的方法
     _fetchUserInfo();
+    setState(() {
+      // 这将触发 PollListView 的重建
+    });
+  }
+
+  void refreshPollListViews() {
+    setState(() {
+      // 这里不需要做任何事情，因为setState会触发重建
+    });
   }
 
   @override
@@ -452,19 +460,25 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
       controller: _tabController,
       children: [
         PollListView(
+          key: UniqueKey(),
           pollIds: user.pollAsk.pollIds,
           emptyMessage: '您还没有发起任何投票',
           currentUsername: widget.username,
+          onRefresh: refreshPollListViews,
         ),
         PollListView(
+          key: UniqueKey(),
           pollIds: user.pollAns.pollIds,
           emptyMessage: '您还没有回答任何投票',
           currentUsername: widget.username,
+          onRefresh: refreshPollListViews,
         ),
         PollListView(
+          key: UniqueKey(),
           pollIds: user.pollCollect.pollIds,
           emptyMessage: '您还没有收藏任何投票',
           currentUsername: widget.username,
+          onRefresh: refreshPollListViews,
         ),
       ],
     );

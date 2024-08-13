@@ -375,6 +375,12 @@ class UserProfilePageState extends State<UserProfilePage>
     );
   }
 
+  void refreshPollListViews() {
+    setState(() {
+      // 这里不需要做任何事情，因为setState会触发重建
+    });
+  }
+
   Widget _buildTabBar() {
     return TabBar(
       controller: _tabController,
@@ -407,16 +413,19 @@ class UserProfilePageState extends State<UserProfilePage>
           pollIds: user.pollAsk.pollIds,
           emptyMessage: '该用户还没有发起任何投票',
           currentUsername: currentUsername,
+          onRefresh: refreshPollListViews,
         ),
         PollListView(
           pollIds: user.pollAns.pollIds,
           emptyMessage: '该用户还没有回答任何投票',
           currentUsername: currentUsername,
+          onRefresh: refreshPollListViews,
         ),
         PollListView(
           pollIds: user.pollCollect.pollIds,
           emptyMessage: '该用户还没有收藏任何投票',
           currentUsername: currentUsername,
+          onRefresh: refreshPollListViews,
         ),
       ],
     );

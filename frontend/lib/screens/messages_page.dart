@@ -8,8 +8,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class MessagesPage extends StatefulWidget {
   final TabController tabController;
-
-  const MessagesPage({super.key, required this.tabController});
+  final String username;
+  const MessagesPage(
+      {super.key, required this.tabController, required this.username});
 
   @override
   MessagesPageState createState() => MessagesPageState();
@@ -77,8 +78,7 @@ class MessagesPageState extends State<MessagesPage> {
         itemCount: getTotalLength([
           messages.commentReplyMessages,
           messages.followMessages,
-          messages.voteMessages
-        ,
+          messages.voteMessages,
         ]),
         itemBuilder: (context, index) {
           // 根据index判断是那个类型的消息
@@ -114,8 +114,8 @@ class MessagesPageState extends State<MessagesPage> {
 
   void _handleMessageTap(dynamic message) async {
     // 标记消息为已读，await 不会阻塞后续操作
-    await MessageService()
-        .markMessageStatus(message.message_id, MessageStatus.MESSAGE_STATUS_READ);
+    await MessageService().markMessageStatus(
+        message.message_id, MessageStatus.MESSAGE_STATUS_READ);
     if (!mounted) return; // 防止页面已经被销毁
 
     // 根据消息类型跳转到不同的页面

@@ -3,15 +3,15 @@ import 'package:aorb/services/comment_service.dart';
 import 'package:aorb/generated/comment.pbgrpc.dart';
 
 class SaySomething extends StatelessWidget {
-  final String avatar; // 传递用户的头像
-  final String username; // 当前用户的username
+  final String currentUserAvatar; // 传递用户的头像
+  final String currentUsername; // 当前用户的username
   final String pollId; // 当前投票的id
   final VoidCallback onCommentPosted;
 
   SaySomething(
       {super.key,
-      required this.username,
-      required this.avatar,
+      required this.currentUsername,
+      required this.currentUserAvatar,
       required this.pollId,
       required this.onCommentPosted});
 
@@ -25,7 +25,7 @@ class SaySomething extends StatelessWidget {
         children: <Widget>[
           // 左侧是我的头像
           CircleAvatar(
-            backgroundImage: NetworkImage(avatar),
+            backgroundImage: NetworkImage(currentUserAvatar),
             radius: 20.0, // 调整头像大小
           ),
           const SizedBox(width: 16.0), // 增加头像和输入框之间的间距
@@ -50,7 +50,7 @@ class SaySomething extends StatelessWidget {
             onPressed: () {
               String inputText = _textController.text;
               _textController.clear(); // 点击发送按钮后，清空输入框
-              CommentService().actionComment(username, pollId,
+              CommentService().actionComment(currentUsername, pollId,
                   ActionCommentType.ACTION_COMMENT_TYPE_ADD, inputText);
               onCommentPosted();
             },

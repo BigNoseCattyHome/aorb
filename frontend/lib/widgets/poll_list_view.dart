@@ -10,19 +10,21 @@ class PollListView extends StatefulWidget {
   final List<String> pollIds;
   final String currentUsername;
   final String emptyMessage;
+  final VoidCallback onRefresh;
 
   const PollListView({
     Key? key,
     required this.pollIds,
     required this.currentUsername,
     this.emptyMessage = 'No data',
+    required this.onRefresh,
   }) : super(key: key);
 
   @override
-  _PollListViewState createState() => _PollListViewState();
+  PollListViewState createState() => PollListViewState();
 }
 
-class _PollListViewState extends State<PollListView> {
+class PollListViewState extends State<PollListView> {
   final ScrollController _scrollController = ScrollController();
   final logger = getLogger();
 
@@ -37,6 +39,16 @@ class _PollListViewState extends State<PollListView> {
     });
   }
 
+  void refresh() {
+    setState(() {
+      final reversedPollIds = widget.pollIds.reversed.toList();
+      for (int index = 0; index < reversedPollIds.length; index++) {
+        final pollId = reversedPollIds[index];
+        _fetchPollData(pollId);
+      }
+    });
+  }
+
   @override
   void dispose() {
     _scrollController.dispose();
@@ -44,40 +56,45 @@ class _PollListViewState extends State<PollListView> {
   }
 
   Future<Map<String, dynamic>> _fetchPollData(String pollId) async {
-    // 调用PollService获取投票信息
-    final pollResponse = await PollService().getPoll(
-      GetPollRequest()..pollUuid = pollId,
-    );
-    final poll = pollResponse.poll;
+    try {
+      // 调用PollService获取投票信息
+      final pollResponse = await PollService().getPoll(
+        GetPollRequest()..pollUuid = pollId,
+      );
+      final poll = pollResponse.poll;
 
-    // 调用UserService获取用户信息（poll的发起人）
-    final userInfoResponse = await UserService().getUserInfo(
-      UserRequest()..username = poll.username,
-    );
-    final userInfo = userInfoResponse.user;
+      // 调用UserService获取用户信息（poll的发起人）
+      final userInfoResponse = await UserService().getUserInfo(
+        UserRequest()..username = poll.username,
+      );
+      final userInfo = userInfoResponse.user;
 
-    // 查询用户是否已经投票
-    final selectedOptionResponse =
-        await PollService().getChoiceWithPollUuidAndUsername(
-      GetChoiceWithPollUuidAndUsernameRequest()
-        ..pollUuid = pollId
-        ..username = widget.currentUsername,
-    );
-    final selectedOption = selectedOptionResponse.choice;
+      // 查询用户是否已经投票
+      final selectedOptionResponse =
+          await PollService().getChoiceWithPollUuidAndUsername(
+        GetChoiceWithPollUuidAndUsernameRequest()
+          ..pollUuid = pollId
+          ..username = widget.currentUsername,
+      );
+      final selectedOption = selectedOptionResponse.choice;
 
-    // 计算投票百分比
-    final totalVotes = poll.optionsCount.reduce((a, b) => a + b);
-    final percentages = poll.optionsCount.map((value) {
-      return totalVotes > 0 ? (value / totalVotes) * 100 : 0.0;
-    }).toList();
+      // 计算投票百分比
+      final totalVotes = poll.optionsCount.reduce((a, b) => a + b);
+      final percentages = poll.optionsCount.map((value) {
+        return totalVotes > 0 ? (value / totalVotes) * 100 : 0.0;
+      }).toList();
 
-    return {
-      'poll': poll,
-      'userInfo': userInfo,
-      'totalVotes': totalVotes,
-      'percentages': percentages,
-      'selectedOption': selectedOption,
-    };
+      return {
+        'poll': poll,
+        'userInfo': userInfo,
+        'totalVotes': totalVotes,
+        'percentages': percentages,
+        'selectedOption': selectedOption,
+      };
+    } catch (e) {
+      logger.e('Error fetching poll data: $e');
+      rethrow;
+    }
   }
 
   @override
