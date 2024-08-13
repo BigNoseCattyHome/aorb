@@ -82,27 +82,49 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
     }
   }
 
+  Future<void> _onRefresh() async {
+    _fetchUserInfo();
+    setState(() {
+      // 这将触发 PollListView 的重建
+    });
+  }
+
+  void refreshPollListViews() {
+    setState(() {
+      // 这里不需要做任何事情，因为setState会触发重建
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          _buildBackgroundImage(),
-          SafeArea(
-            child: Column(
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: _buildUserInfoSection(),
+      body: RefreshIndicator(
+        onRefresh: _onRefresh,
+        child: Stack(
+          children: [
+            _buildBackgroundImage(),
+            SafeArea(
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height,
+                  child: Column(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: _buildUserInfoSection(),
+                      ),
+                      Expanded(
+                        flex: 6,
+                        child: _buildTabSection(),
+                      ),
+                    ],
+                  ),
                 ),
-                Expanded(
-                  flex: 5,
-                  child: _buildTabSection(),
-                ),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -438,16 +460,25 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
       controller: _tabController,
       children: [
         PollListView(
+          key: UniqueKey(),
           pollIds: user.pollAsk.pollIds,
           emptyMessage: '您还没有发起任何投票',
+          currentUsername: widget.username,
+          onRefresh: refreshPollListViews,
         ),
         PollListView(
+          key: UniqueKey(),
           pollIds: user.pollAns.pollIds,
           emptyMessage: '您还没有回答任何投票',
+          currentUsername: widget.username,
+          onRefresh: refreshPollListViews,
         ),
         PollListView(
+          key: UniqueKey(),
           pollIds: user.pollCollect.pollIds,
           emptyMessage: '您还没有收藏任何投票',
+          currentUsername: widget.username,
+          onRefresh: refreshPollListViews,
         ),
       ],
     );

@@ -1,3 +1,4 @@
+import 'package:aorb/screens/user_profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:aorb/generated/user.pb.dart';
 import 'package:aorb/services/user_service.dart';
@@ -166,10 +167,21 @@ class FollowPageState extends State<FollowPage>
     );
   }
 
-  // 构建用户信息的ListTile
+// 构建用户信息的ListTile
   Widget _buildUserInfoListTile(User user) {
     return ListTile(
-      leading: CircleAvatar(backgroundImage: NetworkImage(user.avatar)),
+      leading: GestureDetector(
+        onTap: () {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) =>
+                      UserProfilePage(username: user.username)));
+        },
+        child: CircleAvatar(
+          backgroundImage: NetworkImage(user.avatar),
+        ),
+      ),
       title: Text(user.nickname),
     );
   }

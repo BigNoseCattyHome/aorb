@@ -104,13 +104,9 @@ figma原型设计共享链接：[Aorb原型设计](https://www.figma.com/design/
 
 确保在本地安装好MongoDB后，进行数据库初始化：
 
-```shell    
-mongosh
-```
-
-进入到mongodb shell之后输入命令：
 ```shell
-load("scripts/init_db.js")
+mongodump --db aorb --out ./database_init # 备份数据库
+mongorestore --db aorb ./database_init # 恢复数据库
 ```
 
 ### 后台各个服务的开启

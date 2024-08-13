@@ -14,6 +14,7 @@ import (
 
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/auth"
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/comment"
+	"github.com/BigNoseCattyHome/aorb/backend/rpc/message"
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/poll"
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/recommend"
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/user"
@@ -70,6 +71,7 @@ type GatewayServer struct {
 	poll.UnimplementedPollServiceServer
 	vote.UnimplementedVoteServiceServer
 	recommend.UnimplementedRecommendServiceServer
+	message.UnimplementedMessageServiceServer
 }
 
 // gRPC 服务名到 Consul 服务名的映射
@@ -80,6 +82,7 @@ var serviceNameMapping = map[string]string{
 	"rpc.vote.VoteService":           config.VoteRpcServerName,
 	"rpc.poll.PollService":           config.PollRpcServerName,
 	"rpc.recommend.RecommendService": config.RecommendRpcServerName,
+	"rpc.message.MessageService":     config.MessageRpcServerName,
 }
 
 // getServiceConn 获取指定服务的 gRPC 连接
@@ -200,6 +203,10 @@ func getResponseType(method string) reflect.Type {
 		return reflect.TypeOf((*user.IsUserFollowingResponse)(nil))
 	case "/rpc.user.UserService/UpdateUser":
 		return reflect.TypeOf((*user.UpdateUserResponse)(nil))
+	case "/rpc.user.UserService/FollowUser":
+		return reflect.TypeOf((*user.FollowUserResponse)(nil))
+	case "/rpc.user.UserService/UnfollowUser":
+		return reflect.TypeOf((*user.FollowUserResponse)(nil))
 
 	case "/rpc.comment.CommentService/ActionComment":
 		return reflect.TypeOf((*comment.ActionCommentResponse)(nil))
@@ -216,6 +223,10 @@ func getResponseType(method string) reflect.Type {
 		return reflect.TypeOf((*poll.ListPollResponse)(nil))
 	case "/rpc.poll.PollService/PollExist":
 		return reflect.TypeOf((*poll.PollExistResponse)(nil))
+	case "/rpc.poll.PollService/GetChoiceWithPollUuidAndUsername":
+		return reflect.TypeOf((*poll.GetChoiceWithPollUuidAndUsernameResponse)(nil))
+	case "/rpc.poll.PollService/FeedPoll":
+		return reflect.TypeOf((*poll.FeedPollResponse)(nil))
 
 	case "/rpc.vote.VoteService/CreateVote":
 		return reflect.TypeOf((*vote.CreateVoteResponse)(nil))
@@ -226,6 +237,16 @@ func getResponseType(method string) reflect.Type {
 		return reflect.TypeOf((*recommend.RecommendResponse)(nil))
 	case "/rpc.recommend.RecommendService/RegisterRecommendUser":
 		return reflect.TypeOf((*recommend.RecommendRegisterResponse)(nil))
+
+	case "/rpc.message.MessageService/GetUserMessage":
+		return reflect.TypeOf((*message.GetUserMessageResponse)(nil))
+	case "/rpc.message.MessageService/MarkMessageStatus":
+		return reflect.TypeOf((*message.MarkMessageStatusResponse)(nil))
+	case "/rpc.message.MessageService/MessageChat":
+		return reflect.TypeOf((*message.MessageChatResponse)(nil))
+	case "/rpc.message.MessageService/MessageAction":
+		return reflect.TypeOf((*message.MessageActionResponse)(nil))
+
 	default:
 		return nil
 	}
@@ -302,6 +323,7 @@ func main() {
 	poll.RegisterPollServiceServer(s, &GatewayServer{})
 	vote.RegisterVoteServiceServer(s, &GatewayServer{})
 	recommend.RegisterRecommendServiceServer(s, &GatewayServer{})
+	message.RegisterMessageServiceServer(s, &GatewayServer{})
 
 	// 注册反射服务
 	reflection.Register(s)

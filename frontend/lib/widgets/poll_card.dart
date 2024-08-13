@@ -1,8 +1,11 @@
+import 'package:aorb/conf/config.dart';
 import 'package:aorb/generated/google/protobuf/timestamp.pb.dart';
+import 'package:aorb/screens/login_prompt_page.dart';
 import 'package:aorb/screens/poll_detail_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:aorb/utils/time.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PollCard extends StatefulWidget {
   final String title; // 投票的标题
@@ -17,10 +20,9 @@ class PollCard extends StatefulWidget {
   final String pollId; // 就是 poll_uuid
   final String userId; // 用户id，根据username查询
   final String backgroundImage; // 背景图片，可以是纯色、网络图片或渐变，根据username查询
-  // TODO 查询selected_option，如果没有投票则为-1
-  int selectedOption = -1; // 用户选择的选项,-1代表没有投票
+  final String selectedOption; // 用户选择的选项,-1代表没有投票
 
-  PollCard({
+  const PollCard({
     Key? key,
     required this.title,
     required this.content,
@@ -34,7 +36,7 @@ class PollCard extends StatefulWidget {
     required this.pollId,
     required this.backgroundImage,
     required this.votePercentage,
-    this.selectedOption = -1,
+    required this.selectedOption,
   }) : super(key: key);
 
   @override
@@ -42,15 +44,32 @@ class PollCard extends StatefulWidget {
 }
 
 class PollCardState extends State<PollCard> {
-  int _selectedOption = -1;
-  late Color _textColor;
+  String _selectedOption = "";
+  Color? _textColor;
+  String? currentUser; // 从本地存储中获取，用于验证用户是否登录
+  var logger = getLogger();
 
   @override
   void initState() {
     super.initState();
-    // widget就是当前State对象关联的Widget对象
-    _selectedOption = widget.selectedOption;
-    _textColor = _getTextColor(widget.backgroundImage);
+    _selectedOption = widget.selectedOption; // 目前是从父组件传递过来的
+    _initializeTextColor();
+    _checkLoginStatus();
+  }
+
+  Future<void> _checkLoginStatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    currentUser = prefs.getString('username') ?? '';
+    setState(() {
+      currentUser = currentUser;
+    });
+  }
+
+  Future<void> _initializeTextColor() async {
+    _textColor = await _getTextColor(widget.backgroundImage);
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
@@ -120,7 +139,8 @@ class PollCardState extends State<PollCard> {
                           Text(
                             widget.content,
                             style: TextStyle(
-                              color: _textColor.withOpacity(0.8),
+                              color:
+                                  (_textColor ?? Colors.black).withOpacity(0.8),
                               fontSize: 10,
                             ),
                           ),
@@ -141,7 +161,7 @@ class PollCardState extends State<PollCard> {
   }
 
   Widget _buildOptionButtons(
-      List<String> text, List<double> votePercentage, int selectedOption) {
+      List<String> text, List<double> votePercentage, String selectedOption) {
     // 颜色数组
     List<Color> colorBackground = [
       const Color(0xFF9D9D9D),
@@ -154,92 +174,75 @@ class PollCardState extends State<PollCard> {
       const Color(0xFF6DB6EB),
     ];
 
+    bool hasUserSelected = selectedOption.isNotEmpty;
+
     return Row(
-      mainAxisAlignment: MainAxisAlignment.center, // 设置主轴对齐方式为居中
+      mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(text.length, (i) {
-        // Expanded是一个占满剩余空间的部件
+        bool isSelected = selectedOption == text[i];
         return Expanded(
-            child: Stack(children: [
-          // 获取ElevatedButton部件的宽度
-          LayoutBuilder(
-              builder: (BuildContext context, BoxConstraints constraints) {
-            // 获取Container的最大宽度
-            double containerWidth = constraints.maxWidth;
-            // ^ 获取Container的最大高度
-            // double containerHeight = constraints.maxHeight;
-            return ElevatedButton(
-              // style是按钮的样式，这里设置了背景颜色、圆角等
-              style: ElevatedButton.styleFrom(
-                // 设置按钮颜色
-                backgroundColor: selectedOption == -1
-                    ? colorBackground[i + 1]
-                    : (selectedOption == i
-                        ? colorBackground[i + 1]
-                        : colorBackground[0]),
-                // 设置按钮上文本颜色
-                foregroundColor: Colors.white,
-                // 设置按钮圆角
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                minimumSize: const Size(130, 50),
-                padding: EdgeInsets.zero, // 设置内边距为0
-              ),
-
-              child: Stack(
-                alignment: Alignment.center, // 设置Stack的对齐方式为居中
-                children: [
-                  if (_selectedOption != -1)
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Container(
-                        height: 40, // ! 好像containerHeight的数值有问题，所以先用50测试
-                        // 宽度等于父组件的长度*这个option所占的百分比
-                        width: votePercentage[i] * containerWidth,
-                        decoration: BoxDecoration(
-                          color: _selectedOption == i
-                              ? colorPercents[i + 1] // 使用正确的颜色
-                              : colorPercents[0], // 使用默认颜色
-                          borderRadius: BorderRadius.circular(10), // 设置圆角半径
-                        ),
+          child: Stack(
+            children: [
+              LayoutBuilder(
+                builder: (BuildContext context, BoxConstraints constraints) {
+                  double containerWidth = constraints.maxWidth;
+                  return ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: hasUserSelected
+                          ? (isSelected
+                              ? colorBackground[i + 1]
+                              : colorBackground[0])
+                          : colorBackground[i + 1],
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
                       ),
+                      minimumSize: const Size(130, 50),
+                      padding: EdgeInsets.zero,
                     ),
-                  // 使用Align小部件来居中对齐Container
-                  Align(
-                    alignment: Alignment.center,
-                    child: Text(text[i]),
-                  ),
-                ],
-              ),
-
-              // 点击跳转到内容详情页面
-              onPressed: () {
-                // setState(() {
-                //   _selectedOption = i;
-                //   // 把选择的结果发送到服务端
-                // });
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => PollDetailPage(
-                      userId: widget.userId,
-                      pollId: widget.pollId,
-                      username: widget.username,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        if (hasUserSelected)
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Container(
+                              height: 50,
+                              width: votePercentage[i] * containerWidth,
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? colorPercents[i + 1]
+                                    : colorPercents[0],
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                        Align(
+                          alignment: Alignment.center,
+                          child: Text(text[i]),
+                        ),
+                      ],
                     ),
-                  ),
-                );
-              },
-
-              // // 长按取消
-              // onLongPress: () {
-              //   setState(() {
-              //     _selectedOption = -1;
-              //     // 把选择的结果发送到服务端
-              //   });
-              // },
-            );
-          })
-        ]));
+                    onPressed: () {
+                      currentUser == ""
+                          ? const LoginPromptPage()
+                          : Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => PollDetailPage(
+                                  userId: widget.userId,
+                                  pollId: widget.pollId,
+                                  username: widget.username,
+                                ),
+                              ),
+                            );
+                    },
+                  );
+                },
+              )
+            ],
+          ),
+        );
       }),
     );
   }
@@ -290,20 +293,21 @@ class PollCardState extends State<PollCard> {
 
   // 点击跳转到内容详情页面
   void onTapContent() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PollDetailPage(
-          userId: widget.userId,
-          pollId: widget.pollId,
-          username: widget.username,
-        ),
-      ),
-    );
+    currentUser == ""
+        ? const LoginPromptPage()
+        : Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PollDetailPage(
+                userId: widget.userId,
+                pollId: widget.pollId,
+                username: widget.username,
+              ),
+            ),
+          );
   }
 
-// 根据背景决定文字颜色
-  Color _getTextColor(String backgroundImage) {
+  Future<Color> _getTextColor(String backgroundImage) async {
     if (backgroundImage.startsWith('0x')) {
       // 纯色背景
       int colorValue = int.parse(backgroundImage.substring(2), radix: 16);
@@ -317,16 +321,30 @@ class PollCardState extends State<PollCard> {
           Color(int.parse(colorStrings[0].substring(2), radix: 16));
       return _isLightColor(firstColor) ? Colors.black : Colors.white;
     } else {
-      // 对于图片背景，我们默认使用白色文字
-      return Colors.white;
+      // // 图片背景
+      // try {
+      //   PaletteGenerator paletteGenerator =
+      //       await PaletteGenerator.fromImageProvider(
+      //     NetworkImage(backgroundImage),
+      //     size: const Size(100, 100), // 可以调整大小以提高性能
+      //   );
+
+      //   // 获取主色调
+      //   Color? dominantColor = paletteGenerator.dominantColor?.color;
+      //   if (dominantColor != null) {
+      //     return _isLightColor(dominantColor) ? Colors.black : Colors.white;
+      //   }
+      // } catch (e) {
+      //   logger.e('Error analyzing image color: $e');
+      // }
+
+      // 如果无法分析图片颜色，默认使用白色文字
+      return Colors.black;
     }
   }
 
-  // 新增方法：判断颜色是否为浅色
+// 判断颜色是否为浅色
   bool _isLightColor(Color color) {
-    // 使用相对亮度公式
-    return (0.299 * color.red + 0.587 * color.green + 0.114 * color.blue) /
-            255 >
-        0.5;
+    return color.computeLuminance() > 0.5;
   }
 }

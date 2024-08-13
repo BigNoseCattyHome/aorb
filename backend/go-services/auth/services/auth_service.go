@@ -18,6 +18,7 @@ import (
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/logging"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/storage/database"
+	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -31,51 +32,16 @@ var log = logging.LogService(config.AuthRpcServerName) // 使用logging库，添
 func RegisterUser(newUser *user.User) error {
 	log.Infof("Attempting to register user: %s", newUser.Username)
 
-	// 注册用户的逻辑
-	isExistUser, err := checkUsernameExists(newUser.Username)
+	// 对密码进行哈希加密
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(*newUser.Password), bcrypt.DefaultCost)
 	if err != nil {
-		log.Errorf("while checking existing user: %v", err)
-		return fmt.Errorf("while checking existing user: %w", err)
+		log.Errorf("Failed to hash password: %v", err)
+		return errors.New("注册失败")
 	}
-	if isExistUser {
-		log.Warnf("User already exists: %s", newUser.Username)
-		return errors.New("username has been registered")
-	}
+	*newUser.Password = string(hashedPassword)
 
 	// 其他字段的初始化
-	coins := float64(0)
-	newUser.Coins = &coins
-	newUser.Blacklist = &user.BlackList{
-		Usernames: []string{},
-	}
-	newUser.CoinsRecord = &user.CoinRecordList{
-		Records: []*user.CoinRecord{},
-	}
-	newUser.Followed = &user.FollowedList{
-		Usernames: []string{},
-	}
-	newUser.Follower = &user.FollowerList{
-		Usernames: []string{},
-	}
-	newUser.PollAsk = &user.PollAskList{
-		PollIds: []string{},
-	}
-	newUser.PollAns = &user.PollAnsList{
-		PollIds: []string{},
-	}
-	newUser.PollCollect = &user.PollCollectList{
-		PollIds: []string{},
-	}
-	newUser.CreateAt = timestamppb.Now()
-	newUser.UpdateAt = timestamppb.Now()
-	newUser.DeleteAt = timestamppb.New(time.Time{})
-
-	bgpic_me := conf.DefaultBgpicMe
-	bgpic_pollcard := conf.DefaultBgpicPollcard
-	bio := conf.DefaultUserBio
-	newUser.BgpicMe = &bgpic_me
-	newUser.BgpicPollcard = &bgpic_pollcard
-	newUser.Bio = &bio
+	initializeUserFields(newUser)
 
 	// 保存用户到数据库
 	if err := storeUser(newUser); err != nil {
@@ -113,17 +79,6 @@ func storeUser(user *user.User) error {
 			log.Warn("No user.id was updated")
 		}
 
-		// 更新pictures表中的id字段
-		picturesCollection := database.MongoDbClient.Database("aorb").Collection("pictures")
-		updateResult, err = picturesCollection.UpdateOne(context.TODO(), bson.M{"url": user.Avatar}, bson.M{"$set": bson.M{"userid": user.Id}})
-		if err != nil {
-			log.Error("Update pictures.id failed", err)
-			return err
-		}
-		if updateResult.ModifiedCount == 0 {
-			log.Warn("No pictures.id was updated")
-		}
-
 	} else {
 		log.Error("Failed to get_id of document inserted")
 		return errors.New("failed to get_id of document inserted")
@@ -144,7 +99,8 @@ func AuthenticateUser(ctx context.Context, user *auth.LoginRequest) (string, int
 	}
 
 	// 检查用户名对应的密码是否正确
-	if user.Password != *storedUser.Password {
+	err = bcrypt.CompareHashAndPassword([]byte(*storedUser.Password), []byte(user.Password))
+	if err != nil {
 		log.Error("Invalid password")
 		return "", 0, "", nil, errors.New("invalid password")
 	}
@@ -217,7 +173,7 @@ func getUserByUsername(userName string) (*user.User, error) {
 
 // 查询是否username已经存在
 // 只有在数据库查询的时候遇到除了mongo.ErrNoDocuments之外的错误才会返回错误
-func checkUsernameExists(username string) (bool, error) {
+func CheckUsernameExists(username string) (bool, error) {
 	collection := database.MongoDbClient.Database("aorb").Collection("users")
 
 	// 查询用户
@@ -263,8 +219,16 @@ type Data struct {
 	Page      string `json:"page"`
 }
 
-// 生成用户头像并上传到 SM.MS 图床
-func GenerateAvatar(ctx context.Context, imageURL, multiavatarToken, smmsToken, fileName string) (*string, error) {
+// GenerateAvatar 生成用户头像并上传到 SM.MS 图床
+func GenerateAvatar(ctx context.Context, imageURL, multiavatarToken, smmsToken, fileName, userid string) (*string, error) {
+	/*
+		imageURL 是从 Multiavatar API 获取的头像 URL
+		multiavatarToken 是 Multiavatar API 的访问令牌
+		smmsToken 是 SM.MS API 的访问令牌
+		fileName 是上传到 SM.MS 的文件名
+		userid 是用户的 ID，已经在storeUser函数中生成
+	*/
+
 	// 在长时间操作中定期检查 context
 	if ctx.Err() != nil {
 		return nil, ctx.Err()
@@ -337,12 +301,64 @@ func GenerateAvatar(ctx context.Context, imageURL, multiavatarToken, smmsToken, 
 		return nil, fmt.Errorf("failed to upload avatar: %s", smmsResp.Message)
 	}
 
-	// 将response中的 url,delete,hash,userid(之后再更新，现在先用""占位),type保存到数据库
+	// 将response中的 url,delete,hash,userid,type保存到数据库 pictures 中
+	// 查询图片的时候按照userid和type进行查询
 	collection := database.MongoDbClient.Database("aorb").Collection("pictures")
-	_, err = collection.InsertOne(context.TODO(), bson.M{"userid": "", "type": "avatar", "url": smmsResp.Data.URL, "delete": smmsResp.Data.Delete, "hash": smmsResp.Data.Hash})
+	_, err = collection.InsertOne(context.TODO(), bson.M{
+		"userid": userid,
+		"type":   "avatar",
+		"url":    smmsResp.Data.URL,
+		"delete": smmsResp.Data.Delete,
+		"hash":   smmsResp.Data.Hash})
 	if err != nil {
 		return nil, fmt.Errorf("failed to insert picture to db: %w", err)
 	}
 
 	return &smmsResp.Data.URL, nil
+}
+
+func UpdateUserAvatar(username, avatarUrl string) error {
+	collection := database.MongoDbClient.Database("aorb").Collection("users")
+	_, err := collection.UpdateOne(context.TODO(), bson.M{"username": username}, bson.M{"$set": bson.M{"avatar": avatarUrl}})
+	if err != nil {
+		log.Error("Failed to update user avatar: ", err)
+		return err
+	}
+	return nil
+}
+
+func initializeUserFields(newUser *user.User) {
+	coins := float64(0)
+	newUser.Coins = &coins
+	newUser.Blacklist = &user.BlackList{
+		Usernames: []string{},
+	}
+	newUser.CoinsRecord = &user.CoinRecordList{
+		Records: []*user.CoinRecord{},
+	}
+	newUser.Followed = &user.FollowedList{
+		Usernames: []string{},
+	}
+	newUser.Follower = &user.FollowerList{
+		Usernames: []string{},
+	}
+	newUser.PollAsk = &user.PollAskList{
+		PollIds: []string{},
+	}
+	newUser.PollAns = &user.PollAnsList{
+		PollIds: []string{},
+	}
+	newUser.PollCollect = &user.PollCollectList{
+		PollIds: []string{},
+	}
+	newUser.CreateAt = timestamppb.Now()
+	newUser.UpdateAt = timestamppb.Now()
+	newUser.DeleteAt = timestamppb.New(time.Time{})
+
+	bgpic_me := conf.DefaultBgpicMe
+	bgpic_pollcard := conf.DefaultBgpicPollcard
+	bio := conf.DefaultUserBio
+	newUser.BgpicMe = &bgpic_me
+	newUser.BgpicPollcard = &bgpic_pollcard
+	newUser.Bio = &bio
 }

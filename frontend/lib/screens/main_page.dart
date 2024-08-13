@@ -66,8 +66,8 @@ class MainPageState extends State<MainPage>
       username = '';
       avatar = '';
       _pages = [
-        HomePage(tabController: tabController),
-        MessagesPage(tabController: tabController),
+        HomePage(tabController: tabController,username : username),
+        MessagesPage(tabController: tabController,username : username),
         const LoginPage(),
       ];
     });

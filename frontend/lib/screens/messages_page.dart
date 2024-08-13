@@ -1,5 +1,6 @@
 import 'package:aorb/conf/config.dart';
 import 'package:aorb/generated/message.pb.dart';
+import 'package:aorb/screens/login_prompt_page.dart';
 import 'package:aorb/screens/poll_detail_page.dart';
 import 'package:aorb/screens/user_profile_page.dart';
 import 'package:aorb/services/message_service.dart';
@@ -8,8 +9,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class MessagesPage extends StatefulWidget {
   final TabController tabController;
-
-  const MessagesPage({super.key, required this.tabController});
+  final String username;
+  const MessagesPage(
+      {super.key, required this.tabController, required this.username});
 
   @override
   MessagesPageState createState() => MessagesPageState();
@@ -19,7 +21,7 @@ class MessagesPageState extends State<MessagesPage> {
   late TabController _tabController;
   String username = '';
   String userId = '';
-  UserMessageResponse messages = UserMessageResponse();
+  GetUserMessageResponse messages = GetUserMessageResponse();
   bool isLoading = true; // 是否正在加载数据
   final logger = getLogger(); // 日志记录器
 
@@ -38,7 +40,7 @@ class MessagesPageState extends State<MessagesPage> {
     userId = prefs.getString('userId') ?? '';
 
     try {
-      UserMessageResponse messagesFetch =
+      GetUserMessageResponse messagesFetch =
           await MessageService().getUserMessage(username);
       setState(() {
         messages = messagesFetch;
@@ -61,7 +63,10 @@ class MessagesPageState extends State<MessagesPage> {
     return Scaffold(
       body: TabBarView(
         controller: _tabController,
-        children: [_buildNoticeList(), _buildMessageList()],
+        children: [
+          username == '' ? const LoginPromptPage() : _buildNoticeList(),
+          username == '' ? const LoginPromptPage() : _buildMessageList()
+        ],
       ),
     );
   }
@@ -75,9 +80,9 @@ class MessagesPageState extends State<MessagesPage> {
       onRefresh: () async => _loadData(), // onRefresh 在下拉刷新时调用
       child: ListView.builder(
         itemCount: getTotalLength([
-          messages.messagesCommentReplyList,
-          messages.messagesFollowList,
-          messages.messagesVoteList,
+          messages.commentReplyMessages,
+          messages.followMessages,
+          messages.voteMessages,
         ]),
         itemBuilder: (context, index) {
           // 根据index判断是那个类型的消息
@@ -113,8 +118,8 @@ class MessagesPageState extends State<MessagesPage> {
 
   void _handleMessageTap(dynamic message) async {
     // 标记消息为已读，await 不会阻塞后续操作
-    await MessageService()
-        .markMessageStatus(message.message_id, MessageStatus.READ);
+    await MessageService().markMessageStatus(
+        message.message_id, MessageStatus.MESSAGE_STATUS_READ);
     if (!mounted) return; // 防止页面已经被销毁
 
     // 根据消息类型跳转到不同的页面
@@ -124,7 +129,7 @@ class MessagesPageState extends State<MessagesPage> {
           context,
           MaterialPageRoute(
               builder: (context) => PollDetailPage(
-                    pollId: message.pollId,
+                    pollId: message.pollUuid,
                     username: username,
                     userId: userId,
                   )));
@@ -141,7 +146,7 @@ class MessagesPageState extends State<MessagesPage> {
           context,
           MaterialPageRoute(
               builder: (context) => PollDetailPage(
-                    pollId: message.pollId,
+                    pollId: message.pollUuid,
                     username: username,
                     userId: userId,
                   )));
@@ -150,15 +155,15 @@ class MessagesPageState extends State<MessagesPage> {
 
   // 根据索引获取消息
   dynamic _getMessageAtIndex(int index) {
-    int commentReplyCount = messages.messagesCommentReplyList.length;
-    int followCount = messages.messagesFollowList.length;
+    int commentReplyCount = messages.commentReplyMessages.length;
+    int followCount = messages.voteMessages.length;
 
     if (index < commentReplyCount) {
-      return messages.messagesCommentReplyList[index];
+      return messages.commentReplyMessages[index];
     } else if (index < commentReplyCount + followCount) {
-      return messages.messagesFollowList[index - commentReplyCount];
+      return messages.followMessages[index - commentReplyCount];
     } else {
-      return messages.messagesVoteList[index - commentReplyCount - followCount];
+      return messages.voteMessages[index - commentReplyCount - followCount];
     }
   }
 
