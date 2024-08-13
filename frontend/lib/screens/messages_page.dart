@@ -42,6 +42,7 @@ class MessagesPageState extends State<MessagesPage> {
     try {
       GetUserMessageResponse messagesFetch =
           await MessageService().getUserMessage(username);
+      logger.i('messagesFetch: $messagesFetch');
       setState(() {
         messages = messagesFetch;
         isLoading = false;
@@ -96,11 +97,12 @@ class MessagesPageState extends State<MessagesPage> {
   Widget _buildMessageTile(dynamic message) {
     return ListTile(
       leading: _getLeadingIcon(message),
-      title: Text(message.title ?? ''),
-      subtitle: Text(message.content ?? ''),
-      trailing: message.isRead
-          ? null
-          : const Icon(Icons.circle, color: Colors.red, size: 10),
+      // TODO 有问题
+      // title: Text(message.title ?? ''),
+      // subtitle: Text(message.content ?? ''),
+      // trailing: message.isRead
+      //     ? null
+      //     : const Icon(Icons.circle, color: Colors.red, size: 10),
       onTap: () => _handleMessageTap(message),
     );
   }
@@ -156,7 +158,7 @@ class MessagesPageState extends State<MessagesPage> {
   // 根据索引获取消息
   dynamic _getMessageAtIndex(int index) {
     int commentReplyCount = messages.commentReplyMessages.length;
-    int followCount = messages.voteMessages.length;
+    int followCount = messages.followMessages.length;
 
     if (index < commentReplyCount) {
       return messages.commentReplyMessages[index];
