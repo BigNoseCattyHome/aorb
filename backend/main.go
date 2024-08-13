@@ -5,25 +5,19 @@ import (
 	"fmt"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/storage/database"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // 运行整个项目
 
 func main() {
-	collection := database.MongoDbClient.Database("aorb").Collection("polls")
 
-	// Whether user had already voted or not
-	filter4Check := bson.D{
-		{"pollUuid", "dfbeb25d-f79d-4003-aafb-995ea6fe3453"},
-		{"voteList.voteUserName", "aaa"},
-	}
-	projection := bson.D{
-		{"voteList.voteUserName", 1},
-	}
+	userCollection := database.MongoDbClient.Database("aorb").Collection("users")
 
-	var result bson.D
-	collection.FindOne(context.TODO(), filter4Check, options.FindOne().SetProjection(projection)).Decode(&result)
+	// 查看是否已经关注
+	filter4Check := bson.D{{"username", "user1"}}
+	cursor := userCollection.FindOne(context.TODO(), filter4Check)
+	var result bson.M
+	cursor.Decode(&result)
 
-	fmt.Println(result != nil)
+	fmt.Println(result["followed"].(bson.M)["usernames"].(bson.A))
 }

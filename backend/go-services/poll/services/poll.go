@@ -124,6 +124,7 @@ func (s PollServiceImpl) CreatePoll(ctx context.Context, request *pollPb.CreateP
 		PollType:     request.Poll.GetPollType(),
 		Title:        request.Poll.GetTitle(),
 		Options:      request.Poll.GetOptions(),
+		Content:      request.Poll.Content,
 		OptionsCount: optionsCount,
 		UserName:     request.Poll.GetUsername(),
 		CommentList:  make([]commentModels.Comment, 0),
@@ -484,6 +485,119 @@ func (s PollServiceImpl) FeedPoll(ctx context.Context, req *pollPb.FeedPollReque
 		StatusMsg:  strings.ServiceOK,
 		PollList:   rPollList,
 		NextTime:   nextTime,
+	}
+	return
+}
+
+func (s PollServiceImpl) GetChoiceWithPollUuidAndUsername(ctx context.Context, request *pollPb.GetChoiceWithPollUuidAndUsernameRequest) (response *pollPb.GetChoiceWithPollUuidAndUsernameResponse, err error) {
+	ctx, span := tracing.Tracer.Start(ctx, "GetChoiceWithPollUuidAndUsernameService")
+	defer span.End()
+	logging.SetSpanWithHostname(span)
+	logger := logging.LogService("PollService.GetChoiceWithPollUuidAndUsername").WithContext(ctx)
+
+	// 先查有没有该user
+	checkUserExistsResponse, err := UserClient.CheckUserExists(ctx, &userPb.UserExistRequest{
+		Username: request.Username,
+	})
+
+	if err != nil {
+		logger.WithFields(logrus.Fields{
+			"poll_uuid": request.PollUuid,
+			"username":  request.Username,
+		}).Errorf("获取choice失败, Error when calling rpc CheckUserExists")
+		logging.SetSpanError(span, err)
+		response = &pollPb.GetChoiceWithPollUuidAndUsernameResponse{
+			StatusCode: strings.UnableToGetChoiceCode,
+			StatusMsg:  strings.UnableToGetChoice,
+		}
+		return
+	}
+
+	if !checkUserExistsResponse.Existed {
+		logger.WithFields(logrus.Fields{
+			"poll_uuid": request.PollUuid,
+			"username":  request.Username,
+		}).Errorf("获取choice失败, username doesn't exist")
+		logging.SetSpanError(span, err)
+		response = &pollPb.GetChoiceWithPollUuidAndUsernameResponse{
+			StatusCode: strings.UnableToGetChoiceCode,
+			StatusMsg:  strings.UnableToGetChoice,
+		}
+		return
+	}
+
+	// 先redis查一下
+	redisKey := request.PollUuid
+	redisResult, err := redisUtil.RedisPollClient.Get(ctx, redisKey).Result()
+	if err != nil && !errors.Is(err, redis.Nil) {
+		logger.WithFields(logrus.Fields{
+			"poll_uuid": request.PollUuid,
+			"username":  request.Username,
+		}).Errorf("获取choice失败, Error when getting data from redisPollClient with key %s", redisKey)
+		logging.SetSpanError(span, err)
+		response = &pollPb.GetChoiceWithPollUuidAndUsernameResponse{
+			StatusCode: strings.UnableToGetChoiceCode,
+			StatusMsg:  strings.UnableToGetChoice,
+		}
+		return
+	}
+	if redisResult != "" {
+		// 有poll，查一下username
+		var rPoll pollPb.Poll
+		err = json.Unmarshal([]byte(redisResult), &rPoll)
+		for _, rVote := range rPoll.VoteList {
+			if rVote.VoteUsername == request.Username {
+				response = &pollPb.GetChoiceWithPollUuidAndUsernameResponse{
+					StatusCode: strings.ServiceOKCode,
+					StatusMsg:  strings.ServiceOK,
+					VoteUuid:   rVote.VoteUuid,
+					Choice:     rVote.Choice,
+				}
+			}
+		}
+	}
+
+	// redis找不到就去数据库找
+	getPollResponse, err := s.GetPoll(ctx, &pollPb.GetPollRequest{PollUuid: request.PollUuid})
+	if err != nil {
+		logger.WithFields(logrus.Fields{
+			"poll_uuid": request.PollUuid,
+			"username":  request.Username,
+		}).Errorf("获取choice失败, Error when getting poll %s from mongodb", request.PollUuid)
+		logging.SetSpanError(span, err)
+		response = &pollPb.GetChoiceWithPollUuidAndUsernameResponse{
+			StatusCode: strings.UnableToGetChoiceCode,
+			StatusMsg:  strings.UnableToGetChoice,
+		}
+		return
+	}
+
+	// 找到了就加入redis
+	pollJson, _ := json.Marshal(&getPollResponse.Poll)
+	redisUtil.RedisPollClient.Set(ctx, redisKey, pollJson, time.Hour)
+
+	rVoteList := getPollResponse.Poll.VoteList
+	for _, rVote := range rVoteList {
+		if rVote.VoteUsername == request.Username {
+			response = &pollPb.GetChoiceWithPollUuidAndUsernameResponse{
+				StatusCode: strings.ServiceOKCode,
+				StatusMsg:  strings.ServiceOK,
+				VoteUuid:   rVote.VoteUuid,
+				Choice:     rVote.Choice,
+			}
+			return
+		}
+	}
+
+	// 还没找到，返回false
+	logger.WithFields(logrus.Fields{
+		"poll_uuid": request.PollUuid,
+		"username":  request.Username,
+	}).Errorf("获取choice失败, Error when searching for %s's choice of poll_uuid: %s, cuz user didn't make a choice", request.Username, request.PollUuid)
+	logging.SetSpanError(span, err)
+	response = &pollPb.GetChoiceWithPollUuidAndUsernameResponse{
+		StatusCode: strings.UnableToGetChoiceCode,
+		StatusMsg:  strings.UnableToGetChoice,
 	}
 	return
 }
