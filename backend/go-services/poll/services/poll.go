@@ -124,6 +124,7 @@ func (s PollServiceImpl) CreatePoll(ctx context.Context, request *pollPb.CreateP
 		PollType:     request.Poll.GetPollType(),
 		Title:        request.Poll.GetTitle(),
 		Options:      request.Poll.GetOptions(),
+		Content:      request.Poll.Content,
 		OptionsCount: optionsCount,
 		UserName:     request.Poll.GetUsername(),
 		CommentList:  make([]commentModels.Comment, 0),
