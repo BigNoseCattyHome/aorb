@@ -148,22 +148,6 @@ func (s VoteServiceImpl) CreateVote(ctx context.Context, request *votePb.CreateV
 	var pPoll pollModels.Poll
 	pollCollection.FindOne(ctx, filter4Check).Decode(&pPoll)
 
-	for _, vote := range pPoll.VoteList {
-		if vote.VoteUserName == request.Username {
-			logger.WithFields(logrus.Fields{
-				"err":       err,
-				"poll_uuid": request.PollUuid,
-				"username":  request.Username,
-			}).Errorf("user had already voted")
-			logging.SetSpanError(span, err)
-			response = &votePb.CreateVoteResponse{
-				StatusCode: strings.UnableToCreateVoteErrorCode,
-				StatusMsg:  strings.UnableToCreateVoteError,
-			}
-			return
-		}
-	}
-
 	if request.Choice != pPoll.Options[0] && request.Choice != pPoll.Options[1] {
 		logger.WithFields(logrus.Fields{
 			"err":       "只能选择给定选项哦",
@@ -178,13 +162,100 @@ func (s VoteServiceImpl) CreateVote(ctx context.Context, request *votePb.CreateV
 		return
 	}
 
-	findIndex := func(options []string, choice string) int {
+	findChoiceIndex := func(options []string, choice string) int {
 		for i, option := range options {
 			if option == choice {
 				return i
 			}
 		}
 		return -1
+	}
+
+	findVoteIndex := func(pVoteList []voteModels.Vote, targetVote voteModels.Vote) int {
+		for i, pVote := range pVoteList {
+			if pVote.VoteUuid == targetVote.VoteUuid {
+				return i
+			}
+		}
+		return -1
+	}
+
+	for _, pVote := range pPoll.VoteList {
+		if pVote.VoteUserName == request.Username {
+			// 如果已经投过票了，那就修改选项
+			if request.Choice != pVote.Choice {
+				// 选项不一样
+				update := bson.D{
+					{"$set", bson.D{{fmt.Sprintf("voteList.%d.choice", findVoteIndex(pPoll.VoteList, pVote)), request.Choice}}},
+					{"$inc", bson.D{
+						{fmt.Sprintf("optionsCount.%d", findChoiceIndex(pPoll.Options, request.Choice)), 1},
+					}},
+					{"$inc", bson.D{
+						{fmt.Sprintf("optionsCount.%d", 1-findChoiceIndex(pPoll.Options, request.Choice)), -1},
+					}},
+				}
+				_, err = pollCollection.UpdateOne(ctx, filter4Check, update)
+				if err != nil {
+					logger.WithFields(logrus.Fields{
+						"err":      err,
+						"userName": request.Username,
+					}).Errorf("修改投票失败, Error when updating vote")
+					logging.SetSpanError(span, err)
+					response = &votePb.CreateVoteResponse{
+						StatusCode: strings.UnableToCreateVoteErrorCode,
+						StatusMsg:  strings.UnableToCreateVoteError,
+					}
+					return
+				}
+
+				// 创建一条message
+				filter := bson.D{
+					{"pollUuid", request.PollUuid},
+				}
+				cursor := pollCollection.FindOne(ctx, filter)
+				cursor.Decode(&pPoll)
+
+				messageActionResponse, messageActionErr := messageClient.MessageAction(ctx, &message.MessageActionRequest{
+					FromUsername: request.Username,
+					ToUsername:   pPoll.UserName,
+					ActionType:   message.ActionMessageType_ACTION_MESSAGE_TYPE_ADD,
+					MessageType:  message.MessageType_MESSAGE_TYPE_VOTE,
+					Action: &message.MessageActionRequest_MessageContent{
+						MessageContent: pVote.VoteUuid,
+					},
+				})
+
+				if messageActionErr != nil && messageActionResponse.StatusCode != 0 {
+					logger.WithFields(logrus.Fields{
+						"err":       messageActionErr,
+						"poll_uuid": request.PollUuid,
+						"username":  request.Username,
+					}).Errorf("修改投票失败，Error when calling rpc MessageAction")
+					logging.SetSpanError(span, messageActionErr)
+					response = &votePb.CreateVoteResponse{
+						StatusCode: strings.UnableToQueryPollErrorCode,
+						StatusMsg:  strings.UnableToQueryPollError,
+					}
+					return
+				}
+
+				response = &votePb.CreateVoteResponse{
+					StatusCode: strings.ServiceOKCode,
+					StatusMsg:  strings.ServiceOK,
+					VoteUuid:   pVote.VoteUuid,
+				}
+				return
+
+			} else {
+				// 啥也没改，直接返回
+				response = &votePb.CreateVoteResponse{
+					StatusCode: strings.ServiceOKCode,
+					StatusMsg:  strings.ServiceOK,
+					VoteUuid:   pVote.VoteUuid,
+				}
+				return
+			}
+		}
 	}
 
 	pVote := &voteModels.Vote{
@@ -206,7 +277,7 @@ func (s VoteServiceImpl) CreateVote(ctx context.Context, request *votePb.CreateV
 			{"voteList", newVote},
 		}},
 		{"$inc", bson.D{
-			{fmt.Sprintf("optionsCount.%d", findIndex(pPoll.Options, request.Choice)), 1},
+			{fmt.Sprintf("optionsCount.%d", findChoiceIndex(pPoll.Options, request.Choice)), 1},
 		}},
 	}
 

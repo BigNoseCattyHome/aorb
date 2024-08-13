@@ -12,6 +12,7 @@ type Poll struct {
 	Title        string                  `json:"title" bson:"title, omitempty"`
 	Options      []string                `json:"options" bson:"options, omitempty"`
 	OptionsCount []uint32                `json:"options_count" bson:"optionsCount, omitempty"`
+	Content      string                  `json:"content" bson:"content, omitempty"`
 	PollType     string                  `json:"poll_type" bson:"pollType, omitempty"`
 	UserName     string                  `json:"username" bson:"userName, omitempty"`
 	CommentList  []commentModels.Comment `json:"comment_list" bson:"commentList, omitempty"`

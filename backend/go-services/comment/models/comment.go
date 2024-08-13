@@ -30,9 +30,7 @@ type ActionCommentRes struct {
 }
 
 type ListCommentReq struct {
-	Token   string `form:"token"`
-	ActorId int    `form:"actor_id"`
-	PollId  int    `form:"poll_id" binding:"-"`
+	PollUuid string `form:"poll_uuid" json:"poll_uuid"`
 }
 
 type ListCommentRes struct {
