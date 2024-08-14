@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:aorb/utils/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:aorb/generated/auth.pbgrpc.dart';
 import 'package:aorb/generated/google/protobuf/timestamp.pb.dart';
@@ -8,6 +9,7 @@ import 'package:aorb/services/auth_service.dart';
 import 'package:aorb/utils/ip_locator.dart';
 import 'package:aorb/utils/constant/err.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:provider/provider.dart';
 
 // 登录页面
 class LoginPage extends StatefulWidget {
@@ -68,6 +70,8 @@ class LoginPageState extends State<LoginPage> {
       logger.i('登录响应: $loginResponse');
 
       if (loginResponse.statusCode == 0) {
+         // 登录成功，更新 AuthProvider 状态
+        Provider.of<AuthProvider>(context, listen: false).login();
         // 登录成功，导航到主页
         Navigator.pushReplacementNamed(context, '/me');
       } else {

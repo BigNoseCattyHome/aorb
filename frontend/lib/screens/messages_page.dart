@@ -2,10 +2,12 @@ import 'package:aorb/conf/config.dart';
 import 'package:aorb/generated/message.pb.dart';
 import 'package:aorb/screens/login_prompt_page.dart';
 import 'package:aorb/services/message_service.dart';
+import 'package:aorb/utils/auth_provider.dart';
 import 'package:aorb/widgets/message_comment_reply.dart';
 import 'package:aorb/widgets/message_followed.dart';
 import 'package:aorb/widgets/message_vote.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MessagesPage extends StatefulWidget {
@@ -62,12 +64,18 @@ class MessagesPageState extends State<MessagesPage> {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+
     return Scaffold(
       body: TabBarView(
         controller: _tabController,
         children: [
-          username == '' ? const LoginPromptPage() : _buildNoticeList(),
-          username == '' ? const LoginPromptPage() : _buildMessageList()
+          authProvider.isLoggedIn
+              ? _buildNoticeList()
+              : const LoginPromptPage(),
+          authProvider.isLoggedIn
+              ? _buildMessageList()
+              : const LoginPromptPage(),
         ],
       ),
     );
