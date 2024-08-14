@@ -203,7 +203,7 @@ class MainPageState extends State<MainPage>
             label: '消息',
           ),
           // 如果用户没有登录的话或者头像为''，就展示默认的icon，否则展示用户头像
-          avatar == ''
+          avatar == '' || !authProvider.isLoggedIn
               ? BottomNavigationBarItem(
                   icon: _currentIndex == 2
                       ? SvgPicture.asset(
