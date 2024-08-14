@@ -4,6 +4,7 @@ import 'package:aorb/generated/user.pb.dart';
 import 'package:aorb/screens/poll_detail_page.dart';
 import 'package:aorb/services/poll_service.dart';
 import 'package:aorb/services/user_service.dart';
+import 'package:aorb/utils/container_decoration.dart';
 import 'package:aorb/utils/time.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -49,7 +50,8 @@ class MessageVoteState extends State<MessageVote> {
         .getUserInfo(
       UserRequest()
         ..username = widget.username
-        ..fields.addAll(['avatar', 'bgpic_pollcard', 'nickname']),
+        // ..fields.addAll(['avatar', 'bgpic_pollcard', 'nickname'])
+        ,
     )
         .then((response) {
       setState(() {
@@ -104,60 +106,65 @@ class MessageVoteState extends State<MessageVote> {
             ),
           );
         },
-        child: Card(
+        child: Container(
+          decoration: createBackgroundDecoration(bgpicPollcard),
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    CircleAvatar(
-                      backgroundImage: NetworkImage(avatar),
-                      radius: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(nickname,
-                        style: const TextStyle(fontWeight: FontWeight.bold)),
-                    const SizedBox(width: 8),
-                    const Text("选择了"),
-                    const SizedBox(width: 4),
-                    Text(widget.choice,
-                        style: const TextStyle(fontWeight: FontWeight.bold)),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(Icons.chat_bubble_outline, size: 24),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            title,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 18),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(content, style: const TextStyle(fontSize: 14)),
-                        ],
+          child: Card(
+            color: Colors.transparent,
+            shadowColor: Colors.transparent,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        backgroundImage: NetworkImage(avatar),
+                        radius: 20,
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Align(
-                  alignment: Alignment.bottomRight,
-                  child: Text(
-                    formatTimestamp(widget.time, ""),
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      const SizedBox(width: 8),
+                      Text(nickname,
+                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                      const SizedBox(width: 8),
+                      const Text("选择了"),
+                      const SizedBox(width: 4),
+                      Text(widget.choice,
+                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                    ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.chat_bubble_outline, size: 24),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 18),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(content, style: const TextStyle(fontSize: 14)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Align(
+                    alignment: Alignment.bottomRight,
+                    child: Text(
+                      formatTimestamp(widget.time, ""),
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
