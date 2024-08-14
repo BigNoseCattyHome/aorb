@@ -14,6 +14,7 @@ class PollDetail extends StatefulWidget {
   final String pollId;
   final String username;
   final String bgpic;
+  final String currentUser;
 
   const PollDetail({
     Key? key,
@@ -27,6 +28,7 @@ class PollDetail extends StatefulWidget {
     required this.pollId,
     required this.username,
     required this.bgpic,
+    required this.currentUser,
   }) : super(key: key);
 
   @override

@@ -23,7 +23,7 @@ class UserProfilePageState extends State<UserProfilePage>
   final logger = getLogger();
   String currentUsername = "";
   bool isFollowed = false;
-  
+
   @override
   void initState() {
     super.initState();

@@ -84,15 +84,11 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
 
   Future<void> _onRefresh() async {
     _fetchUserInfo();
-    setState(() {
-      // 这将触发 PollListView 的重建
-    });
+    setState(() {});
   }
 
   void refreshPollListViews() {
-    setState(() {
-      // 这里不需要做任何事情，因为setState会触发重建
-    });
+    setState(() {});
   }
 
   @override

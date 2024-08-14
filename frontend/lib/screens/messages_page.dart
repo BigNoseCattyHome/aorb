@@ -1,9 +1,10 @@
 import 'package:aorb/conf/config.dart';
 import 'package:aorb/generated/message.pb.dart';
 import 'package:aorb/screens/login_prompt_page.dart';
-import 'package:aorb/screens/poll_detail_page.dart';
-import 'package:aorb/screens/user_profile_page.dart';
 import 'package:aorb/services/message_service.dart';
+import 'package:aorb/widgets/message_comment_reply.dart';
+import 'package:aorb/widgets/message_followed.dart';
+import 'package:aorb/widgets/message_vote.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -95,64 +96,47 @@ class MessagesPageState extends State<MessagesPage> {
   }
 
   Widget _buildMessageTile(dynamic message) {
-    return ListTile(
-      leading: _getLeadingIcon(message),
-      // TODO 有问题
-      // title: Text(message.title ?? ''),
-      // subtitle: Text(message.content ?? ''),
-      // trailing: message.isRead
-      //     ? null
-      //     : const Icon(Icons.circle, color: Colors.red, size: 10),
-      onTap: () => _handleMessageTap(message),
-    );
-  }
-
-  Icon _getLeadingIcon(dynamic message) {
     if (message is CommentReplyMessage) {
-      return const Icon(Icons.comment);
+      return MessageCommentReply(
+        time: message.timestamp,
+        pollId: message.pollUuid,
+        replyText: message.content,
+        username: message.username,
+        onRead: () {
+          _sendReadMessage(message.messageUuid);
+        },
+      );
     } else if (message is FollowMessage) {
-      return const Icon(Icons.person_add);
+      return MessageFollowed(
+        username: message.usernameFollower,
+        time: message.timestamp,
+        onRead: () {
+          _sendReadMessage(message.messageUuid);
+        },
+      );
     } else if (message is VoteMessage) {
-      return const Icon(Icons.how_to_vote);
+      return MessageVote(
+        username: message.voteUsername,
+        time: message.timestamp,
+        choice: message.choice,
+        pollId: message.pollUuid,
+        onRead: () {
+          _sendReadMessage(message.messageUuid);
+        },
+      );
+    } else {
+      return const ListTile(
+        title: Text('Unknown message type'),
+        subtitle: Text('This message type is not supported yet'),
+      );
     }
-    return const Icon(Icons.message);
   }
 
-  void _handleMessageTap(dynamic message) async {
-    // 标记消息为已读，await 不会阻塞后续操作
+  // 发送已读消息
+  void _sendReadMessage(dynamic message) async {
     await MessageService().markMessageStatus(
         message.message_id, MessageStatus.MESSAGE_STATUS_READ);
-    if (!mounted) return; // 防止页面已经被销毁
-
-    // 根据消息类型跳转到不同的页面
-    if (message is CommentReplyMessage) {
-      // 跳转到问题页面
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) => PollDetailPage(
-                    pollId: message.pollUuid,
-                    username: username,
-                    userId: userId,
-                  )));
-    } else if (message is FollowMessage) {
-      // 跳转到用户详情页面
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) =>
-                  UserProfilePage(username: message.usernameFollower)));
-    } else if (message is VoteMessage) {
-      // 跳转到问题页面
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) => PollDetailPage(
-                    pollId: message.pollUuid,
-                    username: username,
-                    userId: userId,
-                  )));
-    }
+    logger.d('Message marked as read: ${message.message_id}');
   }
 
   // 根据索引获取消息

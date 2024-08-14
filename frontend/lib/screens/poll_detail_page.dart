@@ -169,8 +169,9 @@ class PollDetailPageState extends State<PollDetailPage>
                       ipaddress: poll.ipaddress,
                       selectedOption: selectedOption,
                       pollId: poll.pollUuid,
-                      username: user.username, // 当前用户的用户名
+                      username: user.username,
                       bgpic: user.bgpicPollcard,
+                      currentUser: currentUser,
                     ),
 
                     // 分割线
