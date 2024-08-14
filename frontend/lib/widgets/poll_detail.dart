@@ -1,5 +1,6 @@
 import 'package:aorb/generated/google/protobuf/timestamp.pb.dart';
 import 'package:aorb/services/vote_service.dart';
+import 'package:aorb/utils/container_decoration.dart';
 import 'package:aorb/utils/time.dart';
 import 'package:flutter/material.dart';
 
@@ -58,14 +59,10 @@ class PollDetailState extends State<PollDetail> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
-        image: DecorationImage(
-          image: NetworkImage(widget.bgpic),
-          fit: BoxFit.cover,
-        ),
-      ),
+      margin: const EdgeInsets.symmetric(horizontal: 15.0),
+      decoration: createBackgroundDecoration(widget.bgpic),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(25.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -129,7 +126,9 @@ class PollDetailState extends State<PollDetail> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: _selectedOption == widget.options[index] ? color : color.withOpacity(0.6),
+          color: _selectedOption == widget.options[index]
+              ? color
+              : color.withOpacity(0.6),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Center(

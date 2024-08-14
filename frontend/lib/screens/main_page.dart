@@ -23,38 +23,10 @@ class MainPageState extends State<MainPage>
     with SingleTickerProviderStateMixin {
   late int _currentIndex; // 用于控制底部到行栏的切换
   late TabController tabController; // tabController用于控制子页面的顶部导航栏的切换
-  // bool isLoggedIn = false; // 是否登录
   late String username; // 在initstate中从本地读取，用于传递给 _pages中的MePage
   late String avatar; // 在initstate中从本地读取，用于底部状态栏的icon的展示
   late List<Widget> _pages;
   final logger = getLogger();
-
-  // 异步初始化
-  Future<void> _initializeData() async {
-    try {
-      // bool loginStatus = await AuthService().checkLoginStatus();
-      // logger.i('Login status: $loginStatus');
-      // setState(() {
-      //   isLoggedIn = loginStatus;
-      // });
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      if (authProvider.isLoggedIn) {
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        setState(() {
-          username = prefs.getString('username') ?? '';
-          avatar = prefs.getString('avatar') ?? '';
-          logger.d('username: $username');
-          logger.d('avatar: $avatar');
-          _pages[2] = MePage(
-            username: username,
-            onAvatarUpdated: updateAvatar, // 传递更新头像的方法给 MePage
-          );
-        });
-      }
-    } catch (e) {
-      logger.e('Error during initialization: $e');
-    }
-  }
 
   @override
   void initState() {
@@ -76,6 +48,28 @@ class MainPageState extends State<MainPage>
 
     // 异步获取登录状态
     _initializeData();
+  }
+
+  // 异步初始化
+  Future<void> _initializeData() async {
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      if (authProvider.isLoggedIn) {
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        setState(() {
+          username = prefs.getString('username') ?? '';
+          avatar = prefs.getString('avatar') ?? '';
+          logger.d('username: $username');
+          logger.d('avatar: $avatar');
+          _pages[2] = MePage(
+            username: username,
+            onAvatarUpdated: updateAvatar, // 传递更新头像的方法给 MePage
+          );
+        });
+      }
+    } catch (e) {
+      logger.e('Error during initialization: $e');
+    }
   }
 
   void updateAvatar(String newAvatar) {

@@ -2,6 +2,7 @@ import 'package:aorb/conf/config.dart';
 import 'package:aorb/generated/google/protobuf/timestamp.pb.dart';
 import 'package:aorb/screens/login_prompt_page.dart';
 import 'package:aorb/screens/poll_detail_page.dart';
+import 'package:aorb/utils/container_decoration.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:aorb/utils/time.dart';
@@ -247,49 +248,6 @@ class PollCardState extends State<PollCard> {
     );
   }
 
-  // 方法：根据backgroundImage创建背景装饰
-  BoxDecoration createBackgroundDecoration(String backgroundImage) {
-    if (backgroundImage.startsWith('0x')) {
-      // 纯色背景
-      int colorValue = int.parse(backgroundImage.substring(2), radix: 16);
-      return BoxDecoration(
-        color: Color(colorValue),
-        borderRadius: BorderRadius.circular(10),
-      );
-    } else if (backgroundImage.startsWith('http://') ||
-        backgroundImage.startsWith('https://')) {
-      // 网络图片背景
-      return BoxDecoration(
-        image: DecorationImage(
-          image: NetworkImage(backgroundImage),
-          fit: BoxFit.cover,
-        ),
-        borderRadius: BorderRadius.circular(10),
-      );
-    } else if (backgroundImage.startsWith('gradient:')) {
-      // 渐变背景
-      List<String> colorStrings =
-          backgroundImage.substring('gradient:'.length).split(',');
-      List<Color> colors = colorStrings
-          .map((colorString) =>
-              Color(int.parse(colorString.substring(2), radix: 16)))
-          .toList();
-      return BoxDecoration(
-        gradient: LinearGradient(
-          colors: colors,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(10),
-      );
-    } else {
-      // 默认纯色背景
-      return BoxDecoration(
-        color: Colors.blue[900],
-        borderRadius: BorderRadius.circular(10),
-      );
-    }
-  }
 
   // 点击跳转到内容详情页面
   void onTapContent() {
