@@ -127,7 +127,9 @@ Redis:
 redis-server
 ```
 
-Jaeger:
+链路监控和性能检测:
+- 需要分别开启Prometheus、Jaeger、Grafana
+其中Jaeger可以使用docker命令拉
 ```shell
 docker run -d --name jaeger \                                                                                                                                               ─╯
   -e COLLECTOR_ZIPKIN_HOST_PORT=:9411 \
@@ -141,6 +143,25 @@ docker run -d --name jaeger \                                                   
   -p 9411:9411 \
   jaegertracing/all-in-one:1.28
 ```
+- 另外两个需要手动启动，其中Prometheus需要修改启动文件prometheus.yml为:
+```shell
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+    - targets: [
+      "localhost:9090",
+      "localhost:37100",
+      "localhost:37101",
+      "localhost:37102",
+      "localhost:37103",
+      "localhost:37104",
+      "localhost:37105"
+    ]
+```
+- 然后使用命令```prometheus ..../prometheus.yml```即可监控对应的metric，完成之后可以在Grafana中查看调用情况
 
 ### 微服务的启动
 
