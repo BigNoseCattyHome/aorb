@@ -51,7 +51,7 @@ class PollDetailState extends State<PollDetail> {
     });
     VoteService().createVote(
       widget.pollId,
-      widget.username,
+      widget.currentUser,
       widget.options[index],
     );
   }

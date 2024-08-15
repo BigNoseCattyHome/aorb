@@ -4,10 +4,12 @@ import 'package:aorb/generated/user.pb.dart';
 import 'package:aorb/screens/poll_detail_page.dart';
 import 'package:aorb/services/poll_service.dart';
 import 'package:aorb/services/user_service.dart';
+import 'package:aorb/utils/color_analyzer.dart';
 import 'package:aorb/utils/container_decoration.dart';
 import 'package:aorb/utils/time.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class MessageVote extends StatefulWidget {
   final String username; // 需要根据 username 获取头像,昵称
@@ -36,6 +38,7 @@ class MessageVoteState extends State<MessageVote> {
   String title = '';
   String content = '';
   int commentsCount = 0;
+  Color _textColor = Colors.black; // 默认文字颜色
 
   @override
   void initState() {
@@ -48,17 +51,19 @@ class MessageVoteState extends State<MessageVote> {
   void fetchUserInfo() {
     UserService()
         .getUserInfo(
-      UserRequest()
-        ..username = widget.username
-        // ..fields.addAll(['avatar', 'bgpic_pollcard', 'nickname'])
-        ,
+      UserRequest()..username = widget.username,
     )
-        .then((response) {
+        .then((response) async {
       setState(() {
         avatar = response.user.avatar;
         bgpicPollcard = response.user.bgpicPollcard;
         nickname = response.user.nickname;
       });
+      // 使用 ColorAnalyzer 获取适合的文字颜色
+      _textColor = await ColorAnalyzer.getTextColor(bgpicPollcard);
+      if (mounted) {
+        setState(() {});
+      }
     });
   }
 
@@ -125,19 +130,21 @@ class MessageVoteState extends State<MessageVote> {
                       ),
                       const SizedBox(width: 8),
                       Text(nickname,
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, color: _textColor)),
                       const SizedBox(width: 8),
                       const Text("选择了"),
                       const SizedBox(width: 4),
                       Text(widget.choice,
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, color: _textColor)),
                     ],
                   ),
                   const SizedBox(height: 16),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.chat_bubble_outline, size: 24),
+                      SvgPicture.asset('images/comments.svg'),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Column(
@@ -145,22 +152,26 @@ class MessageVoteState extends State<MessageVote> {
                           children: [
                             Text(
                               title,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 18),
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                  color: _textColor),
                             ),
                             const SizedBox(height: 4),
-                            Text(content, style: const TextStyle(fontSize: 14)),
+                            Text(content,
+                                style:
+                                    TextStyle(fontSize: 14, color: _textColor)),
                           ],
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
                   Align(
                     alignment: Alignment.bottomRight,
                     child: Text(
                       formatTimestamp(widget.time, ""),
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      style: TextStyle(
+                          fontSize: 12, color: _textColor.withOpacity(0.6)),
                     ),
                   ),
                 ],

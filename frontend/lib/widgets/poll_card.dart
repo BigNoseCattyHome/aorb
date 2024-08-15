@@ -2,11 +2,13 @@ import 'package:aorb/conf/config.dart';
 import 'package:aorb/generated/google/protobuf/timestamp.pb.dart';
 import 'package:aorb/screens/login_prompt_page.dart';
 import 'package:aorb/screens/poll_detail_page.dart';
+import 'package:aorb/utils/auth_provider.dart';
+import 'package:aorb/utils/color_analyzer.dart';
 import 'package:aorb/utils/container_decoration.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:aorb/utils/time.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 
 class PollCard extends StatefulWidget {
   final String title; // 投票的标题
@@ -47,7 +49,6 @@ class PollCard extends StatefulWidget {
 class PollCardState extends State<PollCard> {
   String _selectedOption = "";
   Color? _textColor;
-  String? currentUser; // 从本地存储中获取，用于验证用户是否登录
   var logger = getLogger();
 
   @override
@@ -55,19 +56,10 @@ class PollCardState extends State<PollCard> {
     super.initState();
     _selectedOption = widget.selectedOption; // 目前是从父组件传递过来的
     _initializeTextColor();
-    _checkLoginStatus();
-  }
-
-  Future<void> _checkLoginStatus() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    currentUser = prefs.getString('username') ?? '';
-    setState(() {
-      currentUser = currentUser;
-    });
   }
 
   Future<void> _initializeTextColor() async {
-    _textColor = await _getTextColor(widget.backgroundImage);
+    _textColor = await ColorAnalyzer.getTextColor(widget.backgroundImage);
     if (mounted) {
       setState(() {});
     }
@@ -161,9 +153,11 @@ class PollCardState extends State<PollCard> {
     );
   }
 
-  Widget _buildOptionButtons(
-      List<String> text, List<double> votePercentage, String selectedOption) {
+  Widget _buildOptionButtons(List<String> optionsText,
+      List<double> votePercentage, String selectedOption) {
     // 颜色数组
+    // 左边的选项用红色，右边的选项用蓝色
+    // 投票后未选中的投片用灰色，选中该的选项保留原来的颜色
     List<Color> colorBackground = [
       const Color(0xFF9D9D9D),
       const Color(0xFFBE3030),
@@ -179,8 +173,9 @@ class PollCardState extends State<PollCard> {
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(text.length, (i) {
-        bool isSelected = selectedOption == text[i];
+      children: List.generate(optionsText.length, (i) {
+        bool isSelected = selectedOption == optionsText[i];
+        final authProvider = context.read<AuthProvider>();
         return Expanded(
           child: Stack(
             children: [
@@ -220,14 +215,13 @@ class PollCardState extends State<PollCard> {
                           ),
                         Align(
                           alignment: Alignment.center,
-                          child: Text(text[i]),
+                          child: Text(optionsText[i]),
                         ),
                       ],
                     ),
                     onPressed: () {
-                      currentUser == ""
-                          ? const LoginPromptPage()
-                          : Navigator.push(
+                      authProvider.isLoggedIn
+                          ? Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => PollDetailPage(
@@ -236,7 +230,8 @@ class PollCardState extends State<PollCard> {
                                   username: widget.username,
                                 ),
                               ),
-                            );
+                            )
+                          : const LoginPromptPage();
                     },
                   );
                 },
@@ -248,12 +243,11 @@ class PollCardState extends State<PollCard> {
     );
   }
 
-
   // 点击跳转到内容详情页面
   void onTapContent() {
-    currentUser == ""
-        ? const LoginPromptPage()
-        : Navigator.push(
+    final authProvider = context.read<AuthProvider>();
+    authProvider.isLoggedIn
+        ? Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => PollDetailPage(
@@ -262,47 +256,7 @@ class PollCardState extends State<PollCard> {
                 username: widget.username,
               ),
             ),
-          );
-  }
-
-  Future<Color> _getTextColor(String backgroundImage) async {
-    if (backgroundImage.startsWith('0x')) {
-      // 纯色背景
-      int colorValue = int.parse(backgroundImage.substring(2), radix: 16);
-      Color backgroundColor = Color(colorValue);
-      return _isLightColor(backgroundColor) ? Colors.black : Colors.white;
-    } else if (backgroundImage.startsWith('gradient:')) {
-      // 渐变背景，我们取第一个颜色作为参考
-      List<String> colorStrings =
-          backgroundImage.substring('gradient:'.length).split(',');
-      Color firstColor =
-          Color(int.parse(colorStrings[0].substring(2), radix: 16));
-      return _isLightColor(firstColor) ? Colors.black : Colors.white;
-    } else {
-      // // 图片背景
-      // try {
-      //   PaletteGenerator paletteGenerator =
-      //       await PaletteGenerator.fromImageProvider(
-      //     NetworkImage(backgroundImage),
-      //     size: const Size(100, 100), // 可以调整大小以提高性能
-      //   );
-
-      //   // 获取主色调
-      //   Color? dominantColor = paletteGenerator.dominantColor?.color;
-      //   if (dominantColor != null) {
-      //     return _isLightColor(dominantColor) ? Colors.black : Colors.white;
-      //   }
-      // } catch (e) {
-      //   logger.e('Error analyzing image color: $e');
-      // }
-
-      // 如果无法分析图片颜色，默认使用白色文字
-      return Colors.black;
-    }
-  }
-
-// 判断颜色是否为浅色
-  bool _isLightColor(Color color) {
-    return color.computeLuminance() > 0.5;
+          )
+        : const LoginPromptPage();
   }
 }

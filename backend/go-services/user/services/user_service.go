@@ -114,7 +114,7 @@ func IsUserFollowing(username string, target_username string) (*user.IsUserFollo
 }
 
 func UpdateUserInService(ctx context.Context, userId string, updateFields map[string]interface{}) (resp *user.UpdateUserResponse, err error) {
-	log.Debug("Updating user in service: ", userId)
+	log.Debug("Updating user in service, userId is ", userId)
 	collection := database.MongoDbClient.Database("aorb").Collection("users")
 
 	// 如果是对username进行更新，需要先检查是否有重复的username
@@ -208,8 +208,16 @@ func checkUserExistsbyUsername(username string) (bool, error) {
 // deleteImage 删除 sm.ms 图床上的图片
 // 根据 userid 查询对应的文档，然后删除 $field 字段的图片
 func deleteImage(userId, field string, picdata *user.SmmsResponse) error {
-	// 如果是默认的图片，直接返回
-	if picdata.Url == conf.DefaultBgpicMe || picdata.Url == conf.DefaultBgpicPollcard {
+	// 如果是userid对应的图片默认的图片，直接返回
+	collection_user := database.MongoDbClient.Database("aorb").Collection("users")
+	filter_user := bson.M{"id": userId}
+	var queryUser user.User
+	err := collection_user.FindOne(context.Background(), filter_user).Decode(&queryUser)
+	if err != nil {
+		log.Error("Failed to find user: ", err)
+		return err
+	}
+	if *queryUser.BgpicMe == conf.DefaultBgpicMe || *queryUser.BgpicPollcard == conf.DefaultBgpicPollcard {
 		return nil
 	}
 
@@ -217,7 +225,7 @@ func deleteImage(userId, field string, picdata *user.SmmsResponse) error {
 	collection := database.MongoDbClient.Database("aorb").Collection("pictures")
 	filter := bson.M{"userid": userId, "type": field}
 	var result bson.M
-	err := collection.FindOne(context.TODO(), filter).Decode(&result)
+	err = collection.FindOne(context.TODO(), filter).Decode(&result)
 	if err != nil {
 		log.Error("Failed to delete image: ", err)
 		return err

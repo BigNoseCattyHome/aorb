@@ -38,7 +38,7 @@ BoxDecoration createBackgroundDecoration(String backgroundImage) {
   } else {
     // 默认纯色背景
     return BoxDecoration(
-      color: Colors.blue[200],
+      color: Colors.white,
       borderRadius: BorderRadius.circular(10),
     );
   }

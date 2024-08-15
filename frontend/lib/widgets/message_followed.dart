@@ -4,6 +4,7 @@ import 'package:aorb/screens/user_profile_page.dart';
 import 'package:aorb/services/user_service.dart';
 import 'package:aorb/utils/container_decoration.dart';
 import 'package:aorb/utils/time.dart';
+import 'package:aorb/utils/color_analyzer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
@@ -27,6 +28,7 @@ class MessageFollowedState extends State<MessageFollowed> {
   String avatar = '';
   String bgpicPollcard = '';
   String nickname = '';
+  Color _textColor = Colors.black; // 默认文字颜色
 
   @override
   void initState() {
@@ -34,20 +36,23 @@ class MessageFollowedState extends State<MessageFollowed> {
     fetchUserInfo();
   }
 
-  // 根据username查询avatar和bgpic_pollcard
+  // 获取用户信息并设置文字颜色
   void fetchUserInfo() {
     UserService()
         .getUserInfo(
-      UserRequest()
-        ..username = widget.username
-        ..fields.addAll(['avatar', 'bgpic_pollcard', 'nickname']),
+      UserRequest()..username = widget.username,
     )
-        .then((response) {
+        .then((response) async {
       setState(() {
         avatar = response.user.avatar;
         bgpicPollcard = response.user.bgpicPollcard;
         nickname = response.user.nickname;
       });
+      // 使用 ColorAnalyzer 获取适合的文字颜色
+      _textColor = await ColorAnalyzer.getTextColor(bgpicPollcard);
+      if (mounted) {
+        setState(() {});
+      }
     });
   }
 
@@ -97,19 +102,20 @@ class MessageFollowedState extends State<MessageFollowed> {
                         ),
                         const SizedBox(width: 8),
                         Text(nickname,
-                            style:
-                                const TextStyle(fontWeight: FontWeight.bold)),
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: _textColor)),
                         const SizedBox(width: 8),
-                        const Text("关注了你", style: TextStyle(fontSize: 16)),
+                        Text("关注了你",
+                            style: TextStyle(fontSize: 16, color: _textColor)),
                       ],
                     ),
-                    const SizedBox(height: 16),
                     Align(
                       alignment: Alignment.bottomRight,
                       child: Text(
                         formatTimestamp(widget.time, ""),
-                        style:
-                            const TextStyle(fontSize: 12, color: Colors.grey),
+                        style: TextStyle(
+                            fontSize: 12, color: _textColor.withOpacity(0.6)),
                       ),
                     ),
                   ],
