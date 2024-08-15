@@ -61,6 +61,7 @@ class MessageFollowedState extends State<MessageFollowed> {
     return Slidable(
       endActionPane: ActionPane(
         motion: const ScrollMotion(),
+        extentRatio: 0.2, // 控制滑动的范围
         children: [
           SlidableAction(
             onPressed: (context) {
@@ -70,6 +71,7 @@ class MessageFollowedState extends State<MessageFollowed> {
             foregroundColor: Colors.white,
             icon: Icons.check,
             label: '已读',
+            borderRadius: BorderRadius.circular(10),
           ),
         ],
       ),

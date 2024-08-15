@@ -134,7 +134,7 @@ class PollCardState extends State<PollCard> {
                             style: TextStyle(
                               color:
                                   (_textColor ?? Colors.black).withOpacity(0.8),
-                              fontSize: 10,
+                              fontSize: 16,
                             ),
                           ),
                         ],

@@ -86,6 +86,7 @@ class MessageVoteState extends State<MessageVote> {
     return Slidable(
       endActionPane: ActionPane(
         motion: const ScrollMotion(),
+        extentRatio: 0.2, // 控制滑动的范围
         children: [
           SlidableAction(
             onPressed: (context) {
@@ -95,6 +96,7 @@ class MessageVoteState extends State<MessageVote> {
             foregroundColor: Colors.white,
             icon: Icons.check,
             label: '已读',
+            borderRadius: BorderRadius.circular(10),
           ),
         ],
       ),
@@ -133,7 +135,10 @@ class MessageVoteState extends State<MessageVote> {
                           style: TextStyle(
                               fontWeight: FontWeight.bold, color: _textColor)),
                       const SizedBox(width: 8),
-                      const Text("选择了"),
+                      Text(
+                        "选择了",
+                        style: TextStyle(color: _textColor),
+                      ),
                       const SizedBox(width: 4),
                       Text(widget.choice,
                           style: TextStyle(

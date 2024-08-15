@@ -1,5 +1,6 @@
 import 'package:aorb/generated/google/protobuf/timestamp.pb.dart';
 import 'package:aorb/services/vote_service.dart';
+import 'package:aorb/utils/color_analyzer.dart';
 import 'package:aorb/utils/container_decoration.dart';
 import 'package:aorb/utils/time.dart';
 import 'package:flutter/material.dart';
@@ -38,11 +39,20 @@ class PollDetail extends StatefulWidget {
 
 class PollDetailState extends State<PollDetail> {
   String _selectedOption = "";
+  Color _textColor = Colors.black; // 默认文字颜色
 
   @override
   void initState() {
     super.initState();
+    fetchColor();
     _selectedOption = widget.selectedOption;
+  }
+
+  void fetchColor() async {
+    _textColor = await ColorAnalyzer.getTextColor(widget.bgpic);
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   void _selectOption(int index) {
@@ -68,18 +78,18 @@ class PollDetailState extends State<PollDetail> {
           children: [
             Text(
               widget.title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: Colors.black,
+                color: _textColor,
               ),
             ),
             const SizedBox(height: 16),
             Text(
               widget.content,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
-                color: Colors.black,
+                color: _textColor,
               ),
             ),
             const SizedBox(height: 16),
@@ -99,17 +109,17 @@ class PollDetailState extends State<PollDetail> {
               children: [
                 Text(
                   formatTimestamp(widget.time, "发布于"),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
-                    color: Colors.grey,
+                    color: _textColor.withOpacity(0.6),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Text(
                   widget.ipaddress,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
-                    color: Colors.grey,
+                    color: _textColor.withOpacity(0.6),
                   ),
                 )
               ],
