@@ -81,10 +81,8 @@ class PollService {
         await _client.getChoiceWithPollUuidAndUsername(request);
 
     if (response.statusCode == 0) {
-      logger.i('Successfully retrieved choice for poll ${request.pollUuid}');
       return response;
     } else if (response.statusCode == unableToGetChoiceCode) {
-      logger.i('User has not voted for poll ${request.pollUuid}');
       return response;
     } else {
       logger.w(

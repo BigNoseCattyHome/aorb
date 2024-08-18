@@ -1,39 +1,50 @@
 import 'package:aorb/generated/google/protobuf/timestamp.pb.dart';
+import 'package:aorb/generated/poll.pb.dart';
 import 'package:aorb/generated/user.pb.dart';
-import 'package:aorb/screens/user_profile_page.dart';
+import 'package:aorb/screens/poll_detail_page.dart';
+import 'package:aorb/services/poll_service.dart';
 import 'package:aorb/services/user_service.dart';
+import 'package:aorb/utils/color_analyzer.dart';
 import 'package:aorb/utils/container_decoration.dart';
 import 'package:aorb/utils/time.dart';
-import 'package:aorb/utils/color_analyzer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
-class MessageFollowed extends StatefulWidget {
+class MessageCommentReply extends StatefulWidget {
   final String username;
+  final String replyText;
+  final String pollId;
   final Timestamp time;
   final Function onRead; // 标记为已读的回调函数
 
-  const MessageFollowed({
+  const MessageCommentReply({
     Key? key,
     required this.username,
+    required this.replyText,
+    required this.pollId,
     required this.time,
     required this.onRead,
   }) : super(key: key);
 
   @override
-  MessageFollowedState createState() => MessageFollowedState();
+  MessageCommentReplyState createState() => MessageCommentReplyState();
 }
 
-class MessageFollowedState extends State<MessageFollowed> {
+class MessageCommentReplyState extends State<MessageCommentReply> {
   String avatar = '';
   String bgpicPollcard = '';
   String nickname = '';
+  String title = '';
+  String content = '';
+  int commentsCount = 0;
   Color _textColor = Colors.black; // 默认文字颜色
 
   @override
   void initState() {
     super.initState();
     fetchUserInfo();
+    fetchPollInfo();
   }
 
   // 获取用户信息并设置文字颜色
@@ -53,6 +64,21 @@ class MessageFollowedState extends State<MessageFollowed> {
       if (mounted) {
         setState(() {});
       }
+    });
+  }
+
+  // 获取投票信息
+  void fetchPollInfo() {
+    PollService()
+        .getPoll(
+      GetPollRequest()..pollUuid = widget.pollId,
+    )
+        .then((response) {
+      setState(() {
+        title = response.poll.title;
+        content = response.poll.content;
+        commentsCount = response.poll.commentList.length;
+      });
     });
   }
 
@@ -80,8 +106,11 @@ class MessageFollowedState extends State<MessageFollowed> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) =>
-                    UserProfilePage(username: widget.username),
+                builder: (context) => PollDetailPage(
+                  pollId: widget.pollId,
+                  username: widget.username,
+                  userId: '',
+                ),
               ),
             );
           },
@@ -108,8 +137,49 @@ class MessageFollowedState extends State<MessageFollowed> {
                                 fontWeight: FontWeight.bold,
                                 color: _textColor)),
                         const SizedBox(width: 8),
-                        Text("关注了你",
-                            style: TextStyle(fontSize: 16, color: _textColor)),
+                        Text("回复了你",
+                            style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.normal,
+                                color: _textColor)),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Center(
+                      child: Text(
+                        widget.replyText,
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: _textColor,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SvgPicture.asset('images/comments.svg'),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                title,
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                    color: _textColor),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(content,
+                                  style: TextStyle(
+                                      fontSize: 14, color: _textColor)),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                     Align(

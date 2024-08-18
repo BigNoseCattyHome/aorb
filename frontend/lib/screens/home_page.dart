@@ -6,9 +6,12 @@ import 'package:aorb/screens/content_publish_page.dart';
 import 'package:aorb/screens/login_prompt_page.dart';
 import 'package:aorb/services/poll_service.dart';
 import 'package:aorb/services/user_service.dart';
+import 'package:aorb/utils/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:aorb/widgets/poll_card.dart';
 import 'dart:async';
+
+import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
   final TabController tabController;
@@ -27,7 +30,7 @@ class HomePageState extends State<HomePage>
   late List<PollCard> _polls;
   final ScrollController _scrollController = ScrollController();
   bool _isLoading = false;
-  bool isLoggedIn = false;
+  // bool isLoggedIn = false;
   final logger = getLogger();
 
   @override
@@ -128,10 +131,12 @@ class HomePageState extends State<HomePage>
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext cFontext) {
+    final authProvider = Provider.of<AuthProvider>(context);
+
     return Scaffold(
       floatingActionButton: Visibility(
-        visible: widget.username != "",
+        visible: authProvider.isLoggedIn,
         child: FloatingActionButton(
           onPressed: () {
             Navigator.push(
@@ -153,7 +158,7 @@ class HomePageState extends State<HomePage>
         controller: _tabController,
         children: [
           _buildPollList(),
-          widget.username == "" ? const LoginPromptPage() : _buildPollList(),
+          authProvider.isLoggedIn ? _buildPollList() : const LoginPromptPage(),
         ],
       ),
     );

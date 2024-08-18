@@ -84,15 +84,11 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
 
   Future<void> _onRefresh() async {
     _fetchUserInfo();
-    setState(() {
-      // 这将触发 PollListView 的重建
-    });
+    setState(() {});
   }
 
   void refreshPollListViews() {
-    setState(() {
-      // 这里不需要做任何事情，因为setState会触发重建
-    });
+    setState(() {});
   }
 
   @override
@@ -107,7 +103,7 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 child: SizedBox(
-                  height: MediaQuery.of(context).size.height,
+                  height: MediaQuery.of(context).size.height * 0.9,
                   child: Column(
                     children: [
                       Expanded(
@@ -449,7 +445,7 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
       tabs: const [
         Tab(text: '我发起的'),
         Tab(text: '我回答的'),
-        Tab(text: '我收藏的'),
+        // Tab(text: '我收藏的'),
       ],
     );
   }
@@ -473,13 +469,13 @@ class MePageState extends State<MePage> with SingleTickerProviderStateMixin {
           currentUsername: widget.username,
           onRefresh: refreshPollListViews,
         ),
-        PollListView(
-          key: UniqueKey(),
-          pollIds: user.pollCollect.pollIds,
-          emptyMessage: '您还没有收藏任何投票',
-          currentUsername: widget.username,
-          onRefresh: refreshPollListViews,
-        ),
+        // PollListView(
+        //   key: UniqueKey(),
+        //   pollIds: user.pollCollect.pollIds,
+        //   emptyMessage: '您还没有收藏任何投票',
+        //   currentUsername: widget.username,
+        //   onRefresh: refreshPollListViews,
+        // ),
       ],
     );
   }

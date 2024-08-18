@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"sync"
+	"time"
+
 	redisUtil "github.com/BigNoseCattyHome/aorb/backend/utils/storage/redis"
 	"github.com/redis/go-redis/v9"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"sync"
-	"time"
 
 	commentModels "github.com/BigNoseCattyHome/aorb/backend/go-services/comment/models"
 	pollModels "github.com/BigNoseCattyHome/aorb/backend/go-services/poll/models"
@@ -644,6 +645,7 @@ func BuildPollPbModel(poll *pollModels.Poll) *pollPb.Poll {
 	return &pollPb.Poll{
 		PollUuid:     poll.PollUuid,
 		Title:        poll.Title,
+		Content:      poll.Content,
 		Options:      poll.Options,
 		OptionsCount: poll.OptionsCount,
 		PollType:     poll.PollType,

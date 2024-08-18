@@ -23,7 +23,7 @@ class UserProfilePageState extends State<UserProfilePage>
   final logger = getLogger();
   String currentUsername = "";
   bool isFollowed = false;
-  
+
   @override
   void initState() {
     super.initState();
@@ -397,7 +397,7 @@ class UserProfilePageState extends State<UserProfilePage>
       tabs: const [
         Tab(text: '发起的投票'),
         Tab(text: '回答的投票'),
-        Tab(text: '收藏的投票'),
+        // Tab(text: '收藏的投票'),
       ],
     );
   }
@@ -418,12 +418,12 @@ class UserProfilePageState extends State<UserProfilePage>
           currentUsername: currentUsername,
           onRefresh: refreshPollListViews,
         ),
-        PollListView(
-          pollIds: user.pollCollect.pollIds,
-          emptyMessage: '该用户还没有收藏任何投票',
-          currentUsername: currentUsername,
-          onRefresh: refreshPollListViews,
-        ),
+        // PollListView(
+        //   pollIds: user.pollCollect.pollIds,
+        //   emptyMessage: '该用户还没有收藏任何投票',
+        //   currentUsername: currentUsername,
+        //   onRefresh: refreshPollListViews,
+        // ),
       ],
     );
   }

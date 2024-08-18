@@ -1,3 +1,4 @@
+import 'package:aorb/utils/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -7,6 +8,7 @@ import 'package:aorb/screens/me_page.dart';
 import 'package:aorb/screens/login_page.dart';
 import 'package:aorb/widgets/top_bar_index.dart';
 import 'package:aorb/services/auth_service.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:aorb/conf/config.dart';
 
@@ -21,22 +23,38 @@ class MainPageState extends State<MainPage>
     with SingleTickerProviderStateMixin {
   late int _currentIndex; // 用于控制底部到行栏的切换
   late TabController tabController; // tabController用于控制子页面的顶部导航栏的切换
-  bool isLoggedIn = false; // 是否登录
   late String username; // 在initstate中从本地读取，用于传递给 _pages中的MePage
   late String avatar; // 在initstate中从本地读取，用于底部状态栏的icon的展示
   late List<Widget> _pages;
   final logger = getLogger();
 
+  @override
+  void initState() {
+    super.initState();
+    // vsync是一个同步的信号，用于保证动画的同步性
+    tabController = TabController(length: 2, vsync: this);
+    _currentIndex = widget.initialIndex;
+
+    // 提供初始值
+    setState(() {
+      username = '';
+      avatar = '';
+      _pages = [
+        HomePage(tabController: tabController, username: username),
+        MessagesPage(tabController: tabController, username: username),
+        const LoginPage(),
+      ];
+    });
+
+    // 异步获取登录状态
+    _initializeData();
+  }
+
   // 异步初始化
   Future<void> _initializeData() async {
     try {
-      bool loginStatus = await AuthService().checkLoginStatus();
-      logger.i('Login status: $loginStatus');
-      setState(() {
-        isLoggedIn = loginStatus;
-      });
-
-      if (isLoggedIn) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      if (authProvider.isLoggedIn) {
         SharedPreferences prefs = await SharedPreferences.getInstance();
         setState(() {
           username = prefs.getString('username') ?? '';
@@ -52,28 +70,6 @@ class MainPageState extends State<MainPage>
     } catch (e) {
       logger.e('Error during initialization: $e');
     }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    // vsync是一个同步的信号，用于保证动画的同步性
-    tabController = TabController(length: 2, vsync: this);
-    _currentIndex = widget.initialIndex;
-
-    // 提供初始值
-    setState(() {
-      username = '';
-      avatar = '';
-      _pages = [
-        HomePage(tabController: tabController,username : username),
-        MessagesPage(tabController: tabController,username : username),
-        const LoginPage(),
-      ];
-    });
-
-    // 异步获取登录状态
-    _initializeData();
   }
 
   void updateAvatar(String newAvatar) {
@@ -100,9 +96,8 @@ class MainPageState extends State<MainPage>
     final accessToken = prefs.getString('authToken');
     final refreshToken = prefs.getString('refreshToken');
 
-    // 检查 token 是否为 null
+    // 检查 token 是否为 null，不为空则清空
     if (accessToken != null && refreshToken != null) {
-      // 退出登录
       await AuthService().logout(accessToken, refreshToken);
       await prefs.remove('authToken');
       await prefs.remove('refreshToken');
@@ -110,21 +105,20 @@ class MainPageState extends State<MainPage>
       await prefs.remove('avatar');
       await prefs.remove('nickname');
       logger.i('user\'s login info cleared.');
-
-      if (!mounted) return;
-      // 退出登录后，刷新页面
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const MainPage()),
-        (Route<dynamic> route) => false,
-      );
-    } else {
-      // 处理 token 为 null 的情况，例如显示错误信息
-      logger.e('Token is null');
     }
+    if (!mounted) return;
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    authProvider.logout();
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const MainPage()),
+      (Route<dynamic> route) => false,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+
     return Scaffold(
       // appBar随底部栏进行切换
       appBar: _currentIndex == 2
@@ -158,7 +152,7 @@ class MainPageState extends State<MainPage>
               },
             ),
             // 如果用户已登录，显示退出登录按钮
-            if (isLoggedIn)
+            if (authProvider.isLoggedIn)
               ListTile(
                 leading: const Icon(Icons.logout),
                 title: const Text('退出登录'),
@@ -203,7 +197,7 @@ class MainPageState extends State<MainPage>
             label: '消息',
           ),
           // 如果用户没有登录的话或者头像为''，就展示默认的icon，否则展示用户头像
-          avatar == ''
+          avatar == '' || !authProvider.isLoggedIn
               ? BottomNavigationBarItem(
                   icon: _currentIndex == 2
                       ? SvgPicture.asset(

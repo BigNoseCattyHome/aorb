@@ -1,5 +1,7 @@
+import 'package:aorb/utils/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'routes/router.dart';
 import 'package:logger/logger.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -19,7 +21,8 @@ Future<void> main() async {
     ),
   );
 
-  runApp(Aorb(logger: logger));
+  runApp(ChangeNotifierProvider(
+      create: (context) => AuthProvider(), child: Aorb(logger: logger)));
 }
 
 class Aorb extends StatelessWidget {

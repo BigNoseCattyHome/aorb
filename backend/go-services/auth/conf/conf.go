@@ -8,7 +8,7 @@ const (
 	DefaultBgpicMe string = "https://s2.loli.net/2024/08/05/srhjwzeIcPVo7DG.png"
 
 	// 默认用户投票消息卡片
-	DefaultBgpicPollcard string = "https://s2.loli.net/2024/05/28/Wx43kE95JURNdCY.png"
+	DefaultBgpicPollcard string = "https://s2.loli.net/2024/08/15/UnIuOWKbLdpPG4M.jpg"
 
 	// 默认用户bio
 	DefaultUserBio string = "这个人很神秘，关于他一无所知..."
