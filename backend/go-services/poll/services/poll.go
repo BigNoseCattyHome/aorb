@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/messageQueue"
 	"sync"
 	"time"
 
@@ -184,12 +185,54 @@ func (s PollServiceImpl) CreatePoll(ctx context.Context, request *pollPb.CreateP
 	return resp, err
 }
 
-func (s PollServiceImpl) GetPoll(ctx context.Context, request *pollPb.GetPollRequest) (resp *pollPb.GetPollResponse, err error) {
+func (s PollServiceImpl) GetPoll(ctx context.Context, request *pollPb.GetPollRequest) (response *pollPb.GetPollResponse, err error) {
 	ctx, span := tracing.Tracer.Start(ctx, "GetPollService")
 	defer span.End()
 	logging.SetSpanWithHostname(span)
 	logger := logging.LogService("PollService.GetPoll").WithContext(ctx)
 
+	// 先去redis找
+	redisKey := request.PollUuid
+	// 从redis中获取数据
+	redisResult, err := redisUtil.RedisCommentClient.Get(ctx, redisKey).Result()
+	if err != nil && !errors.Is(err, redis.Nil) {
+		logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Errorf("获取poll失败, Error when getting data from redis")
+		logging.SetSpanError(span, err)
+		response = &pollPb.GetPollResponse{
+			StatusCode: strings.UnableToQueryPollErrorCode,
+			StatusMsg:  strings.UnableToQueryPollError,
+		}
+		return
+	}
+
+	if redisResult != "" {
+		var rPoll *pollPb.Poll
+		err = json.Unmarshal([]byte(redisResult), &rPoll)
+		if err != nil {
+			logger.WithFields(logrus.Fields{
+				"err": err,
+			}).Errorf("获取poll失败, Error when getting data from redis")
+			logging.SetSpanError(span, err)
+			response = &pollPb.GetPollResponse{
+				StatusCode: strings.UnableToQueryPollErrorCode,
+				StatusMsg:  strings.UnableToQueryPollError,
+			}
+			return
+		}
+		response = &pollPb.GetPollResponse{
+			StatusCode: strings.ServiceOKCode,
+			StatusMsg:  strings.ServiceOK,
+			Poll:       rPoll,
+		}
+		logger.WithFields(logrus.Fields{
+			"response": response,
+		}).Debugf("Process done.")
+		return
+	}
+
+	// redis里面没有
 	collection := database.MongoDbClient.Database("aorb").Collection("polls")
 	filter := bson.D{
 		{"pollUuid", request.PollUuid},
@@ -203,7 +246,7 @@ func (s PollServiceImpl) GetPoll(ctx context.Context, request *pollPb.GetPollReq
 			"err":       result.Err(),
 		}).Errorf("Error when getting poll of uuid %s", request.PollUuid)
 		logging.SetSpanError(span, err)
-		resp = &pollPb.GetPollResponse{
+		response = &pollPb.GetPollResponse{
 			StatusCode: strings.PollServiceInnerErrorCode,
 			StatusMsg:  strings.PollServiceInnerError,
 			Poll:       nil,
@@ -220,7 +263,7 @@ func (s PollServiceImpl) GetPoll(ctx context.Context, request *pollPb.GetPollReq
 			"err":       err,
 		}).Errorf("Error when decoding poll of uuid %s", request.PollUuid)
 		logging.SetSpanError(span, err)
-		resp = &pollPb.GetPollResponse{
+		response = &pollPb.GetPollResponse{
 			StatusCode: strings.PollServiceInnerErrorCode,
 			StatusMsg:  strings.PollServiceInnerError,
 			Poll:       nil,
@@ -228,7 +271,34 @@ func (s PollServiceImpl) GetPoll(ctx context.Context, request *pollPb.GetPollReq
 		return
 	}
 
-	resp = &pollPb.GetPollResponse{
+	jsonBytes, err := json.Marshal(BuildPollPbModel(&pPoll))
+	if err != nil {
+		logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Errorf("获取poll失败, Error when marshalling pPoll")
+		logging.SetSpanError(span, err)
+		response = &pollPb.GetPollResponse{
+			StatusCode: strings.UnableToQueryPollErrorCode,
+			StatusMsg:  strings.UnableToQueryPollError,
+		}
+		return
+	}
+
+	// 将数据存入redis
+	err = redisUtil.RedisPollClient.Set(ctx, redisKey, jsonBytes, time.Hour).Err()
+	if err != nil {
+		logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Errorf("获取poll失败, Error when setting poll of uuid %s into redis", request.PollUuid)
+		logging.SetSpanError(span, err)
+		response = &pollPb.GetPollResponse{
+			StatusCode: strings.UnableToQueryPollErrorCode,
+			StatusMsg:  strings.UnableToQueryPollError,
+		}
+		return
+	}
+
+	response = &pollPb.GetPollResponse{
 		StatusCode: strings.ServiceOKCode,
 		StatusMsg:  strings.ServiceOK,
 		Poll:       BuildPollPbModel(&pPoll),
@@ -291,35 +361,61 @@ func (s PollServiceImpl) ListPoll(ctx context.Context, request *pollPb.ListPollR
 	return
 }
 
-func (s PollServiceImpl) PollExist(ctx context.Context, req *pollPb.PollExistRequest) (resp *pollPb.PollExistResponse, err error) {
+func (s PollServiceImpl) PollExist(ctx context.Context, request *pollPb.PollExistRequest) (response *pollPb.PollExistResponse, err error) {
 	ctx, span := tracing.Tracer.Start(ctx, "PollExistedService")
 	defer span.End()
 	logging.SetSpanWithHostname(span)
 	logger := logging.LogService("PollService.PollExisted").WithContext(ctx)
 
-	// TODO 使用二级缓存加速查询
-	//var tempPoll pollModels.Poll
-	//_, err = cached.GetWithFunc(ctx, fmt.Sprintf("PollExistedCached-%s", req.PollUuid), func(ctx context.Context, key string) (string, error) {
-	//	collection := database.MongoDbClient.Database("aorb").Collection("polls")
-	//	cursor := collection.FindOne(ctx, bson.M{"pollUuid": req.PollUuid})
-	//	if cursor.Err() != nil {
-	//		return "false", cursor.Err()
-	//	}
-	//	if err := cursor.Decode(&tempPoll); err != nil {
-	//		return "false", err
-	//	}
-	//	return "true", nil
-	//})
+	// 从redis里面查询
+	redisKey := request.PollUuid
+	redisResult, err := redisUtil.RedisCommentClient.Get(ctx, redisKey).Result()
+	if err != nil && !errors.Is(err, redis.Nil) {
+		logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Errorf("调用pollExist失败, Error when getting data from redis")
+		logging.SetSpanError(span, err)
+		response = &pollPb.PollExistResponse{
+			StatusCode: strings.UnableToQueryPollErrorCode,
+			StatusMsg:  strings.UnableToQueryPollError,
+		}
+		return
+	}
+
+	if redisResult != "" {
+		var rPoll *pollPb.Poll
+		err = json.Unmarshal([]byte(redisResult), &rPoll)
+		if err != nil {
+			logger.WithFields(logrus.Fields{
+				"err": err,
+			}).Errorf("调用pollExist失败, Error when getting data from redis")
+			logging.SetSpanError(span, err)
+			response = &pollPb.PollExistResponse{
+				StatusCode: strings.UnableToQueryPollErrorCode,
+				StatusMsg:  strings.UnableToQueryPollError,
+			}
+			return
+		}
+		response = &pollPb.PollExistResponse{
+			StatusCode: strings.ServiceOKCode,
+			StatusMsg:  strings.ServiceOK,
+			Exist:      true,
+		}
+		logger.WithFields(logrus.Fields{
+			"response": response,
+		}).Debugf("Process done.")
+		return
+	}
 
 	collection := database.MongoDbClient.Database("aorb").Collection("polls")
-	cursor := collection.FindOne(ctx, bson.M{"pollUuid": req.PollUuid})
+	cursor := collection.FindOne(ctx, bson.M{"pollUuid": request.PollUuid})
 	if cursor.Err() != nil {
 		logger.WithFields(logrus.Fields{
 			"err":       cursor.Err(),
-			"poll_uuid": req.PollUuid,
-		}).Errorf("Error when checking if poll exists")
+			"poll_uuid": request.PollUuid,
+		}).Errorf("调用pollExist失败, Error when checking if poll exists")
 		logging.SetSpanError(span, err)
-		resp = &pollPb.PollExistResponse{
+		response = &pollPb.PollExistResponse{
 			StatusCode: strings.UnableToQueryPollErrorCode,
 			StatusMsg:  strings.UnableToQueryPollError,
 			Exist:      false,
@@ -332,31 +428,58 @@ func (s PollServiceImpl) PollExist(ctx context.Context, req *pollPb.PollExistReq
 
 	if err != nil {
 		logger.WithFields(logrus.Fields{
-			"poll_uuid": req.PollUuid,
-		}).Errorf("Error when decoding poll")
+			"poll_uuid": request.PollUuid,
+		}).Errorf("调用pollExist失败, Error when decoding poll")
 		logging.SetSpanError(span, err)
-		resp = &pollPb.PollExistResponse{
+		response = &pollPb.PollExistResponse{
 			StatusCode: strings.PollServiceInnerErrorCode,
 			StatusMsg:  strings.PollServiceInnerError,
 			Exist:      false,
 		}
-		return resp, err
+		return response, err
 	}
 
 	if pPoll.PollUuid == "" {
 		logger.WithFields(logrus.Fields{
-			"poll_uuid": req.PollUuid,
-		}).Warnf("poll_uuid %s doesn't exist", req.PollUuid)
+			"poll_uuid": request.PollUuid,
+		}).Warnf("poll_uuid %s doesn't exist", request.PollUuid)
 		logging.SetSpanError(span, err)
-		resp = &pollPb.PollExistResponse{
-			StatusCode: strings.PollServiceInnerErrorCode,
-			StatusMsg:  strings.PollServiceInnerError,
+		response = &pollPb.PollExistResponse{
+			StatusCode: strings.ServiceOKCode,
+			StatusMsg:  strings.ServiceOK,
 			Exist:      false,
 		}
-		return resp, err
+		return response, err
 	}
 
-	resp = &pollPb.PollExistResponse{
+	jsonBytes, err := json.Marshal(BuildPollPbModel(&pPoll))
+	if err != nil {
+		logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Errorf("调用pollExist失败, Error when marshalling pPoll")
+		logging.SetSpanError(span, err)
+		response = &pollPb.PollExistResponse{
+			StatusCode: strings.UnableToQueryPollErrorCode,
+			StatusMsg:  strings.UnableToQueryPollError,
+		}
+		return
+	}
+
+	// 将数据存入redis
+	err = redisUtil.RedisPollClient.Set(ctx, redisKey, jsonBytes, time.Hour).Err()
+	if err != nil {
+		logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Errorf("调用pollExist失败, Error when setting poll of uuid %s into redis", request.PollUuid)
+		logging.SetSpanError(span, err)
+		response = &pollPb.PollExistResponse{
+			StatusCode: strings.UnableToQueryPollErrorCode,
+			StatusMsg:  strings.UnableToQueryPollError,
+		}
+		return
+	}
+
+	response = &pollPb.PollExistResponse{
 		StatusCode: strings.ServiceOKCode,
 		StatusMsg:  strings.ServiceOK,
 		Exist:      true,
@@ -364,7 +487,7 @@ func (s PollServiceImpl) PollExist(ctx context.Context, req *pollPb.PollExistReq
 	return
 }
 
-func (s PollServiceImpl) FeedPoll(ctx context.Context, req *pollPb.FeedPollRequest) (resp *pollPb.FeedPollResponse, err error) {
+func (s PollServiceImpl) FeedPoll(ctx context.Context, request *pollPb.FeedPollRequest) (response *pollPb.FeedPollResponse, err error) {
 	ctx, span := tracing.Tracer.Start(ctx, "FeedPollService")
 	defer span.End()
 	logging.SetSpanWithHostname(span)
@@ -379,14 +502,14 @@ func (s PollServiceImpl) FeedPoll(ctx context.Context, req *pollPb.FeedPollReque
 	redisKeys, err := redisUtil.RedisPollClient.Keys(ctx, "*").Result()
 	if err != nil && !errors.Is(err, redis.Nil) {
 		logger.WithFields(logrus.Fields{
-			"username": req.Username,
+			"username": request.Username,
 		}).Errorf("Error when getting keys from redisPollClient")
 		logging.SetSpanError(span, err)
-		resp = &pollPb.FeedPollResponse{
+		response = &pollPb.FeedPollResponse{
 			StatusCode: strings.PollServiceFeedErrorCode,
 			StatusMsg:  strings.PollServiceFeedError,
 		}
-		return resp, err
+		return response, err
 	}
 	if len(redisKeys) > 10 {
 		// 保留前10条提问
@@ -398,28 +521,28 @@ func (s PollServiceImpl) FeedPoll(ctx context.Context, req *pollPb.FeedPollReque
 		redisResult, err := redisUtil.RedisPollClient.Get(ctx, redisKey).Result()
 		if err != nil && !errors.Is(err, redis.Nil) {
 			logger.WithFields(logrus.Fields{
-				"username": req.Username,
+				"username": request.Username,
 			}).Errorf("获取提问流失败,Error when getting data from redisPollClient with key %s", redisKey)
 			logging.SetSpanError(span, err)
-			resp = &pollPb.FeedPollResponse{
+			response = &pollPb.FeedPollResponse{
 				StatusCode: strings.PollServiceFeedErrorCode,
 				StatusMsg:  strings.PollServiceFeedError,
 			}
-			return resp, err
+			return response, err
 		}
 		if redisResult != "" {
 			var rPoll pollPb.Poll
 			err = json.Unmarshal([]byte(redisResult), &rPoll)
 			if err != nil {
 				logger.WithFields(logrus.Fields{
-					"username": req.Username,
+					"username": request.Username,
 				}).Errorf("获取提问流失败,Error when getting unmarshalling from redisPollClient with key %s", redisKey)
 				logging.SetSpanError(span, err)
-				resp = &pollPb.FeedPollResponse{
+				response = &pollPb.FeedPollResponse{
 					StatusCode: strings.PollServiceFeedErrorCode,
 					StatusMsg:  strings.PollServiceFeedError,
 				}
-				return resp, err
+				return response, err
 			}
 			rPollList = append(rPollList, &rPoll)
 		}
@@ -427,7 +550,7 @@ func (s PollServiceImpl) FeedPoll(ctx context.Context, req *pollPb.FeedPollReque
 
 	if len(rPollList) == 10 {
 		// 一次拿10条数据，不够再从数据库拿
-		resp = &pollPb.FeedPollResponse{
+		response = &pollPb.FeedPollResponse{
 			StatusCode: strings.ServiceOKCode,
 			StatusMsg:  strings.ServiceOK,
 			PollList:   rPollList,
@@ -447,27 +570,27 @@ func (s PollServiceImpl) FeedPoll(ctx context.Context, req *pollPb.FeedPollReque
 	cursor, err := pollCollection.Find(ctx, filter, options)
 	if err != nil {
 		logger.WithFields(logrus.Fields{
-			"username": req.Username,
+			"username": request.Username,
 		}).Errorf("获取提问流失败, Error when getting poll from mongodb")
 		logging.SetSpanError(span, err)
-		resp = &pollPb.FeedPollResponse{
+		response = &pollPb.FeedPollResponse{
 			StatusCode: strings.PollServiceFeedErrorCode,
 			StatusMsg:  strings.PollServiceFeedError,
 		}
-		return resp, err
+		return response, err
 	}
 	var pPollList []*pollModels.Poll
 	err = cursor.All(ctx, &pPollList)
 	if err != nil {
 		logger.WithFields(logrus.Fields{
-			"username": req.Username,
+			"username": request.Username,
 		}).Errorf("获取提问流失败, Error when decoding poll from mongodb")
 		logging.SetSpanError(span, err)
-		resp = &pollPb.FeedPollResponse{
+		response = &pollPb.FeedPollResponse{
 			StatusCode: strings.PollServiceFeedErrorCode,
 			StatusMsg:  strings.PollServiceFeedError,
 		}
-		return resp, err
+		return response, err
 	}
 	for _, pPoll := range pPollList {
 		rPollList = append(rPollList, BuildPollPbModel(pPoll))
@@ -478,10 +601,24 @@ func (s PollServiceImpl) FeedPoll(ctx context.Context, req *pollPb.FeedPollReque
 		nextTime = rPollList[len(rPollList)-1].CreateAt
 	}
 
-	// TODO 将rPollList中的内容存入消息队列，方便下一次执行的时候进行渲染
-	////
+	// 将rPollList中的内容存入消息队列，异步写入redis
+	for _, rPoll := range rPollList {
+		body, _ := json.Marshal(&rPoll)
+		err = rabbitmq.SendMessage2MQ(body, messageQueue.Poll2RedisQueue)
+		if err != nil {
+			//logger.WithFields(logrus.Fields{
+			//	"username": request.Username,
+			//}).Errorf("获取提问流失败, Error when sending message to rabbitmq")
+			//logging.SetSpanError(span, err)
+			//response = &pollPb.FeedPollResponse{
+			//	StatusCode: strings.PollServiceFeedErrorCode,
+			//	StatusMsg:  strings.PollServiceFeedError,
+			//}
+			//return response, err
+		}
+	}
 
-	resp = &pollPb.FeedPollResponse{
+	response = &pollPb.FeedPollResponse{
 		StatusCode: strings.ServiceOKCode,
 		StatusMsg:  strings.ServiceOK,
 		PollList:   rPollList,
@@ -654,4 +791,13 @@ func BuildPollPbModel(poll *pollModels.Poll) *pollPb.Poll {
 		VoteList:     rVoteList,
 		CreateAt:     timestamppb.New(poll.CreateAt),
 	}
+}
+
+func PollMQ2Redis(ctx context.Context, rPoll *pollPb.Poll) error {
+	pollJsonByte, err := json.Marshal(&rPoll)
+	if err != nil {
+		return err
+	}
+	err = redisUtil.RedisPollClient.Set(ctx, rPoll.PollUuid, pollJsonByte, time.Hour).Err()
+	return err
 }

@@ -214,7 +214,6 @@ func (c CommentServiceImpl) ListComment(ctx context.Context, request *commentPb.
 		"poll_uuid": request.PollUuid,
 	}).Debugf("Process start")
 
-	// TODO 添加redis
 	// 设置redis键
 	key := request.PollUuid
 
@@ -332,7 +331,7 @@ func (c CommentServiceImpl) ListComment(ctx context.Context, request *commentPb.
 		}
 		return
 	}
-	err = redisUtil.RedisCommentClient.Set(ctx, key, string(jsonBytes), time.Hour).Err()
+	err = redisUtil.RedisCommentClient.Set(ctx, key, jsonBytes, time.Hour).Err()
 	if err != nil {
 		logger.WithFields(logrus.Fields{
 			"err": err,

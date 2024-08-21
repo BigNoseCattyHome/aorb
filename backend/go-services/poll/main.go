@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/BigNoseCattyHome/aorb/backend/go-services/poll/script"
 	"github.com/BigNoseCattyHome/aorb/backend/go-services/poll/services"
 	"github.com/BigNoseCattyHome/aorb/backend/rpc/poll"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
@@ -79,6 +80,9 @@ func main() {
 	srv.New()
 	srvMetrics.InitializeMetrics(s)
 
+	// 启动脚本
+	loadScripts()
+
 	g := &run.Group{}
 	g.Add(func() error {
 		return s.Serve(lis)
@@ -114,4 +118,9 @@ func main() {
 		}).Errorf("Error when runing http server")
 		os.Exit(1)
 	}
+}
+
+func loadScripts() {
+	ctx := context.Background()
+	go script.SyncPoll2Redis(ctx)
 }
