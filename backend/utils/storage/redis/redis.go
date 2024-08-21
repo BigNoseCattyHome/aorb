@@ -7,6 +7,10 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+/*
+	设计思路: 仅在查询数据而未找到的时候时插入redis
+*/
+
 var RedisCommentClient *redis.Client // key: comment_uuid	value: comment
 var RedisMessageClient *redis.Client // key: chat-message:{fromUserName}:{toUserName}	value: message
 var RedisPollClient *redis.Client    // key: poll_uuid		value: poll
