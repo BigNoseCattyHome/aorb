@@ -106,7 +106,7 @@ figma原型设计共享链接：[Aorb原型设计](https://www.figma.com/design/
 
 ```shell
 mongodump --db aorb --out ./database_init # 备份数据库
-mongorestore --db aorb ./database_init # 恢复数据库
+mongorestore --db aorb ./database_init/aorb # 恢复数据库
 ```
 
 ### 后台各个服务的开启

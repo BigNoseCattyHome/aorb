@@ -37,6 +37,7 @@ class MessageVoteState extends State<MessageVote> {
   String nickname = '';
   String title = '';
   String content = '';
+  String pollowner = '';
   int commentsCount = 0;
   Color _textColor = Colors.black; // 默认文字颜色
 
@@ -77,6 +78,7 @@ class MessageVoteState extends State<MessageVote> {
         title = response.poll.title;
         content = response.poll.content;
         commentsCount = response.poll.commentList.length;
+        pollowner = response.poll.username;
       });
     });
   }
@@ -107,7 +109,7 @@ class MessageVoteState extends State<MessageVote> {
             MaterialPageRoute(
               builder: (context) => PollDetailPage(
                 pollId: widget.pollId,
-                username: widget.username,
+                username: pollowner,
                 userId: '',
               ),
             ),
