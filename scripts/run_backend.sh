@@ -19,12 +19,12 @@ function start_service() {
 }
 
 start_service "API Gateway" "go run ./backend/api-gateway/main.go" "./logs/api-gateway.log"
-start_service "Auth Service" "go run ./backend/go-services/auth/main.go" "./logs/auth.log"
-start_service "Comment Service" "go run ./backend/go-services/comment/main.go" "./logs/comment.log"
-start_service "Poll Service" "go run ./backend/go-services/poll/main.go" "./logs/poll.log"
-start_service "User Service" "go run ./backend/go-services/user/main.go" "./logs/user.log"
-start_service "Vote Service" "go run ./backend/go-services/vote/main.go" "./logs/vote.log"
-start_service "Message Service" "go run ./backend/go-services/message/main.go" "./logs/message.log"
+start_service "Auth Service" "go run ./backend/services/auth/main.go" "./logs/auth.log"
+start_service "Comment Service" "go run ./backend/services/comment/main.go" "./logs/comment.log"
+start_service "Poll Service" "go run ./backend/services/poll/main.go" "./logs/poll.log"
+start_service "User Service" "go run ./backend/services/user/main.go" "./logs/user.log"
+start_service "Vote Service" "go run ./backend/services/vote/main.go" "./logs/vote.log"
+start_service "Message Service" "go run ./backend/services/message/main.go" "./logs/message.log"
 
 echo "All services started."
 echo "Check logs for more details."

@@ -19,7 +19,7 @@ fi
 # 构建 services
 cd $AORB_HOME
 mkdir -p build/services
-cd backend/go-services || exit
+cd backend/services || exit
 
 for i in *; do
   if [ -d "$i" ]; then

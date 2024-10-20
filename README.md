@@ -22,7 +22,7 @@
 aorb
 ├── backend
 │   ├── api-gateway
-│   ├── go-services
+│   ├── services
 │   │   ├── auth
 │   │   ├── comment
 │   │   ├── event
