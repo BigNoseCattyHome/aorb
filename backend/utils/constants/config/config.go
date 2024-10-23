@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/spf13/viper"
@@ -31,11 +32,15 @@ type Config struct {
 // 使用viper读取配置文件
 func init() {
 	work, _ := os.Getwd()
+	fmt.Println("Current working directory:", work)
+	fmt.Println("Config path:", work+"/../../utils/constants/config")
+
 	viper.SetConfigName("config")
 	viper.SetConfigType("toml")
-	viper.AddConfigPath(work + "/backend/utils/constants/config")
+	viper.AddConfigPath(work + "/../../utils/constants/config")
 	err := viper.ReadInConfig()
 	if err != nil {
+		fmt.Printf("Fatal error config file: %s \n", err)
 		panic(err)
 	}
 	err = viper.Unmarshal(&Conf) // 将配置文件解析到Conf结构体中

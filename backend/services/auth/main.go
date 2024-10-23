@@ -11,7 +11,6 @@ import (
 	"time"
 
 	authRpc "github.com/BigNoseCattyHome/aorb/backend/rpc/auth"
-	authController "github.com/BigNoseCattyHome/aorb/backend/services/auth/handlers"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/constants/config"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/consul"
 	"github.com/BigNoseCattyHome/aorb/backend/utils/extra/tracing"
@@ -27,6 +26,8 @@ import (
 	_ "google.golang.org/grpc/encoding/gzip"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
+
+	authController "github.com/BigNoseCattyHome/aorb/backend/services/auth/handlers"
 )
 
 var log = logging.LogService(config.AuthRpcServerName) // 使用logging库，添加字段日志AuthRpcServer
